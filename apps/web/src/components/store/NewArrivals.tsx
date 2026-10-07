@@ -48,7 +48,7 @@ export function NewArrivals({ items, brand, compare, title, sub, pill }: { items
               <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={p.name} />
               <div style={{ height: 260, borderRadius: 'var(--r)', overflow: 'hidden', position: 'relative' }} className="na-img">
                 <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="lg" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
-                <span className="badge" style={{ position: 'absolute', left: 12, top: 12, background: 'var(--hi)', color: '#fff' }}>
+                <span className="badge badge-new" style={{ position: 'absolute', left: 12, top: 12 }}>
                   NEW
                 </span>
                 <span style={{ position: 'absolute', right: 12, top: 12 }}>
