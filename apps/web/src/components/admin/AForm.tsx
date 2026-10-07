@@ -44,6 +44,7 @@ export function AForm({
           if (r.ok) {
             setMsg({ ok: true, text: r.data?.message ?? 'Saved' });
             if (resetOnOk) form.reset();
+            else form.querySelectorAll<HTMLInputElement>('input[type=file]').forEach((i) => (i.value = ''));
           } else setMsg({ ok: false, text: r.error });
         });
       }}

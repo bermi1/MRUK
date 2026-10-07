@@ -55,6 +55,7 @@ export interface AzaniaBank {
   chargeAccount(c: AccountCharge): Promise<{ ok: boolean; reference: string; message: string }>;
   verifySsoToken(token: string): Promise<BankCustomer | null>;
   verifyPin(customerRef: string, pin: string): Promise<boolean>;
+  getCustomer(customerRef: string): Promise<BankCustomer | null>;
 }
 
 const MOCK_CUSTOMERS: BankCustomer[] = [
@@ -102,6 +103,10 @@ export class MockAzaniaBank implements AzaniaBank {
     const [ref, exp] = Buffer.from(body, 'base64url').toString().split('.');
     if (!ref || !exp || Number(exp) * 1000 < Date.now()) return null;
     return MOCK_CUSTOMERS.find((c) => c.customerRef === ref) ?? null;
+  }
+
+  async getCustomer(customerRef: string) {
+    return MOCK_CUSTOMERS.find((c) => c.customerRef === customerRef) ?? null;
   }
 
   /** Mock PIN check: any 4-digit PIN except 0000. */

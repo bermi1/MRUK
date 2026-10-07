@@ -118,7 +118,7 @@
 }
 .mn-card:active { transform: scale(0.985); }
 .mn-card .pimg { position: absolute; inset: 0; border-radius: 0; }
-.mn-card .pimg .ph { justify-content: flex-start; padding: 34px 12px 12px; font-size: 22px; }
+.mn-card .pimg .ph { justify-content: flex-start; padding: 46px 12px 12px; font-size: 22px; }
 .mn-card .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.88) 100%); }
 .mn-card .meta { position: absolute; left: 12px; right: 12px; bottom: 12px; }
 .mn-card .nm { font-size: 13px; font-weight: 600; line-height: 1.2; }

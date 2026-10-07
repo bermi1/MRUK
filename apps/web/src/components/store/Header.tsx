@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { BrandView, CategoryView, CmsView } from '@/lib/types';
@@ -185,7 +186,7 @@ export function Header({ brand, cms, cats, mega, cartCount, compareCount, user, 
           </div>
         </>
       )}
-      {auth && <AuthModal brand={brand.key} user={user} onClose={() => setAuth(false)} />}
+      {auth && createPortal(<AuthModal brand={brand.key} user={user} onClose={() => setAuth(false)} />, document.querySelector('.brand-root') ?? document.body)}
     </div>
   );
 }

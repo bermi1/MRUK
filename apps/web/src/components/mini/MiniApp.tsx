@@ -146,7 +146,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
   // ---------------------------------------------------------------- 1 · Shop
   if (step === 'shop') {
     return (
-      <div className="mn-screen" ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Shop">
+      <div className="mn-screen" key={step} ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Shop">
         <header className="mn-top">
           <div className="mn-head">
             <button type="button" className="mn-iconbtn" aria-label="Close shop and return to Azania Bank" onClick={closeMiniApp}>
@@ -247,7 +247,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
   // ---------------------------------------------------------------- 2 · Choose term
   if (step === 'term' && product) {
     return (
-      <div className="mn-screen white mn-col" ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Choose your term">
+      <div className="mn-screen white mn-col" key={step} ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Choose your term">
         <div className="mn-hero">
           <PImg src={product.img} alt={product.name} model={product.model} cover size="lg" />
           <button type="button" className="mn-iconbtn glass back" aria-label="Back to shop" onClick={() => go('shop')}>
@@ -365,7 +365,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
     const terms = contractTerms(months, fmtTZS(monthly), fmtDate(firstDeduction));
     const consentsOk = consents[0] && consents[1];
     return (
-      <div className="mn-screen white" ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Review and sign">
+      <div className="mn-screen white" key={step} ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Review and sign">
         <div className="mn-col" style={{ padding: 'calc(18px + env(safe-area-inset-top)) 20px calc(30px + env(safe-area-inset-bottom))', gap: 14 }}>
           <div className="mn-pagehead">
             <button type="button" className="mn-iconbtn" aria-label="Back to term" onClick={() => go('term')} disabled={pending}>
@@ -540,7 +540,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
     const approved = result.status === 'approved';
     const rejected = result.status === 'rejected';
     return (
-      <div className="mn-screen white" ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Order result">
+      <div className="mn-screen white" key={step} ref={screenRef} tabIndex={-1} style={themeStyle} aria-label="Order result">
         <div className="mn-done">
           <div className={`mn-tick ${approved ? '' : rejected ? 'no' : 'wait'}`} aria-hidden="true">
             {approved ? (
@@ -558,10 +558,10 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
               </svg>
             )}
           </div>
-          <h2 role="status">{approved ? 'Approved and ordered' : rejected ? 'Not approved' : 'Sent to Azania Bank'}</h2>
+          <h2>{approved ? 'Approved and ordered' : rejected ? 'Not approved' : 'Sent to Azania Bank'}</h2>
           <p>
             {approved
-              ? `Contract ${result.contract} is signed. ${brand.name} will deliver your ${product.name} to ${region} ${deliveryEta(region)}.`
+              ? `Contract ${result.contract} is signed. ${brand.name} will deliver your ${product.name} to ${region} ${deliveryEta(region) === 'tomorrow' ? 'tomorrow' : `in ${deliveryEta(region)}`}.`
               : rejected
                 ? `Azania Bank could not approve this Salary Advance. ${result.note} No money will be deducted.`
                 : `Contract ${result.contract} is signed and with Azania Bank for a decision. We'll SMS you when it's approved.`}
@@ -637,7 +637,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
 
   // Fallback (e.g. product vanished): return to the shop.
   return (
-    <div className="mn-screen" ref={screenRef}>
+    <div className="mn-screen" key={step} ref={screenRef}>
       <div className="mn-gate">
         <p>This product is no longer available.</p>
         <button type="button" className="mn-cta" onClick={() => go('shop')}>

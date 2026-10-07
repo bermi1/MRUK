@@ -315,3 +315,8 @@ details.ad-more[open] > summary { margin-bottom: 10px; }
   .ad-card, .ad-kpi { border: 1px solid #ddd; break-inside: avoid; }
   .ad-detail > :last-child { position: static; }
 }
+
+@media (max-width: 1180px) {
+  .ad-cmsgrid { grid-template-columns: minmax(0, 1fr) !important; }
+  .ad-cmsgrid > section { position: static !important; }
+}
