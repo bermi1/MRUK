@@ -31,6 +31,7 @@ import {
 import { contractPdf, invoicePdf } from '@bt/integrations';
 import type { BrandKey } from '@/lib/types';
 import { getCart, clearCart } from './cart';
+import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { sign } from './session';
 
@@ -89,11 +90,22 @@ async function reserveStock(tx: Prisma.TransactionClient, lines: { productId: st
     const r = await tx.product.updateMany({ where: { id: l.productId, stock: { gte: l.qty }, hidden: false }, data: { stock: { decrement: l.qty } } });
     if (r.count !== 1) throw new CheckoutError(`Sorry, ${l.name} no longer has enough stock. Please update your cart.`);
   }
+  stockChanged();
+}
+
+/** Shown stock comes from the catalogue cache; refresh it when stock moves. */
+function stockChanged() {
+  try {
+    refreshCatalog();
+  } catch {
+    // Not inside a server action or route (e.g. during render): the cache expires within a minute.
+  }
 }
 
 async function restock(tx: Prisma.TransactionClient, orderId: string) {
   const items = await tx.orderItem.findMany({ where: { orderId } });
   for (const i of items) await tx.product.update({ where: { id: i.productId }, data: { stock: { increment: i.qty } } });
+  stockChanged();
 }
 
 function validateContact(c: ContactInput) {

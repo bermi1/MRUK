@@ -6,6 +6,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
+import { refreshCatalog } from '@/server/catalog';
 import { cookies } from 'next/headers';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import QRCode from 'qrcode';
@@ -68,6 +69,7 @@ function revalidateAdmin() {
 }
 /** Storefront-visible change: CMS, price, stock, photos, promos. */
 function revalidateStore() {
+  refreshCatalog();
   revalidatePath('/', 'layout');
 }
 
