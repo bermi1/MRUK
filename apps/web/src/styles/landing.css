@@ -22,7 +22,7 @@
 .l-brand { position: relative; height: 340px; border-radius: 22px; overflow: hidden; color: #fff; display: grid; grid-template-columns: 1fr 1fr; padding: 34px; transition: transform 0.25s var(--ease); }
 .l-brand:hover { transform: translateY(-3px); }
 .l-brand.mruk { background: #283a6e; }
-.l-brand.sky { background: #111216; }
+.l-brand.sky { background: #1c1915; }
 .l-brand-copy { display: flex; flex-direction: column; gap: 10px; justify-content: flex-end; position: relative; z-index: 1; }
 .l-brand-copy img { align-self: flex-start; margin-bottom: auto; }
 .l-brand .t { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; }

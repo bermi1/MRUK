@@ -26,6 +26,7 @@
   --head: 600;
   --track: -0.032em;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --focus: var(--az);
 }
 
 * { box-sizing: border-box; }
@@ -43,7 +44,7 @@ input, textarea, select { font: inherit; color: var(--text); }
 img { max-width: 100%; }
 .mono { font-family: var(--font-geist-mono), 'Geist Mono', ui-monospace, monospace; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
-:focus-visible { outline: 2px solid var(--az); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .nsb { scrollbar-width: none; }
 .nsb::-webkit-scrollbar { display: none; }
 
@@ -72,6 +73,7 @@ img { max-width: 100%; }
 .pill { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; background: var(--surface); padding: 7px 13px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; color: var(--ink); }
 .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hi); }
 .badge { display: inline-flex; align-items: center; border-radius: 999px; font-size: 11px; font-weight: 700; padding: 5px 10px; letter-spacing: 0.04em; }
+.badge-new { background: var(--hi); color: #fff; }
 .eyebrow { font-family: var(--font-geist-mono), 'Geist Mono', monospace; font-size: 12px; letter-spacing: 0.16em; color: var(--monthly); text-transform: uppercase; }
 .eyebrow-muted { font-family: var(--font-geist-mono), 'Geist Mono', monospace; font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
 .seg { display: inline-grid; grid-auto-flow: column; background: var(--surface); border-radius: 14px; padding: 4px; }
@@ -334,7 +336,7 @@ textarea.input { resize: vertical; }
 /* Stretched-link cards: the whole card is clickable, buttons stay separate controls. */
 .ptile, .lrow, .carousel-item { position: relative; }
 .stretch { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
-.stretch:focus-visible { outline: 2px solid var(--az); outline-offset: 2px; }
+.stretch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ptile .tags, .ptile .meta button, .lrow button, .carousel-item button, .cmp-link { position: relative; z-index: 3; }
 .ptile .tags { pointer-events: none; }
 .ptile .tags button { pointer-events: auto; }
@@ -348,6 +350,7 @@ textarea.input { resize: vertical; }
 .share-btn > span { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .pdp { display: grid; grid-template-columns: 1.1fr 1fr; gap: 52px; margin-top: 18px; }
 .pdp-media { position: relative; height: 620px; border-radius: var(--r); overflow: hidden; }
+.pdp-badge { position: absolute; left: 20px; top: 20px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(10px); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 600; padding: 6px 12px; }
 .thumbs { display: flex; gap: 8px; margin-top: 10px; }
 .thumbs button { width: 72px; height: 72px; border-radius: 12px; overflow: hidden; border: 2px solid transparent; background: var(--p); padding: 0; }
 .thumbs button.on { border-color: var(--az); }
@@ -434,3 +437,183 @@ textarea.input { resize: vertical; }
   .grid-5 .ptile .pimg .ph { justify-content: flex-start; padding-top: 14px !important; opacity: 0.9; }
 }
 @media (max-width: 767px) { .hero-copy { max-width: 60%; z-index: 1; } }
+
+/* =====================================================================================
+   Skywood personality — same structure and components as Mr UK, its own taste.
+   Mr UK: bold retail navy, pill buttons, big round tiles, UPPERCASE nav, heavy headings.
+   Skywood: the logo's warm black ink + champagne gold on ivory and stone; tailored
+   6–8px corners, light editorial headings, sentence-case nav, gold hairline accents,
+   product photos on warm stone instead of solid brand colour.
+   Everything is scoped to .brand-root[data-brand='skywood'] so Mr UK is untouched.
+   The shape and type values below win over brand tokens stored in the database
+   (!important on custom properties beats the inline style from themeVars), so an
+   older seed still renders the current Skywood look.
+   ===================================================================================== */
+[data-brand='skywood'] {
+  --r: 8px !important;
+  --rs: 6px !important;
+  --head: 440 !important;
+  --track: -0.03em !important;
+  --sw-ink: #1c1915; /* logo black, warmed */
+  --sw-espresso: #211d18; /* footer / dark surfaces */
+  --sw-gold: #c9a96e; /* champagne gold: decorative and on dark only (2.2:1 on white) */
+  --sw-gold-hi: #e2c891; /* gold text on dark */
+  --sw-bronze: #7a5a22; /* gold for text on light (5.3:1 white, 5.7:1 ivory, 5.1:1 stone) */
+  --sw-ivory: #f6f2eb;
+  --sw-stone: #ede6da;
+  --sw-r-btn: 6px;
+  --sw-r-card: 8px;
+  --text: #1c1915;
+  --muted: #736a5e;
+  --muted2: #5c554b;
+  --monthly: #7a5a22;
+  --border: #eee8de;
+  --line: #e2dacb;
+  --surface: #f6f2eb;
+  --focus: #7a5a22;
+  background: #fffdfa;
+  color: var(--text);
+}
+[data-brand='skywood'] .icon-btn { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .teasers > a:first-child .mono { color: var(--sw-gold-hi); opacity: 1 !important; }
+
+/* Type: lighter, editorial headings; sentence case. */
+[data-brand='skywood'] .sec-head h2,
+[data-brand='skywood'] .h1,
+[data-brand='skywood'] .h1-xl,
+[data-brand='skywood'] .deals-h2 { font-weight: var(--head); letter-spacing: var(--track); }
+[data-brand='skywood'] .hero-copy h1 { font-weight: 380; letter-spacing: -0.035em; }
+[data-brand='skywood'] .catcard .t { font-weight: 450; letter-spacing: -0.015em; }
+[data-brand='skywood'] .pdp h1 { font-weight: var(--head) !important; letter-spacing: var(--track) !important; }
+[data-brand='skywood'] .spot h2 { font-weight: var(--head) !important; }
+
+/* Section pill becomes a gold hairline + spaced caps label. */
+[data-brand='skywood'] .pill { background: transparent; padding: 0; border-radius: 0; color: var(--sw-bronze); font-weight: 600; letter-spacing: 0.2em; gap: 10px; }
+[data-brand='skywood'] .pill .dot { width: 22px; height: 1.5px; border-radius: 0; background: var(--sw-gold); }
+[data-brand='skywood'] .eyebrow { color: var(--sw-bronze); }
+
+/* Buttons, chips, badges: tailored corners instead of pills. */
+[data-brand='skywood'] .btn { border-radius: var(--sw-r-btn); letter-spacing: 0.01em; font-weight: 500; }
+[data-brand='skywood'] .btn-primary { background: var(--sw-ink); }
+[data-brand='skywood'] .btn-primary:hover { opacity: 1; background: #3a332b; }
+[data-brand='skywood'] .btn-outline,
+[data-brand='skywood'] .btn-outline-p { border-width: 1px; border-color: var(--sw-ink); }
+[data-brand='skywood'] .btn-outline:hover,
+[data-brand='skywood'] .btn-outline-p:hover { opacity: 1; background: var(--sw-ivory); }
+[data-brand='skywood'] .chip { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .chip.on:not(.chip-az) { background: var(--sw-ink); border-color: var(--sw-ink); }
+[data-brand='skywood'] .badge { border-radius: 4px; letter-spacing: 0.1em; text-transform: uppercase; font-size: 10.5px; }
+[data-brand='skywood'] .badge-new { background: var(--sw-gold); color: var(--sw-ink); }
+[data-brand='skywood'] .spot .badge { background: var(--sw-ink) !important; color: var(--sw-gold-hi) !important; }
+[data-brand='skywood'] .link-u { border-bottom: 2px solid var(--sw-gold); }
+[data-brand='skywood'] .seg { border-radius: var(--sw-r-card); }
+[data-brand='skywood'] .seg > * { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .sortlink { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .input { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .input:focus { border-color: var(--sw-ink); box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.3); }
+[data-brand='skywood'] .card,
+[data-brand='skywood'] .card-soft { border-radius: var(--sw-r-card); }
+[data-brand='skywood'] .modal { border-radius: 12px; }
+[data-brand='skywood'] .toast { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .dots.dark button.on { background: var(--sw-ink); }
+
+/* Announcement bar: ivory band with a gold diamond instead of a dark strip. */
+[data-brand='skywood'] .ann { background: var(--sw-ivory); color: #3d372f; border-bottom: 1px solid var(--line); letter-spacing: 0.01em; }
+[data-brand='skywood'] .ann .msg .dot { width: 6px; height: 6px; border-radius: 1px; transform: rotate(45deg); background: var(--sw-gold); }
+[data-brand='skywood'] .ann nav a:hover { color: var(--sw-bronze); }
+
+/* Header and category nav. */
+[data-brand='skywood'] .hdr { background: #fffdfa; }
+[data-brand='skywood'] .exit-pill { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .hdr-search { border-radius: var(--sw-r-btn); box-shadow: inset 0 0 0 1px var(--border); }
+[data-brand='skywood'] .hdr-btn { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .hdr-btn.solid { background: var(--sw-ink); }
+[data-brand='skywood'] .hdr-btn .count { background: var(--sw-gold); color: var(--sw-ink); border-radius: 4px; }
+[data-brand='skywood'] .navcat { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 500; padding: 0 16px; }
+[data-brand='skywood'] .navcat .caret { font-size: 7px; opacity: 0.45; }
+[data-brand='skywood'] .navcat:hover { color: var(--sw-bronze); }
+[data-brand='skywood'] .navcat.on,
+[data-brand='skywood'] .navcat.open { color: var(--sw-ink); border-bottom-color: var(--sw-gold); }
+[data-brand='skywood'] .mega { background: #fffdfa; box-shadow: 0 30px 60px rgba(40, 30, 15, 0.14); border-top: 1px solid var(--border); }
+[data-brand='skywood'] .mega-scrim { background: rgba(28, 25, 21, 0.28); }
+[data-brand='skywood'] .mega-subs a:hover { color: var(--sw-bronze); }
+[data-brand='skywood'] .mega-item { border-radius: var(--sw-r-card); }
+[data-brand='skywood'] .mega-promo { border-radius: var(--sw-r-card); background: linear-gradient(160deg, #3a3128 0%, var(--sw-ink) 60%); }
+[data-brand='skywood'] .mega-promo .mono { color: var(--sw-gold-hi); opacity: 1 !important; }
+
+/* Product imagery sits on warm stone, not on solid brand colour. */
+[data-brand='skywood'] .pimg { background: var(--sw-stone); }
+[data-brand='skywood'] .pimg > img { filter: drop-shadow(0 14px 18px rgba(60, 45, 20, 0.2)); }
+[data-brand='skywood'] .pimg.cover > img { filter: none; }
+[data-brand='skywood'] .pimg .ph { color: var(--sw-ink); font-weight: 500; letter-spacing: -0.03em; }
+[data-brand='skywood'] .pimg .ph .sub { color: var(--sw-bronze); opacity: 1; }
+[data-brand='skywood'] .pdp-badge { background: var(--sw-ink); color: var(--sw-gold-hi); backdrop-filter: none; border-radius: 4px; letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
+[data-brand='skywood'] .thumbs button { background: var(--sw-stone); border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .thumbs button.on { border-color: var(--sw-ink); }
+
+/* Hero: espresso with a warm glow, a thin gold arc and hairline rings. */
+[data-brand='skywood'] .hero { background: radial-gradient(120% 140% at 82% 35%, #3d342a 0%, var(--sw-ink) 52%, #15120f 100%); }
+[data-brand='skywood'] .hero .arc { border-top: 1.5px solid var(--sw-gold); opacity: 0.6; }
+[data-brand='skywood'] .hero-art .c1 { background: transparent; border: 1px solid rgba(201, 169, 110, 0.32); }
+[data-brand='skywood'] .hero-art .c2 { background: rgba(201, 169, 110, 0.06); border: 1px solid rgba(201, 169, 110, 0.22); }
+[data-brand='skywood'] .hero-copy > .mono:first-child { color: var(--sw-gold-hi) !important; }
+[data-brand='skywood'] .hero .btn-ghost-light { border-color: rgba(201, 169, 110, 0.6); }
+[data-brand='skywood'] .hero .dots button.on { background: var(--sw-gold); }
+
+/* Category cards and category hero. */
+[data-brand='skywood'] .catcard { background: var(--sw-ink); }
+[data-brand='skywood'] .catcard .s { border-bottom-color: var(--sw-gold); }
+[data-brand='skywood'] .arrow-glass { border-radius: var(--sw-r-btn); border-color: rgba(201, 169, 110, 0.55); background: rgba(28, 25, 21, 0.35); }
+[data-brand='skywood'] .cathero { box-shadow: inset 0 -2px 0 var(--sw-gold); }
+
+/* Product tiles: stone card, ink text, soft border and lift instead of a dark gradient. */
+[data-brand='skywood'] .ptile { background: var(--sw-stone); color: var(--sw-ink); box-shadow: inset 0 0 0 1px #e2d9c9; transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease); }
+[data-brand='skywood'] .ptile:hover { box-shadow: inset 0 0 0 1px #d8cdb9, 0 18px 40px rgba(60, 45, 20, 0.12); }
+[data-brand='skywood'] .ptile.shade-tb::after { background: linear-gradient(180deg, rgba(237, 230, 218, 0) 48%, rgba(237, 230, 218, 0.92) 78%, #ede6da 100%); }
+[data-brand='skywood'] .ptile .glass { color: var(--sw-ink); background: rgba(255, 253, 250, 0.82); border-radius: 4px; backdrop-filter: none; letter-spacing: 0.1em; }
+[data-brand='skywood'] .ptile .monthly-light { color: var(--sw-bronze); }
+[data-brand='skywood'] .ptile .plus,
+[data-brand='skywood'] .plus.p { background: var(--sw-ink); color: #fff; border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .cmp-tag { border-radius: 4px; }
+[data-brand='skywood'] .cmp-tag.on { background: var(--sw-ink); color: #fff; }
+[data-brand='skywood'] .lrow,
+[data-brand='skywood'] .cartline,
+[data-brand='skywood'] .related { border-radius: var(--sw-r-card) !important; }
+[data-brand='skywood'] .lrow:hover { border-color: var(--sw-gold); }
+[data-brand='skywood'] .payopt,
+[data-brand='skywood'] .paym,
+[data-brand='skywood'] .perks { border-radius: var(--sw-r-card); }
+
+/* Home-page sections whose radii are set inline. */
+[data-brand='skywood'] .spot { border-radius: var(--sw-r-card) !important; background: var(--sw-ivory) !important; }
+[data-brand='skywood'] .reviews > figure { border-radius: var(--sw-r-card) !important; }
+[data-brand='skywood'] .teasers > a { border-radius: var(--sw-r-card) !important; }
+[data-brand='skywood'] .deals-hero { border-radius: var(--sw-r-card); }
+
+/* Footer: warm espresso with gold headings and a gold hairline. */
+[data-brand='skywood'] .foot { background: var(--sw-espresso); color: #b9b0a2; border-top: 2px solid var(--sw-gold); }
+[data-brand='skywood'] .foot-col .t { color: var(--sw-gold); letter-spacing: 0.04em; }
+[data-brand='skywood'] .foot-col a:hover { color: var(--sw-gold-hi); }
+[data-brand='skywood'] .foot-bottom { border-top-color: rgba(201, 169, 110, 0.2); }
+[data-brand='skywood'] .accept span { border-color: rgba(201, 169, 110, 0.3); border-radius: 4px; }
+
+/* Phone app chrome: same layout, tailored shapes. */
+[data-brand='skywood'] .appbar { background: rgba(255, 253, 250, 0.95); }
+[data-brand='skywood'] .appbar .brand-switch { border-radius: var(--sw-r-card); }
+[data-brand='skywood'] .appbar .brand-switch a { border-radius: var(--sw-r-btn); }
+[data-brand='skywood'] .appbar .brand-switch a.on { background: var(--sw-ink); }
+[data-brand='skywood'] .appbar .icon-btn { border-radius: var(--sw-r-card); }
+[data-brand='skywood'] .tabbar { background: rgba(255, 253, 250, 0.97); }
+[data-brand='skywood'] .tabbar a.on { color: var(--sw-ink); }
+[data-brand='skywood'] .tabbar .cart-fab { border-radius: 16px; background: var(--sw-ink); box-shadow: 0 12px 24px rgba(40, 30, 15, 0.32); border-color: #fffdfa; }
+[data-brand='skywood'] .tabbar .cart-fab .count { background: var(--sw-gold); color: var(--sw-ink); border-radius: 4px; border-color: #fffdfa; }
+
+@media (max-width: 767px) {
+  [data-brand='skywood'] .catcard,
+  [data-brand='skywood'] .grid-5 .ptile,
+  [data-brand='skywood'] .card,
+  [data-brand='skywood'] .card-soft { border-radius: var(--sw-r-card); }
+  [data-brand='skywood'] .modal { border-radius: 12px 12px 0 0; }
+  [data-brand='skywood'] .hero-copy h1 { font-weight: 420; }
+}
+[data-brand='skywood'] .grid-3 > article { border-radius: var(--sw-r-card) !important; }
