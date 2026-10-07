@@ -15,7 +15,9 @@
     "reset": "dotenv -e ../../.env -- prisma db push --force-reset --skip-generate && dotenv -e ../../.env -- tsx src/seed.ts",
     "studio": "dotenv -e ../../.env -- prisma studio",
     "typecheck": "tsc -p tsconfig.json",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "deploy": "tsx src/deploy.ts",
+    "secure": "DB_SETUP_ON_BUILD=true dotenv -e ../../.env -- tsx src/deploy.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3"

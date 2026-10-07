@@ -1,7 +1,7 @@
 import 'server-only';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { AnthropicAi, LocalStorage, MockAi, MockAzaniaBank, MockSms, MockWhatsApp, UnconfiguredS3Storage, type Ai, type AzaniaBank, type Sms, type Storage, type WhatsApp } from '@bt/integrations';
+import { AnthropicAi, LocalStorage, SupabaseStorage, MockAi, MockAzaniaBank, MockSms, MockWhatsApp, UnconfiguredS3Storage, type Ai, type AzaniaBank, type Sms, type Storage, type WhatsApp } from '@bt/integrations';
 import { env } from './env';
 
 /**
@@ -20,12 +20,17 @@ function build() {
   const storageDir = process.env.VERCEL
     ? join(tmpdir(), 'bt-storage')
     : resolve(process.cwd(), env.STORAGE_LOCAL_DIR.startsWith('/') ? env.STORAGE_LOCAL_DIR : `../../${env.STORAGE_LOCAL_DIR.replace(/^\.\//, '')}`);
-  if (process.env.VERCEL && env.STORAGE_ADAPTER === 'local') console.warn('[storage] Using temporary storage on a serverless host: uploads will not persist. Configure S3 storage.');
+  if (process.env.VERCEL && env.STORAGE_ADAPTER === 'local') console.warn('[storage] Using temporary storage on a serverless host: uploads will not persist. Set STORAGE_ADAPTER=supabase.');
   return {
     bank: env.AZANIA_ADAPTER === 'mock' ? new MockAzaniaBank(env.AZANIA_SSO_SECRET) : notConfigured('Azania Bank'),
     sms: env.SMS_ADAPTER === 'mock' ? new MockSms() : notConfigured('SMS'),
     whatsapp: env.WHATSAPP_ADAPTER === 'mock' ? new MockWhatsApp() : notConfigured('WhatsApp'),
-    storage: env.STORAGE_ADAPTER === 'local' ? new LocalStorage(storageDir) : new UnconfiguredS3Storage(),
+    storage:
+      env.STORAGE_ADAPTER === 'supabase'
+        ? new SupabaseStorage(env.SUPABASE_URL.replace(/\/$/, ''), env.SUPABASE_SECRET_KEY, env.STORAGE_BUCKET)
+        : env.STORAGE_ADAPTER === 'local'
+          ? new LocalStorage(storageDir)
+          : new UnconfiguredS3Storage(),
     ai: env.AI_ADAPTER === 'anthropic' && env.ANTHROPIC_API_KEY ? new AnthropicAi(env.ANTHROPIC_API_KEY, env.ANTHROPIC_MODEL) : new MockAi(),
   };
 }
