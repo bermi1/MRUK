@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { prisma } from '@bt/db';
 import { fmtTZS } from '@bt/core';
 import { restockAction } from '@/app/actions/admin';
@@ -41,12 +42,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             <p className="ad-sub">Stock is reserved when an order is placed and returned on cancel or timeout. Per-branch stock is not tracked yet.</p>
           </div>
           <nav className="ad-tabs" aria-label="Stock filter">
-            <a className="ad-tab" href="/admin/inventory" aria-current={show === 'all' ? 'true' : undefined}>
+            <Link className="ad-tab" href="/admin/inventory" aria-current={show === 'all' ? 'true' : undefined}>
               All <span>{all.length}</span>
-            </a>
-            <a className="ad-tab" href="/admin/inventory?show=low" aria-current={show === 'low' ? 'true' : undefined}>
+            </Link>
+            <Link className="ad-tab" href="/admin/inventory?show=low" aria-current={show === 'low' ? 'true' : undefined}>
               Needs attention <span>{need}</span>
-            </a>
+            </Link>
           </nav>
         </div>
         <div className="ad-scroll">

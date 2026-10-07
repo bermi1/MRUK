@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
 import { PImg } from '@/components/store/PImg';
@@ -34,11 +33,10 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, base, products, cmp, cart, suppliers, t, h, flash] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), headers(), getFlashDeals(key)]);
+  const [brand, base, products, cmp, cart, suppliers, t, flash] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), getFlashDeals(key)]);
   const deal = flash.find((f) => f.id === base.id);
   const p = deal ? { ...base, price: deal.dealPrice } : base;
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
-  const nonce = h.get('x-nonce') ?? undefined;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -52,7 +50,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
   };
   return (
     <div className="wrap" style={{ paddingTop: 24 }}>
-      <script type="application/ld+json" nonce={nonce} dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <nav aria-label="Breadcrumb" style={{ fontSize: 13, color: 'var(--muted)' }}>
         <Link href={`/${key}`}>Home</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
