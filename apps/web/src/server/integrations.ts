@@ -1,5 +1,6 @@
 import 'server-only';
-import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { AnthropicAi, LocalStorage, MockAi, MockAzaniaBank, MockSms, MockWhatsApp, UnconfiguredS3Storage, type Ai, type AzaniaBank, type Sms, type Storage, type WhatsApp } from '@bt/integrations';
 import { env } from './env';
 
@@ -14,7 +15,12 @@ function notConfigured(name: string): never {
 const g = globalThis as unknown as { __btIntegrations?: { bank: AzaniaBank; sms: Sms; whatsapp: WhatsApp; storage: Storage; ai: Ai } };
 
 function build() {
-  const storageDir = resolve(process.cwd(), env.STORAGE_LOCAL_DIR.startsWith('/') ? env.STORAGE_LOCAL_DIR : `../../${env.STORAGE_LOCAL_DIR.replace(/^\.\//, '')}`);
+  // Serverless hosts (Vercel) have a read-only filesystem: local storage falls back to the
+  // temporary directory, which is NOT persistent. Production needs STORAGE_ADAPTER=s3.
+  const storageDir = process.env.VERCEL
+    ? join(tmpdir(), 'bt-storage')
+    : resolve(process.cwd(), env.STORAGE_LOCAL_DIR.startsWith('/') ? env.STORAGE_LOCAL_DIR : `../../${env.STORAGE_LOCAL_DIR.replace(/^\.\//, '')}`);
+  if (process.env.VERCEL && env.STORAGE_ADAPTER === 'local') console.warn('[storage] Using temporary storage on a serverless host: uploads will not persist. Configure S3 storage.');
   return {
     bank: env.AZANIA_ADAPTER === 'mock' ? new MockAzaniaBank(env.AZANIA_SSO_SECRET) : notConfigured('Azania Bank'),
     sms: env.SMS_ADAPTER === 'mock' ? new MockSms() : notConfigured('SMS'),
