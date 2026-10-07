@@ -20,7 +20,8 @@
     "secure": "DB_SETUP_ON_BUILD=true dotenv -e ../../.env -- tsx src/deploy.ts"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3"
+    "@prisma/client": "6.19.3",
+    "pg": "8.23.1"
   },
   "devDependencies": {
     "@bt/core": "workspace:*",
@@ -28,6 +29,7 @@
     "prisma": "6.19.3",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
-    "dotenv-cli": "11.0.0"
+    "dotenv-cli": "11.0.0",
+    "@types/pg": "8.23.1"
   }
 }

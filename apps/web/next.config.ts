@@ -12,7 +12,7 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@bt/core', '@bt/db', '@bt/integrations'],
-  serverExternalPackages: ['@prisma/client', 'pdf-lib'],
+  serverExternalPackages: ['@prisma/client', 'pdf-lib', 'pg'],
   experimental: { serverActions: { bodySizeLimit: '6mb' } },
   async headers() {
     return [

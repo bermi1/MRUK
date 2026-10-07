@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@bt/db';
+import { discoveredPoolerHost, prisma } from '@bt/db';
 
 /**
  * Deployment self-check. Reports which settings are present (never their values),
@@ -8,7 +8,7 @@ import { prisma } from '@bt/db';
 export const dynamic = 'force-dynamic';
 
 const REQUIRED = ['DATABASE_URL', 'DIRECT_URL', 'ENCRYPTION_KEY', 'SESSION_SECRET', 'APP_URL'] as const;
-const OPTIONAL = ['STORAGE_ADAPTER', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'DEMO_MODE', 'DB_SETUP_ON_BUILD'] as const;
+const OPTIONAL = ['STORAGE_ADAPTER', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'SUPABASE_DB_PASSWORD', 'DEMO_MODE', 'DB_SETUP_ON_BUILD'] as const;
 
 function describeUrl(name: string) {
   const v = process.env[name];
@@ -30,6 +30,10 @@ export async function GET() {
   const settings: Record<string, string> = {};
   for (const k of REQUIRED) settings[k] = k.endsWith('_URL') && k !== 'APP_URL' ? describeUrl(k) : process.env[k] ? 'set' : 'missing';
   for (const k of OPTIONAL) settings[k] = k === 'STORAGE_ADAPTER' || k === 'DEMO_MODE' || k === 'DB_SETUP_ON_BUILD' ? (process.env[k] ?? 'not set') : process.env[k] ? 'set' : 'not set';
+  if (!process.env.DATABASE_URL && process.env.SUPABASE_DB_PASSWORD) {
+    settings.DATABASE_URL = discoveredPoolerHost ? `derived from SUPABASE_URL + SUPABASE_DB_PASSWORD (pooler ${discoveredPoolerHost})` : 'derived, but the pooler region was not found during the build — redeploy and check the [db:deploy] lines in the build log';
+    settings.DIRECT_URL = 'not needed (derived)';
+  }
   if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length < 32) settings.SESSION_SECRET = 'set, but too short (needs 32+ characters)';
   if (process.env.ENCRYPTION_KEY && !/^[0-9a-f]{64}$/i.test(process.env.ENCRYPTION_KEY) && Buffer.from(process.env.ENCRYPTION_KEY, 'base64').length !== 32) settings.ENCRYPTION_KEY = 'set, but not 64 hex characters';
 
@@ -49,6 +53,6 @@ export async function GET() {
     };
     database = { reachable: false, errorCode: code, hint: hints[code] ?? 'See the function logs in Vercel for details.' };
   }
-  const ok = !Object.values(settings).some((v) => v.startsWith('missing') || v.includes('WARNING') || v.includes('but')) && database.reachable === true && Number(database.products ?? 0) > 0;
+  const ok = !Object.values(settings).some((v) => v.startsWith('missing') || v.startsWith('derived, but') || v.includes('WARNING') || v.includes('but')) && database.reachable === true && Number(database.products ?? 0) > 0;
   return NextResponse.json({ ok, environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV, settings, database }, { status: ok ? 200 : 503, headers: { 'Cache-Control': 'no-store' } });
 }

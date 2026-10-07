@@ -4,10 +4,12 @@ import { z } from 'zod';
 // `next build` loads server modules to collect page data; real settings are only
 // required when the site runs, so the build never depends on secrets being present.
 const building = process.env.NEXT_PHASE === 'phase-production-build';
+// With SUPABASE_URL + SUPABASE_DB_PASSWORD the database address is derived (see packages/db/src/supabase.ts).
+const derivedDb = !!process.env.SUPABASE_DB_PASSWORD && !!process.env.SUPABASE_URL;
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  DATABASE_URL: building ? z.string().default('') : z.string({ required_error: 'DATABASE_URL is not set (Vercel › Settings › Environment Variables, for this environment)' }).min(1),
+  DATABASE_URL: building || derivedDb ? z.string().default('') : z.string({ required_error: 'DATABASE_URL is not set (Vercel › Settings › Environment Variables, for this environment) — or set SUPABASE_URL and SUPABASE_DB_PASSWORD' }).min(1),
   SESSION_SECRET: z.string().default(''),
   APP_URL: z.string().url().default('http://localhost:3000'),
   AZANIA_ADAPTER: z.enum(['mock', 'live']).default('mock'),
