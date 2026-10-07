@@ -11,6 +11,8 @@ Use the pooler strings, not `db.<ref>.supabase.co`: that direct address is IPv6-
 If the password contains special characters, encode them: `@` → `%40`, `#` → `%23`, `/` → `%2F`, `:` → `%3A`.
 
 ## 2. Vercel › Project › Settings › Environment Variables
+Tick **Production, Preview and Development** for every variable. Deploys from a branch other than `main` are *Preview* deployments and only see variables ticked for Preview.
+
 | Name | Value |
 |---|---|
 | `DATABASE_URL` | transaction pooler string + `?pgbouncer=true&connection_limit=1` |

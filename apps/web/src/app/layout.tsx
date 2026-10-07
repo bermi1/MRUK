@@ -9,6 +9,9 @@ const geist = localFont({ src: '../fonts/Geist-latin.woff2', variable: '--font-g
 const geistMono = localFont({ src: '../fonts/GeistMono-latin.woff2', variable: '--font-geist-mono', weight: '100 900', display: 'swap' });
 const caveat = localFont({ src: '../fonts/Caveat-latin.woff2', variable: '--font-caveat', weight: '400 700', display: 'swap' });
 
+// Every page reads live data (prices, stock, CMS): render on request, never at build time.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   metadataBase: new URL(env.APP_URL),
   title: { default: 'Mr UK and Skywood — Shop online, pay monthly', template: '%s' },

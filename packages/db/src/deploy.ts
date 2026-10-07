@@ -12,6 +12,11 @@ import { PrismaClient } from '@prisma/client';
 const on = process.env.DB_SETUP_ON_BUILD === 'true';
 if (!on) {
   console.log('[db:deploy] DB_SETUP_ON_BUILD is not "true" — skipping database setup.');
+  if (process.env.VERCEL) {
+    const missing = ['DATABASE_URL', 'DIRECT_URL', 'ENCRYPTION_KEY', 'SESSION_SECRET'].filter((k) => !process.env[k]);
+    if (missing.length)
+      console.warn(`[db:deploy] WARNING: ${missing.join(', ')} not set for this Vercel environment (${process.env.VERCEL_ENV}). The site will not work until they are added in Settings › Environment Variables with "${process.env.VERCEL_ENV}" ticked.`);
+  }
   process.exit(0);
 }
 if (!process.env.DIRECT_URL) {
