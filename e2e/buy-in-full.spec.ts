@@ -22,7 +22,7 @@ test('browse → buy in full with card', async ({ page }) => {
   await page.locator('input[name=expiry]').fill('12/29');
   await page.locator('input[name=cvc]').fill('123');
   await page.getByTestId('pay-submit').click();
-  await expect(page.getByRole('alert')).toContainText('declined');
+  await expect(page.locator('.err')).toContainText('declined');
   await page.locator('input[name=cardNumber]').fill('4242 4242 4242 4242');
   await page.getByTestId('pay-submit').click();
   await expect(page).toHaveURL(/\/skywood\/order\/SW-/);

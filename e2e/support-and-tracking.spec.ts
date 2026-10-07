@@ -20,14 +20,14 @@ test('order tracking', async ({ page }) => {
   await expect(page.getByTestId('track-result')).toContainText('+255 777 ••• 554');
   await page.getByTestId('track-input').fill('MU-1');
   await page.getByRole('button', { name: 'Track' }).click();
-  await expect(page.getByRole('alert')).toContainText("couldn't find");
+  await expect(page.getByText("We couldn't find that order number")).toBeVisible();
 });
 
 test('AI compare answers only from catalogue data', async ({ page }) => {
   await page.goto('/mruk/compare');
   await page.getByTestId('run-verdict').click();
   await expect(page.getByTestId('verdict')).toContainText('Best overall');
-  await page.getByTestId('ai-question').fill('What colour is the warranty card?');
+  await page.getByTestId('ai-question').fill('Can it make coffee?');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(page.getByTestId('ai-answer')).toContainText("doesn't cover that");
   await page.getByRole('button', { name: 'Which is best value?' }).click();

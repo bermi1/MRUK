@@ -428,3 +428,9 @@ textarea.input { resize: vertical; }
 .support-top { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: end; }
 .support-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-top: 24px; align-items: start; }
 @media (max-width: 900px) { .support-top, .support-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 767px) {
+  .tabbar.m-only { display: grid !important; }
+  .grid-5 .ptile .pimg .ph { justify-content: flex-start; padding-top: 14px !important; opacity: 0.9; }
+}
+@media (max-width: 767px) { .hero-copy { max-width: 60%; z-index: 1; } }

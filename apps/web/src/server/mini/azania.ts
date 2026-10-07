@@ -64,10 +64,10 @@ export async function currentAzaniaCustomer(): Promise<BankCustomer | null> {
   return ref ? bankCustomer(ref) : null;
 }
 
-/** Demo sign-in is available outside production only. */
+/** Demo sign-in: outside production, or with DEMO_MODE=true (UAT) — mock adapter only. */
 export const DEMO_CUSTOMER_REF = 'AZ-CUST-0001';
 export function demoSignInAllowed() {
-  return !env.isProd && env.AZANIA_ADAPTER === 'mock';
+  return (!env.isProd || env.demo) && env.AZANIA_ADAPTER === 'mock';
 }
 export function mintDemoToken() {
   if (!demoSignInAllowed()) throw new Error('Demo sign-in is disabled');

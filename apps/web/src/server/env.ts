@@ -16,6 +16,7 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().default(''),
   ANTHROPIC_MODEL: z.string().default('claude-opus-5-5'),
   DEV_SHOW_OTP: z.string().default('false'),
+  DEMO_MODE: z.string().default('false'),
 });
 
 const parsed = schema.parse(process.env);
@@ -30,4 +31,6 @@ export const env = {
   SESSION_SECRET: parsed.SESSION_SECRET || 'dev-only-session-secret-change-me-0000000000',
   isProd: parsed.NODE_ENV === 'production',
   showOtp: parsed.DEV_SHOW_OTP === 'true' && parsed.NODE_ENV !== 'production',
+  /** UAT/staging with mock adapters: enables the mock-SSO demo sign-in. Never with live adapters. */
+  demo: parsed.DEMO_MODE === 'true' && parsed.AZANIA_ADAPTER === 'mock',
 };

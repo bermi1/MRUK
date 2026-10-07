@@ -8,8 +8,7 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@bt/core": "workspace:*",
@@ -31,7 +30,6 @@
     "@types/react-dom": "19.2.7",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.27",
-    "typescript": "5.9.3",
-    "vitest": "3.2.4"
+    "typescript": "5.9.3"
   }
 }

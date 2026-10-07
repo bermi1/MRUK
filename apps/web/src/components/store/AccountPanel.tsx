@@ -57,7 +57,7 @@ export function ProfileForm({ name, email, locale }: { name: string; email: stri
         </div>
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-        <a href="/api/account/export" className="btn btn-outline btn-sm" style={{ borderWidth: 1, borderColor: 'var(--line)' }}>
+        <a href="/api/account/export" download className="btn btn-outline btn-sm" style={{ borderWidth: 1, borderColor: 'var(--line)' }}>
           Download my data
         </a>
         <button type="button" className="btn btn-outline btn-sm" style={{ borderWidth: 1, borderColor: 'var(--line)' }} onClick={() => start(async () => { await logoutAction(); router.refresh(); })}>

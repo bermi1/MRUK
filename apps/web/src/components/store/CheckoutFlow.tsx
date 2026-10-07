@@ -217,7 +217,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
       <button type="button" className="btn btn-primary btn-block" onClick={place} disabled={pending || !cart.lines.length} data-testid="place-order">
         {pending ? 'Please wait…' : method === 'salary_advance' ? 'Continue to Azania Bank' : `Place order · ${fmt(cart.total)}`}
       </button>
-      <div className="note">Prices include VAT. You'll get an SMS with your order number.</div>
+      <div className="note">Prices include VAT. You&apos;ll get an SMS with your order number.</div>
     </div>
   );
 
