@@ -9,9 +9,12 @@
 import { execSync } from 'node:child_process';
 import { PrismaClient } from '@prisma/client';
 
-const on = process.env.DB_SETUP_ON_BUILD === 'true';
+// Accept true/True/"true"/1/yes. On Vercel, run automatically when the database settings
+// are present, unless DB_SETUP_ON_BUILD is explicitly false.
+const flag = (process.env.DB_SETUP_ON_BUILD ?? '').trim().replace(/^["']|["']$/g, '').toLowerCase();
+const on = ['true', '1', 'yes'].includes(flag) || (!!process.env.VERCEL && !!process.env.DIRECT_URL && !['false', '0', 'no'].includes(flag));
 if (!on) {
-  console.log('[db:deploy] DB_SETUP_ON_BUILD is not "true" — skipping database setup.');
+  console.log('[db:deploy] Database setup skipped (DB_SETUP_ON_BUILD not true, or DIRECT_URL not set).');
   if (process.env.VERCEL) {
     const missing = ['DATABASE_URL', 'DIRECT_URL', 'ENCRYPTION_KEY', 'SESSION_SECRET'].filter((k) => !process.env[k]);
     if (missing.length)

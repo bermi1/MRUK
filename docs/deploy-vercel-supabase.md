@@ -36,3 +36,6 @@ Redeploy. In the build log look for `[db:deploy] … Seed complete` (first time)
 - Rotate the database password and the secret key in Supabase if they were ever shared in chat or email, then update the two connection strings and `SUPABASE_SECRET_KEY` in Vercel.
 - Change the staff passwords at first sign-in.
 - Before real customers: set `DEMO_MODE` to false and confirm the data-location question with Azania Bank (see README).
+
+## Checking a deployment
+Open `https://<your-site>/api/health`. It lists which settings are present (never their values), warns about common mistakes (unencoded `@` in the password, the IPv6-only direct address, missing `?pgbouncer=true`), and shows whether the database is reachable and filled. `"ok": true` means everything is in place.
