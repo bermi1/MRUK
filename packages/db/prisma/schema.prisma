@@ -432,3 +432,12 @@ model Counter {
   key   String @id
   value Int
 }
+
+/// Fixed-window rate-limit counters, shared by every server instance (serverless-safe).
+model RateLimit {
+  key   String   @id
+  n     Int
+  reset DateTime
+
+  @@index([reset])
+}

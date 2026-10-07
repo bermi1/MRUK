@@ -13,3 +13,4 @@ playwright-report/
 *.tsbuildinfo
 .DS_Store
 next-env.d.ts.bak
+.claude/worktrees/
