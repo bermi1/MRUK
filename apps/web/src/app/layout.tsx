@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   applicationName: 'Mr UK and Skywood',
   appleWebApp: { capable: true, title: 'Mr UK and Skywood', statusBarStyle: 'default' },
-  icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-192.png' },
+  icons: { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
   openGraph: { type: 'website', siteName: 'Mr UK and Skywood', title: 'Mr UK and Skywood — Shop online, pay monthly', description: 'Appliances and electronics with Azania Bank Salary Advance.' },
   twitter: { card: 'summary_large_image' },
 };

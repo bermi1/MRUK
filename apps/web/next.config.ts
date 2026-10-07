@@ -13,6 +13,15 @@ const config: NextConfig = {
   poweredByHeader: false,
   transpilePackages: ['@bt/core', '@bt/db', '@bt/integrations'],
   serverExternalPackages: ['@prisma/client', 'pdf-lib', 'pg'],
+  images: {
+    // Brand-site photos are resized and converted to WebP/AVIF (see src/lib/img.ts).
+    remotePatterns: [
+      { protocol: 'https', hostname: 'www.mruk.co.tz' },
+      { protocol: 'https', hostname: 'www.skywood.co.tz' },
+    ],
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
   experimental: { serverActions: { bodySizeLimit: '6mb' } },
   async headers() {
     return [

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { AppBar, TabBar } from '@/components/store/AppChrome';
 import { Footer } from '@/components/store/Footer';
@@ -17,12 +17,25 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   if (!isBrandKey(brand)) return {};
   const [b, cms] = await Promise.all([getBrand(brand), getCms(brand)]);
   const img = cms.seo.img || b.heroImg;
+  const sky = brand === 'skywood';
   return {
     title: { default: cms.seo.title || b.name, template: `%s · ${b.name}` },
+    applicationName: b.name,
+    // Browser tab, home-screen and install icons follow the brand being viewed.
+    icons: sky
+      ? { icon: [{ url: '/icons/skywood-32.png', sizes: '32x32' }, { url: '/icons/skywood-192.png', sizes: '192x192' }], apple: '/icons/skywood-apple.png' }
+      : { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
+    manifest: sky ? '/icons/skywood.webmanifest' : '/manifest.webmanifest',
+    appleWebApp: { capable: true, title: b.name, statusBarStyle: 'default' },
     description: cms.seo.desc,
     openGraph: { title: cms.seo.title, description: cms.seo.desc, siteName: b.name, images: img ? [{ url: img }] : undefined, url: `/${brand}` },
     twitter: { card: 'summary_large_image', title: cms.seo.title, description: cms.seo.desc, images: img ? [img] : undefined },
   };
+}
+
+export async function generateViewport({ params }: { params: Promise<{ brand: string }> }): Promise<Viewport> {
+  const { brand } = await params;
+  return { themeColor: brand === 'skywood' ? '#111216' : '#1D2366' };
 }
 
 export default async function BrandLayout({ children, params }: { children: React.ReactNode; params: Promise<{ brand: string }> }) {

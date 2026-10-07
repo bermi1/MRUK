@@ -1,0 +1,51 @@
+{
+  "id": "/skywood",
+  "name": "Skywood",
+  "short_name": "Skywood",
+  "description": "Skywood appliances and electronics, delivered across Tanzania. Pay in full or monthly with Azania Bank Salary Advance.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/skywood?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#111216",
+  "background_color": "#FFFFFF",
+  "categories": [
+    "shopping"
+  ],
+  "icons": [
+    {
+      "src": "/icons/skywood-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/skywood-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/skywood-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Track order",
+      "short_name": "Track",
+      "url": "/skywood/track?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/icons/skywood-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

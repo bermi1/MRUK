@@ -119,7 +119,7 @@ export function AuthModal({ brand, user, onClose }: { brand: string; user: Sessi
                 </div>
                 {devCode && (
                   <div style={{ borderRadius: 12, background: '#FFF3DC', color: '#8A5A00', padding: '10px 12px', fontSize: 13 }}>
-                    Development mode (mock SMS): your code is <b className="mono">{devCode}</b>
+                    Demo mode (no SMS is sent): your code is <b className="mono">{devCode}</b>
                   </div>
                 )}
                 <label className="field">

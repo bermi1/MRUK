@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
+import { img, imgSet } from '@/lib/img';
 
 export interface Slide {
   eyebrow: string;
@@ -62,7 +63,7 @@ export function HeroCarousel({ slides, dealsHref, labels }: { slides: Slide[]; d
       <div className="hero-art">
         <div className="c1" />
         <div className="c2" />
-        {s.img && <img key={s.img} src={s.img} alt={s.title} />}
+        {s.img && <img key={s.img} src={img(s.img, 1080)} srcSet={imgSet(s.img, 640, 1200)} sizes="(max-width: 760px) 90vw, 600px" alt={s.title} fetchPriority={i === 0 ? 'high' : undefined} />}
       </div>
     </section>
   );

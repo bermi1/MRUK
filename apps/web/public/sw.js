@@ -1,10 +1,10 @@
 /* Mr UK and Skywood: offline shell service worker.
  * - Precaches the offline page, logos and icons.
  * - Navigations: network first, then the cached copy of that page, then /offline.
- * - Static assets (/_next/static, /brand, /img, /icons): cache first.
+ * - Static assets (/_next/static, /_next/image, /brand, /img, /icons): cache first.
  * - Never caches /api, /admin, /azania (bank mini app), server actions or any non-GET request.
  * Bump VERSION to invalidate old caches; they are deleted on activate. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `bt-shell-${VERSION}`;
 const PAGES = `bt-pages-${VERSION}`;
 const STATIC = `bt-static-${VERSION}`;
@@ -21,6 +21,9 @@ const PRECACHE = [
   '/icons/icon-512.png',
   '/icons/maskable-192.png',
   '/icons/maskable-512.png',
+  '/icons/skywood.webmanifest',
+  '/icons/skywood-192.png',
+  '/icons/skywood-512.png',
 ];
 const MAX_PAGES = 30;
 const MAX_STATIC = 200;
@@ -47,7 +50,7 @@ self.addEventListener('activate', (event) => {
 
 const NEVER = /^\/(api|admin|azania)(\/|$)/;
 const PERSONAL = /\/(account|order|orders|pay|checkout|track|login)(\/|$)/;
-const STATIC_PATH = /^\/(_next\/static|brand|img|icons)\//;
+const STATIC_PATH = /^\/(_next\/static|_next\/image|brand|img|icons)(\/|\?|$)/;
 
 async function trim(cacheName, max) {
   const c = await caches.open(cacheName);

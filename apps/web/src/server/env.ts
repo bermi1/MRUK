@@ -39,7 +39,8 @@ export const env = {
   ...parsed,
   SESSION_SECRET: parsed.SESSION_SECRET || 'dev-only-session-secret-change-me-0000000000',
   isProd: parsed.NODE_ENV === 'production',
-  showOtp: parsed.DEV_SHOW_OTP === 'true' && parsed.NODE_ENV !== 'production',
+  /** Show the one-time code on screen: in development, or on a demo site where SMS is mocked (no SMS is sent there). */
+  showOtp: parsed.SMS_ADAPTER === 'mock' && ((parsed.DEV_SHOW_OTP === 'true' && parsed.NODE_ENV !== 'production') || parsed.DEMO_MODE === 'true'),
   /** UAT/staging with mock adapters: enables the mock-SSO demo sign-in. Never with live adapters. */
   demo: parsed.DEMO_MODE === 'true' && parsed.AZANIA_ADAPTER === 'mock',
 };

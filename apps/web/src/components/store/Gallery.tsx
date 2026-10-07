@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { PImg } from './PImg';
+import { img } from '@/lib/img';
 
 export function Gallery({ images, name, model, sub, badge }: { images: string[]; name: string; model: string; sub: string; badge: string }) {
   const [i, setI] = useState(0);
@@ -14,7 +15,7 @@ export function Gallery({ images, name, model, sub, badge }: { images: string[];
         <div className="thumbs" role="tablist" aria-label="Product photos">
           {images.map((src, k) => (
             <button key={src} type="button" role="tab" aria-selected={k === i} className={k === i ? 'on' : ''} onClick={() => setI(k)} aria-label={`Photo ${k + 1}`}>
-              <img src={src} alt="" />
+              <img src={img(src, 128)} alt="" loading="lazy" />
             </button>
           ))}
         </div>

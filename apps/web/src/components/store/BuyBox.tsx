@@ -6,6 +6,7 @@ import { fmt } from '@/lib/format';
 import { ShareIcon } from '../icons';
 import { CompareToggle } from './CartButtons';
 import { useToast } from './Toast';
+import { img } from '@/lib/img';
 
 interface Props {
   brand: string;
@@ -104,7 +105,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
           </div>
           <div style={{ marginTop: 14, border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
             <div style={{ aspectRatio: '1.91/1', background: 'var(--p)', position: 'relative' }}>
-              {p.img && <img src={p.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '6%' }} />}
+              {p.img && <img src={img(p.img, 384)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: '6%' }} />}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.8) 100%)' }} />
               <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14, color: '#fff' }} className="row">
                 <div>

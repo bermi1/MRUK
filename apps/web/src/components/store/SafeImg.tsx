@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { img } from '@/lib/img';
 
 /** Decorative image that disappears instead of showing a broken icon when the URL fails. */
 export function SafeImg(props: React.ImgHTMLAttributes<HTMLImageElement>) {
@@ -11,5 +12,5 @@ export function SafeImg(props: React.ImgHTMLAttributes<HTMLImageElement>) {
   }, [props.src]);
   if (!ok || !props.src) return null;
   // eslint-disable-next-line jsx-a11y/alt-text
-  return <img ref={ref} loading="lazy" decoding="async" {...props} onError={() => setOk(false)} />;
+  return <img ref={ref} loading="lazy" decoding="async" {...props} src={typeof props.src === 'string' ? img(props.src, 640) : props.src} onError={() => setOk(false)} />;
 }
