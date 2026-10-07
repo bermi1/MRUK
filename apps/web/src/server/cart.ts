@@ -1,7 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { prisma } from '@bt/db';
-import { checkDiscount, isAdvanceTerm, isRegion, priceCart } from '@bt/core';
+import { checkDiscount, isAdvanceTerm, isRegion, priceCart, salePrice } from '@bt/core';
 import type { BrandKey, CartView } from '@/lib/types';
 import { env } from './env';
 import { sign, verifySigned } from './session';
@@ -30,9 +30,12 @@ async function ensureCart(brand: BrandKey) {
 export async function getCart(brand: BrandKey): Promise<CartView> {
   const id = await cartId(brand);
   const cart = id ? await prisma.cart.findUnique({ where: { id }, include: { items: { include: { product: true }, orderBy: { id: 'asc' } } } }) : null;
+  // Active flash deals reduce the unit price.
+  const flash = await prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true } });
+  const off = (pid: string) => flash.find((f) => f.productId === pid && (!f.endsAt || f.endsAt > new Date()))?.percent ?? 0;
   const lines = (cart?.items ?? [])
     .filter((i) => !i.product.hidden)
-    .map((i) => ({ productId: i.productId, qty: i.qty, name: i.product.name, model: i.product.model, price: i.product.price, img: i.product.images[0] ?? '', stock: i.product.stock, sub: i.product.sub }));
+    .map((i) => ({ productId: i.productId, qty: i.qty, name: i.product.name, model: i.product.model, price: salePrice(i.product.price, off(i.productId)), listPrice: i.product.price, img: i.product.images[0] ?? '', stock: i.product.stock, sub: i.product.sub }));
   const region = cart?.region ?? 'Dar es Salaam';
   const months = cart?.months ?? 12;
   const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);

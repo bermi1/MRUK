@@ -44,7 +44,8 @@ export function NewArrivals({ items, brand, compare, title, sub, pill }: { items
       <div className="carousel nsb" onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} onTouchStart={() => setHold(true)} style={{ overflowX: 'auto' }}>
         <div className="carousel-track" style={{ transform: `translateX(calc(${-i} * (25% + 4px)))` }}>
           {items.map((p) => (
-            <Link key={p.id} href={`/${brand}/p/${p.id}`} className="carousel-item">
+            <div key={p.id} className="carousel-item">
+              <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={p.name} />
               <div style={{ height: 260, borderRadius: 'var(--r)', overflow: 'hidden', position: 'relative' }} className="na-img">
                 <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="lg" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
                 <span className="badge" style={{ position: 'absolute', left: 12, top: 12, background: 'var(--hi)', color: '#fff' }}>
@@ -69,7 +70,7 @@ export function NewArrivals({ items, brand, compare, title, sub, pill }: { items
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </div>

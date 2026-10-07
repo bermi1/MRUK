@@ -143,14 +143,13 @@ export interface FlashDeal extends ProductView {
 }
 
 export async function getFlashDeals(brand: BrandKey): Promise<FlashDeal[]> {
-  const [promos, products] = await Promise.all([prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true }, orderBy: { createdAt: 'asc' } }), getProducts(brand)]);
+  const [promos, products] = await Promise.all([prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true, OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] }, orderBy: { createdAt: 'asc' } }), getProducts(brand)]);
   return promos
     .map((pr) => {
       const p = products.find((x) => x.id === pr.productId);
       return p ? { ...p, off: pr.percent, dealPrice: salePrice(p.price, pr.percent) } : null;
     })
-    .filter((x): x is FlashDeal => !!x)
-    .slice(0, 4);
+    .filter((x): x is FlashDeal => !!x);
 }
 
 export async function getSuppliers(brand?: BrandKey) {

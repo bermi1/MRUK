@@ -3,6 +3,7 @@ import { AddButton } from '@/components/store/CartButtons';
 import { HeroCarousel } from '@/components/store/HeroCarousel';
 import { NewArrivals } from '@/components/store/NewArrivals';
 import { PImg } from '@/components/store/PImg';
+import { SafeImg } from '@/components/store/SafeImg';
 import { CATEGORY_BLURB, REVIEWS } from '@/lib/content';
 import { fmt, initials, stockLabel } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
@@ -53,7 +54,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
       <div className="grid-3" style={{ marginTop: 24 }}>
         {cats.map((c) => (
           <Link key={c.id} href={`${b}/c/${c.id}`} className="catcard shade-b">
-            {c.img && <img src={c.img} alt="" loading="lazy" />}
+            <SafeImg src={c.img} alt="" />
             <div className="info">
               <div>
                 <div className="t">{c.name}</div>
@@ -104,7 +105,8 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
       <SecHead pill="CUSTOMER FAVOURITES" title="Customers love these" sub="Our best-rated products, chosen by thousands of Tanzanian homes." action={<Link href={`${b}/c/all`} className="link-u d-only">Shop bestsellers</Link>} />
       <div className="grid-2" style={{ marginTop: 26 }}>
         {picks.map((p) => (
-          <Link key={p.id} href={`${b}/p/${p.id}`} className="lrow">
+          <div key={p.id} className="lrow">
+            <Link href={`${b}/p/${p.id}`} className="stretch" aria-label={p.name} />
             <PImg src={p.img} alt="" model={p.model} size="md" className="lrow-img" style={{ aspectRatio: '1', height: 'auto' }} />
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#B7791F', fontWeight: 600 }}>
@@ -121,7 +123,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
               </div>
               <AddButton brand={key} id={p.id} name={p.name} className="plus p" />
             </div>
-          </Link>
+          </div>
         ))}
       </div>
 

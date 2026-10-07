@@ -74,6 +74,7 @@ export interface CartLine {
   name: string;
   model: string;
   price: number;
+  listPrice: number;
   img: string;
   stock: number;
   sub: string;
