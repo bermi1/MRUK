@@ -1,0 +1,28 @@
+{
+  "name": "mruk-skywood-platform",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "pnpm --filter @bt/web dev",
+    "build": "pnpm --filter @bt/web build",
+    "start": "pnpm --filter @bt/web start",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "e2e": "playwright test",
+    "db:up": "bash scripts/db-local.sh start",
+    "db:generate": "pnpm --filter @bt/db generate",
+    "db:push": "pnpm --filter @bt/db push",
+    "db:seed": "pnpm --filter @bt/db seed",
+    "db:reset": "pnpm --filter @bt/db reset",
+    "setup": "pnpm install && pnpm db:generate && pnpm db:push && pnpm db:seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "esbuild", "sharp"]
+  }
+}

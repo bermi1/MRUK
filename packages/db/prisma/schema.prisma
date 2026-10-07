@@ -1,0 +1,429 @@
+// Mr UK and Skywood Commerce Platform — data model (CLAUDE.md "Data model (minimum)").
+// Money is stored as whole Tanzanian shillings (Int). Sensitive fields (NIDA,
+// salary, account numbers, TOTP secrets) are stored encrypted (AES-256-GCM, see
+// apps/web/src/server/crypto.ts) in *Enc columns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  key          String  @id // "mruk" | "skywood"
+  name         String
+  legal        String
+  domain       String
+  tagline      String
+  whatsapp     String
+  supportEmail String
+  tokens       Json // primary, dark, soft, accent, hi, r, rs, head, track
+  heroImg      String  @default("")
+
+  categories Category[]
+  products   Product[]
+  orders     Order[]
+  cmsBlocks  CmsBlock[]
+  tickets    Ticket[]
+}
+
+model Category {
+  id       String   @id // "<brand>-<slug>"
+  brandKey String
+  slug     String
+  name     String
+  short    String
+  img      String   @default("")
+  subs     String[]
+  sort     Int      @default(0)
+
+  brand    Brand     @relation(fields: [brandKey], references: [key])
+  products Product[]
+
+  @@unique([brandKey, slug])
+}
+
+model Product {
+  id         String   @id // e.g. "mruk-uk-f275-58-5di0wd"
+  brandKey   String
+  categoryId String
+  sub        String
+  model      String
+  name       String
+  price      Int
+  stock      Int
+  features   String[]
+  images     String[]
+  tag        String   @default("")
+  hidden     Boolean  @default(false)
+  rating     Float    @default(4.7)
+  reviews    Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  brand      Brand             @relation(fields: [brandKey], references: [key])
+  category   Category          @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+  embedding  ProductEmbedding?
+
+  @@index([brandKey, categoryId])
+}
+
+/// Retrieval index for AI answers. In this phase it stores the searchable text;
+/// with pgvector enabled the vector column is added by migration (see docs/architecture.md).
+model ProductEmbedding {
+  productId String   @id
+  text      String
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id         String    @id @default(cuid())
+  phone      String    @unique // E.164, +2557XXXXXXXX
+  name       String    @default("")
+  email      String    @default("")
+  locale     String    @default("en")
+  consentAt  DateTime?
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+
+  addresses Address[]
+  orders    Order[]
+  sessions  Session[]
+  carts     Cart[]
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  region     String
+  line       String
+  isDefault  Boolean  @default(false)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model OtpCode {
+  id        String   @id @default(cuid())
+  phone     String
+  codeHash  String
+  purpose   String   @default("login")
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([phone, createdAt])
+}
+
+model Session {
+  id         String     @id @default(cuid())
+  tokenHash  String     @unique
+  kind       String // "customer" | "staff" | "staff_pending_2fa"
+  customerId String?
+  staffId    String?
+  expiresAt  DateTime
+  lastSeenAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
+  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  staff      StaffUser? @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+model Cart {
+  id         String     @id @default(cuid())
+  brandKey   String
+  customerId String?
+  region     String     @default("Dar es Salaam")
+  months     Int        @default(12)
+  discountCode String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  items      CartItem[]
+  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  productId String
+  qty       Int
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id             String    @id @default(cuid())
+  number         String    @unique // MU-10483 / SW-20391
+  brandKey       String
+  customerId     String?
+  contactName    String
+  contactPhone   String
+  contactEmail   String    @default("")
+  region         String
+  addressLine    String    @default("")
+  channel        String // "web" | "app" | "azania"
+  paymentMethod  String // salary_advance | azania_account | card | pay_on_delivery
+  status         String // see packages/core/src/orders.ts
+  subtotal       Int
+  discount       Int       @default(0)
+  discountCode   String?
+  deliveryFee    Int
+  total          Int
+  months         Int?
+  branch         String    @default("Dar es Salaam")
+  consentAt      DateTime? // PDPA consent recorded at checkout
+  reservedUntil  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  brand     Brand                     @relation(fields: [brandKey], references: [key])
+  customer  Customer?                 @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items     OrderItem[]
+  events    OrderEvent[]
+  payments  Payment[]
+  advance   SalaryAdvanceApplication?
+  invoices  Invoice[]
+
+  @@index([brandKey, status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  name      String
+  model     String
+  price     Int
+  qty       Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model OrderEvent {
+  id      String   @id @default(cuid())
+  orderId String
+  status  String
+  note    String   @default("")
+  actor   String   @default("system")
+  at      DateTime @default(now())
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  orderId   String
+  method    String
+  amount    Int
+  status    String // pending | captured | failed | refunded
+  reference String   @default("")
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model SalaryAdvanceApplication {
+  id            String    @id @default(cuid())
+  orderId       String    @unique
+  fullName      String
+  phone         String
+  email         String    @default("")
+  nidaEnc       String
+  nidaLast4     String
+  employer      String
+  checkNumber   String
+  jobTitle      String
+  netSalaryEnc  String
+  accountEnc    String
+  accountLast4  String
+  termMonths    Int
+  monthly       Int
+  total         Int
+  ratioPercent  Int
+  status        String // see packages/core/src/advance.ts
+  bankReference String    @default("")
+  channel       String    @default("web")
+  decidedAt     DateTime?
+  decidedBy     String?
+  decisionNote  String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  order    Order                @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  schedule InstalmentSchedule[]
+  contract Contract?
+}
+
+model InstalmentSchedule {
+  id            String                   @id @default(cuid())
+  applicationId String
+  n             Int
+  dueDate       DateTime
+  amount        Int
+  paidAt        DateTime?
+  application   SalaryAdvanceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, n])
+}
+
+model Contract {
+  id            String                   @id @default(cuid())
+  number        String                   @unique // AZB-SA-48213
+  applicationId String                   @unique
+  pdfKey        String // storage key
+  sha256        String
+  signedAt      DateTime
+  signerName    String
+  signerIp      String                   @default("")
+  consents      Json // [{ text, acceptedAt }]
+  application   SalaryAdvanceApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id       String   @id @default(cuid())
+  number   String   @unique // INV-2026-00001
+  orderId  String
+  amount   Int
+  status   String // issued | paid | void
+  pdfKey   String   @default("")
+  issuedAt DateTime @default(now())
+  order    Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id     String   @id @default(cuid())
+  city   String
+  area   String
+  type   String
+  phone  String
+  hours  String
+  lat    Float
+  lng    Float
+  brands String[]
+}
+
+model Ticket {
+  id          String          @id @default(cuid())
+  number      String          @unique // TK-4123
+  brandKey    String
+  issue       String
+  name        String
+  phone       String
+  orderNumber String          @default("")
+  productId   String          @default("")
+  description String          @default("")
+  photoKey    String          @default("")
+  status      String          @default("new") // new | open | waiting | resolved
+  assignee    String          @default("")
+  channel     String          @default("web")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  brand       Brand           @relation(fields: [brandKey], references: [key])
+  messages    TicketMessage[]
+}
+
+model TicketMessage {
+  id       String   @id @default(cuid())
+  ticketId String
+  author   String
+  internal Boolean  @default(false)
+  body     String
+  at       DateTime @default(now())
+  ticket   Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+/// Website CMS content per brand: announcement, hero, megaPromo, deals, seo, hot.
+model CmsBlock {
+  id        String   @id @default(cuid())
+  brandKey  String
+  key       String
+  json      Json
+  updatedAt DateTime @updatedAt
+  updatedBy String   @default("system")
+  brand     Brand    @relation(fields: [brandKey], references: [key])
+
+  @@unique([brandKey, key])
+}
+
+model Promotion {
+  id        String    @id @default(cuid())
+  brandKey  String
+  kind      String // "flash" | "banner"
+  productId String?
+  title     String    @default("")
+  percent   Int       @default(0)
+  active    Boolean   @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model DiscountCode {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  percent     Int
+  brandKey    String?
+  active      Boolean   @default(true)
+  expiresAt   DateTime?
+  minSubtotal Int?
+  maxUses     Int?
+  uses        Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+model Role {
+  id          String      @id // owner | manager | finance | support | catalogue
+  name        String
+  permissions String[]
+  staff       StaffUser[]
+}
+
+model StaffUser {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  totpSecretEnc String?
+  totpEnabled   Boolean   @default(false)
+  roleId        String
+  brands        String[] // brand scopes; empty = none, ["*"] = all
+  branch        String    @default("All branches")
+  active        Boolean   @default(true)
+  failedLogins  Int       @default(0)
+  lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  role          Role      @relation(fields: [roleId], references: [id])
+  sessions      Session[]
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actor    String
+  action   String
+  entity   String
+  entityId String   @default("")
+  diff     Json?
+  ip       String   @default("")
+  at       DateTime @default(now())
+
+  @@index([at])
+}
+
+/// Key/value platform settings (integrations, notifications, session timeout).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Running counters for human-friendly numbers (orders, tickets, invoices, contracts).
+model Counter {
+  key   String @id
+  value Int
+}
