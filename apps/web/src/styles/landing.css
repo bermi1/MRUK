@@ -40,7 +40,7 @@
 .l-sa-card .c2 { right: 120px; bottom: -150px; width: 260px; height: 260px; background: #f2fafe; }
 .l-h2 { margin: 14px 0 0; font-size: 44px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
 .l-sub { margin: 10px 0 0; font-size: 16px; color: #5e6378; }
-.l-hot { border-radius: 24px; background: #f4f5f8; padding: 18px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s var(--ease); }
+.l-hot { min-width: 0; border-radius: 24px; background: #f4f5f8; padding: 18px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.25s var(--ease); }
 .l-hot:hover { transform: translateY(-3px); }
 .l-hot-img { height: 230px; background: transparent !important; }
 .l-hot-img .ph { color: #1d2366 !important; }

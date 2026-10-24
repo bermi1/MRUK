@@ -77,6 +77,8 @@ async function main() {
     execSync('tsx src/seed.ts', { stdio: 'inherit', env: { ...process.env, DATABASE_URL: process.env.DIRECT_URL } });
   } else {
     console.log('[db:deploy] Data already present — not seeding.');
+    // Design tokens live in the handoff file; keep the live brands in step with it.
+    execSync('tsx src/seed.ts --tokens', { stdio: 'inherit', env: { ...process.env, DATABASE_URL: process.env.DIRECT_URL } });
   }
 }
 

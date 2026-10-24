@@ -94,7 +94,17 @@ const CUSTOMERS = [
   ['Elia Swai', '+255743550019', 'Mwanza', 'TRA', 'Auditor', 1_900_000],
 ] as const;
 
+const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
+
+/** `seed.ts --tokens`: refresh only the brand design tokens (safe on a live database). */
+async function syncTokens() {
+  const BT = loadHandoff();
+  for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
+  console.log('Brand design tokens refreshed.');
+}
+
 async function main() {
+  if (process.argv.includes('--tokens')) return syncTokens();
   const BT = loadHandoff();
   console.log('Clearing existing data…');
   await prisma.$transaction([
@@ -143,7 +153,7 @@ async function main() {
         whatsapp: b.whatsapp!,
         supportEmail: b.supportEmail!,
         heroImg: b.heroImg ?? '',
-        tokens: { primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] },
+        tokens: brandTokens(b, key),
       },
     });
     const cats = BT.CATS[key]!;
