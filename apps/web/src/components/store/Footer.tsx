@@ -33,7 +33,7 @@ function Columns({ brand, cats, t, headClass }: { brand: BrandView; cats: Catego
       <nav className="foot-col" aria-label={t('footerOffers')}>
         <p className={headClass}>{t('footerOffers')}</p>
         <Link href={`${b}/deals`}>{t('dealsAndBundles')}</Link>
-        <Link href="/#salary-advance">{t('salaryAdvance')}</Link>
+        <Link href={`${b}/pay-later`}>{t('payLater')}</Link>
         <Link href={`${b}/suppliers`}>{t('showroomPickup')}</Link>
       </nav>
     </>
@@ -87,7 +87,7 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
           <p className="mu-foot-h">{t('weAccept')}</p>
           <div className="mu-accept">
             <span>Azania Bank</span>
-            <span>Salary Advance</span>
+            <span>{t('payLater')}</span>
             <span>Visa</span>
             <span>Mastercard</span>
           </div>
@@ -128,7 +128,7 @@ function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryVie
             © {new Date().getFullYear()} {brand.legal}
           </span>
           <span className="sw-foot-pay">
-            {t('weAccept')}: Azania Bank · Salary Advance · Visa · Mastercard
+            {t('weAccept')}: Azania Bank · {t('payLater')} · Visa · Mastercard
           </span>
           <span>
             <Link href="/privacy">{t('privacy')}</Link> · {t('builtBy')}

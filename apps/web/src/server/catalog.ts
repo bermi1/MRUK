@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@bt/db';
 import { bundlePrice, salePrice, type ProductFacts } from '@bt/core';
-import type { BrandKey, BrandView, CategoryView, CmsView, ProductView } from '@/lib/types';
+import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView } from '@/lib/types';
 
 export const BRAND_KEYS: BrandKey[] = ['mruk', 'skywood'];
 
@@ -122,12 +122,39 @@ export function toFacts(p: ProductView): ProductFacts {
 
 const loadCmsBlocks = cached(async (brand: BrandKey) => (await prisma.cmsBlock.findMany({ where: { brandKey: brand } })).map((b) => ({ key: b.key, json: b.json })), 'cms');
 
+/** Safe link for a CMS button: store-relative path or https URL only (no javascript:, no protocol-relative). */
+export function safeHref(v: unknown): string {
+  if (typeof v !== 'string') return '';
+  const s = v.trim();
+  return /^\/(?!\/)[^\s]*$/.test(s) || /^https:\/\/[^\s]+$/.test(s) ? s : '';
+}
+
+/** Fill the optional hero fields with safe defaults so older CMS rows keep working. */
+export function heroDefaults(h: Partial<HeroSlide>): Required<HeroSlide> {
+  const str = (v: unknown) => (typeof v === 'string' ? v : '');
+  return {
+    pid: str(h.pid),
+    eyebrow: str(h.eyebrow),
+    title: str(h.title),
+    sub: str(h.sub),
+    img: str(h.img),
+    cta: str(h.cta).slice(0, 40),
+    href: safeHref(h.href),
+    price: typeof h.price === 'number' && Number.isFinite(h.price) && h.price >= 0 ? Math.round(h.price) : null,
+    imgMobile: str(h.imgMobile),
+    layout: h.layout === 'photo' ? 'photo' : 'product',
+    theme: h.theme === 'light' ? 'light' : 'dark',
+    align: h.align === 'center' || h.align === 'right' ? h.align : 'left',
+    focal: typeof h.focal === 'string' && /^\d{1,3}% \d{1,3}%$/.test(h.focal.trim()) ? h.focal.trim() : '50% 50%',
+  };
+}
+
 export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
   const blocks = await loadCmsBlocks(brand);
   const m = Object.fromEntries(blocks.map((b) => [b.key, b.json])) as Record<string, unknown>;
   return {
     announcement: (m.announcement as string) ?? '',
-    hero: (m.hero as CmsView['hero']) ?? [],
+    hero: (Array.isArray(m.hero) ? (m.hero as Partial<HeroSlide>[]) : []).map(heroDefaults),
     megaPromo: (m.megaPromo as CmsView['megaPromo']) ?? { eyebrow: '', title: '', cta: '', cat: '' },
     deals: (m.deals as CmsView['deals']) ?? [],
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },

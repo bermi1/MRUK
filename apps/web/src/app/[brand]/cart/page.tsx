@@ -46,7 +46,7 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
             <span data-testid="cart-total">{fmt(cart.total)}</span>
           </div>
           <div className="sumrow monthly" style={{ fontWeight: 600 }}>
-            <span>Salary Advance · {cart.months} months</span>
+            <span>Pay Later · {cart.months} months</span>
             <span>{fmt(cart.total / cart.months)}/mo</span>
           </div>
           <DiscountField brand={key} code={cart.discountCode} error={cart.discountError} />

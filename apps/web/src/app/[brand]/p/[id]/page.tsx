@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
   const [brand, p] = await Promise.all([getBrand(key), getProduct(key, id)]);
   const title = `${p.name} (${p.model}) — ${fmt(p.price)}`;
-  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Azania Bank Salary Advance. ${p.features.join(' · ')}.`;
+  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Pay Later by Azania Bank. ${p.features.join(' · ')}.`;
   const images = p.img ? [{ url: abs(p.img), alt: p.name }] : undefined;
   return {
     title: p.name,

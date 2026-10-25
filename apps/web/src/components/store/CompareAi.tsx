@@ -2,6 +2,9 @@
 import { useState, useTransition } from 'react';
 import { aiAskAction, aiVerdictAction } from '@/app/actions/store';
 
+/** Customer-facing name of the Azania product (catalogue AI in @bt/core still says "Salary Advance"). */
+const shown = (s: string) => s.replaceAll('Salary Advance', 'Pay Later');
+
 /** AI verdict and Q&A — answers come only from the catalogue data of the compared products. */
 export function CompareAi({ brand, ids, names, months }: { brand: string; ids: string[]; names: string; months: number }) {
   const [verdict, setVerdict] = useState('');
@@ -12,14 +15,14 @@ export function CompareAi({ brand, ids, names, months }: { brand: string; ids: s
   const run = () =>
     startV(async () => {
       const r = await aiVerdictAction(brand, ids, months);
-      setVerdict(r.ok ? r.data!.text : r.error);
+      setVerdict(r.ok ? shown(r.data!.text) : r.error);
     });
   const ask = (question: string) => {
     setQ(question);
     startA(async () => {
       setA('Thinking…');
       const r = await aiAskAction(brand, ids, question, months);
-      setA(r.ok ? r.data!.text : r.error);
+      setA(r.ok ? shown(r.data!.text) : r.error);
     });
   };
   return (

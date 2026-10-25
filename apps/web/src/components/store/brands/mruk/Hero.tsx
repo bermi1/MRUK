@@ -2,6 +2,7 @@
 import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
+import { AddButton } from '../../CartButtons';
 import { HeroImage } from '../HeroImage';
 import { fill, type HeroLabels, type HeroSlideView } from '../shared';
 
@@ -25,9 +26,10 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
     setI(((k % n) + n) % n);
   };
   const words = s.title.split(/\s+/);
+  const photo = s.layout === 'photo';
   return (
     <section
-      className={`mu-hero ${moved ? '' : 'is-first'} ${paused || hover ? 'is-paused' : ''}`}
+      className={`mu-hero ${moved ? '' : 'is-first'} ${paused || hover ? 'is-paused' : ''} ${photo ? `is-photo theme-${s.theme}` : ''} align-${s.align}`}
       aria-roledescription="carousel"
       aria-label={s.eyebrow || 'Featured'}
       onMouseEnter={() => setHover(true)}
@@ -40,6 +42,11 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
         <span className="mu-hero-glow" />
         <span className="mu-hero-arc" />
       </div>
+      {photo && (
+        <div className="mu-hero-photo" key={`p${i}`}>
+          <HeroImage src={s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="mu-hero-photo-img" />
+        </div>
+      )}
       <div className="wrap mu-hero-in">
         <div className="mu-hero-copy" key={`c${i}`} aria-live={paused ? 'polite' : 'off'}>
           <p className="mu-hero-eyebrow">
@@ -57,21 +64,28 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
             ))}
           </h1>
           <p className="mu-hero-sub">{s.sub}</p>
-          <div className="mu-hero-price">
-            <span className="mu-hero-amt">{fmt(s.price)}</span>
-            <span className="mu-hero-chip">
-              {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
-            </span>
-          </div>
+          {s.showPrice && (
+            <div className="mu-hero-price">
+              <span className="mu-hero-amt">{fmt(s.price)}</span>
+              <span className="mu-hero-chip">
+                {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
+              </span>
+            </div>
+          )}
           <div className="mu-hero-cta">
             <Link href={s.href} className="mu-btn mu-btn-sky">
-              {labels.shopNow} <span aria-hidden="true">→</span>
+              {s.cta || labels.shopNow} <span aria-hidden="true">→</span>
             </Link>
-            <Link href={dealsHref} className="mu-btn mu-btn-ghost">
-              {labels.seeDeals}
-            </Link>
+            {s.pid ? (
+              <AddButton brand="mruk" id={s.pid} name={s.name} className="mu-btn mu-btn-ghost" label={labels.addToCart} />
+            ) : (
+              <Link href={dealsHref} className="mu-btn mu-btn-ghost">
+                {labels.seeDeals}
+              </Link>
+            )}
           </div>
         </div>
+        {!photo && (
         <div className="mu-hero-stage" key={`s${i}`}>
           <span className="mu-hero-word" aria-hidden="true">
             {s.model}
@@ -88,6 +102,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
             ))}
           </ul>
         </div>
+        )}
       </div>
       {n > 1 && (
         <div className="wrap mu-hero-ctrl">

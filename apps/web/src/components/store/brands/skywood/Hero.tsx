@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
+import { AddButton } from '../../CartButtons';
 import { HeroImage } from '../HeroImage';
 import { fill, headlineLines, type HeroLabels, type HeroSlideView } from '../shared';
 
@@ -35,10 +36,11 @@ export function SkywoodHero({ slides, labels }: { slides: HeroSlideView[]; label
     setI(((k % n) + n) % n);
   };
   const lines = headlineLines(s.title);
+  const photo = s.layout === 'photo';
 
   return (
     <section
-      className={`sw-hero ${moved ? '' : 'is-first'} ${paused || hold ? 'is-paused' : ''}`}
+      className={`sw-hero ${moved ? '' : 'is-first'} ${paused || hold ? 'is-paused' : ''} ${photo ? `is-photo theme-${s.theme}` : ''} align-${s.align}`}
       aria-roledescription="carousel"
       aria-label={s.eyebrow || 'Featured'}
       onMouseEnter={() => setHold(true)}
@@ -48,14 +50,23 @@ export function SkywoodHero({ slides, labels }: { slides: HeroSlideView[]; label
     >
       <div className="sw-hero-par">
         <div className="sw-hero-scene" key={`sc${i}`}>
-          <span className="sw-wall" aria-hidden="true" />
-          <span className="sw-arch" aria-hidden="true" />
-          <span className="sw-floor" aria-hidden="true" />
-          <span className="sw-light" aria-hidden="true" />
-          <div className="sw-hero-obj">
-            <span className="sw-shadow" aria-hidden="true" />
-            <HeroImage src={s.img} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="(max-width: 767px) 80vw, 46vw" w1={828} w2={1200} className="sw-hero-img" />
-          </div>
+          {photo ? (
+            <>
+              <HeroImage src={s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="sw-hero-photo" />
+              <span className="sw-photo-shade" aria-hidden="true" />
+            </>
+          ) : (
+            <>
+              <span className="sw-wall" aria-hidden="true" />
+              <span className="sw-arch" aria-hidden="true" />
+              <span className="sw-floor" aria-hidden="true" />
+              <span className="sw-light" aria-hidden="true" />
+              <div className="sw-hero-obj">
+                <span className="sw-shadow" aria-hidden="true" />
+                <HeroImage src={s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="(max-width: 767px) 80vw, 46vw" w1={828} w2={1200} className="sw-hero-img" />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -75,15 +86,20 @@ export function SkywoodHero({ slides, labels }: { slides: HeroSlideView[]; label
         <p className="sw-hero-sub">{s.sub}</p>
         <div className="sw-hero-cta">
           <Link href={s.href} className="sw-btn">
-            {labels.discover}
+            {s.cta || labels.discover}
             <span className="sw-btn-arrow" aria-hidden="true">
               →
             </span>
           </Link>
-          <span className="sw-hero-price">
-            {fmt(s.price)}
-            <em>{fill(labels.perMonth, { amount: fmt(s.price / 12) })}</em>
-          </span>
+          {s.showPrice && (
+            <span className="sw-hero-price">
+              {fmt(s.price)}
+              <em>
+                {fill(labels.perMonth, { amount: fmt(s.price / 12) })} {labels.withAdvance}
+              </em>
+            </span>
+          )}
+          {s.pid && <AddButton brand="skywood" id={s.pid} name={s.name} className="sw-hero-add" label={labels.addToCart} />}
         </div>
       </div>
 

@@ -88,7 +88,7 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
         <div style={{ borderRadius: 22, background: '#EAF6FC', padding: 24, display: 'flex', gap: 14, alignItems: 'center' }}>
           <img src="/brand/azania-mark.png" alt="" style={{ width: 56, height: 44, objectFit: 'contain' }} />
           <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>Salary Advance on every deal</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>Pay Later on every deal</div>
             <div style={{ fontSize: 13, color: '#3D5566', marginTop: 3 }}>Bundles can be paid monthly too</div>
           </div>
         </div>

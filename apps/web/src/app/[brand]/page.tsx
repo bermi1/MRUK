@@ -19,13 +19,22 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     .map((h) => {
       const p = byId(h.pid) ?? products[0];
       if (!p) return null;
+      const price = h.price ?? p.price;
       return {
         eyebrow: h.eyebrow,
         title: h.title,
         sub: h.sub,
         img: h.img || p.img || cats.find((c) => c.id === p.cat)?.img || '',
-        href: `${b}/p/${p.id}`,
-        price: p.price,
+        href: h.href || `${b}/p/${p.id}`,
+        price,
+        showPrice: price > 0,
+        cta: h.cta,
+        pid: p.stock > 0 ? p.id : '',
+        layout: h.layout ?? 'product',
+        imgMobile: h.imgMobile ?? '',
+        theme: h.theme ?? 'dark',
+        align: h.align ?? 'left',
+        focal: h.focal ?? '50% 50%',
         model: p.model,
         name: p.name,
         kind: `${p.sub} ${p.catName}`,
@@ -43,6 +52,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     slideN: t('slideN'),
     discover: t('discover'),
     scrollHint: t('scrollHint'),
+    addToCart: t('addToCart'),
   };
   const cities = [...new Set(suppliers.map((s) => s.city))];
   const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };

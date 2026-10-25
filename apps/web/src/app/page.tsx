@@ -45,7 +45,7 @@ export default async function Landing() {
           <nav className="l-links d-only" aria-label="Main">
             <Link href="/mruk">Shop Mr UK</Link>
             <Link href="/skywood">Shop Skywood</Link>
-            <a href="#salary-advance">Salary Advance</a>
+            <a href="#salary-advance">Pay Later</a>
             <a href="#salary-advance">How it works</a>
           </nav>
           <Link href="/mruk" className="btn btn-sm" style={{ background: '#12164A', color: '#fff', padding: '12px 20px' }}>
@@ -125,7 +125,7 @@ export default async function Landing() {
               IN PARTNERSHIP WITH AZANIA BANK
             </div>
             <h2>Take it home today. Pay from your salary.</h2>
-            <p>Choose Salary Advance at checkout and spread the cost over 3, 6 or 12 months. Track what&apos;s paid and what&apos;s left in the app. Approval by Azania Bank.</p>
+            <p>Choose Pay Later at checkout and spread the cost over 3, 6 or 12 months. Track what&apos;s paid and what&apos;s left in the app. Approval by Azania Bank.</p>
             <ol className="l-steps">
               {['Pick a product', 'Azania Bank approves', 'Pay monthly'].map((t, i) => (
                 <li key={t}>
@@ -251,7 +251,7 @@ export default async function Landing() {
               </div>
               <p style={{ fontSize: 13.5, lineHeight: 1.6, margin: 0, maxWidth: 260 }}>Two trusted brands of appliances and electronics, delivered across Tanzania.</p>
               <span style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: '8px 12px', fontSize: 12 }}>
-                Salary Advance by <img src="/brand/azania-bank-white.png" alt="Azania Bank" style={{ height: 30 }} />
+                Pay Later by <img src="/brand/azania-bank-white.png" alt="Azania Bank" style={{ height: 30 }} />
               </span>
             </div>
             <div className="foot-col">
@@ -275,7 +275,7 @@ export default async function Landing() {
               <Link href="/mruk/track">Track order</Link>
               <Link href="/mruk/support">Support</Link>
               <Link href="/mruk/suppliers">Suppliers near you</Link>
-              <a href="#salary-advance">Salary Advance</a>
+              <a href="#salary-advance">Pay Later</a>
               <a href="tel:+255686990359">+255 686 990 359</a>
             </div>
             <div className="foot-col">

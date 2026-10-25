@@ -182,6 +182,17 @@ export interface HeroSlideView {
   name: string;
   kind: string;
   features: string[];
+  /** CMS button label; empty = the brand's default label. */
+  cta: string;
+  /** Linked product (CMS pid) for the quick add-to-cart; empty when the product is out of stock. */
+  pid: string;
+  layout: 'product' | 'photo';
+  imgMobile: string;
+  theme: 'dark' | 'light';
+  align: 'left' | 'center' | 'right';
+  focal: string;
+  /** False when the CMS sets price 0 (e.g. a brand/campaign slide). */
+  showPrice: boolean;
 }
 
 export interface HeroLabels {
@@ -194,6 +205,7 @@ export interface HeroLabels {
   slideN: string;
   discover: string;
   scrollHint: string;
+  addToCart: string;
 }
 
 /** Split a headline into display lines: at sentence/comma breaks, else into two balanced halves. */
