@@ -174,7 +174,7 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                 <input type="hidden" name="count" value={deals.length} />
                 {deals.map((d, i) => (
                   // Key by content so rows remount (and drop stale inputs / ticked "remove" boxes) after a bundle is removed.
-                  <div key={`${i}:${d.title}:${d.items.join(',')}`} className="ad-form" style={{ gridTemplateColumns: 'minmax(0,1fr) 90px 110px', marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
+                  <div key={`${i}:${d.title}:${d.items.join(',')}`} className="ad-form ad-dealrow" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
                     <label className="ad-field">
                       {i === cms.deals.length ? 'New bundle name' : 'Bundle name'}
                       <input name={`title_${i}`} defaultValue={d.title} maxLength={60} />

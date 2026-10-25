@@ -87,7 +87,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="ad-stack">
-      <div className="ad-grid2" style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr)' }}>
+      <div className="ad-grid2 wide-left">
         <div className="ad-stack">
           <section className="ad-card">
             <h2 className="ad-h">Admin users</h2>

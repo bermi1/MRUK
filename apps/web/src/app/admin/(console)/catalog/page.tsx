@@ -35,7 +35,7 @@ export default async function CatalogPage() {
                 ))}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, fontSize: 12.5 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 8, fontSize: 12.5 }}>
               {[
                 ['Card corners', `${t.r} / ${t.rs}`],
                 ['Heading weight', t.head],
