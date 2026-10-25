@@ -6,7 +6,8 @@ import { BRAND_KEYS, getCategories, getProducts } from '@/server/catalog';
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = env.APP_URL.replace(/\/$/, '');
   const out: MetadataRoute.Sitemap = [{ url: `${base}/`, changeFrequency: 'weekly', priority: 1 }];
-  for (const b of BRAND_KEYS) {
+  const brands = BRAND_KEYS.filter((b) => !process.env.STORE_BRAND || b === process.env.STORE_BRAND);
+  for (const b of brands) {
     const [cats, products] = await Promise.all([getCategories(b), getProducts(b)]);
     out.push({ url: `${base}/${b}`, changeFrequency: 'daily', priority: 0.9 });
     out.push({ url: `${base}/${b}/deals`, changeFrequency: 'daily', priority: 0.7 });

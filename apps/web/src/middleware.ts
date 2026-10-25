@@ -10,6 +10,15 @@ const HOST_BRAND: Record<string, string> = {
   'shop.skywood.co.tz': 'skywood',
 };
 
+/**
+ * Single-brand deployments: the Mr UK and Skywood sites are separate Vercel projects
+ * built from this one codebase and sharing one database. STORE_BRAND=mruk|skywood
+ * makes "/" that brand's home and sends visitors of the other brand's pages to
+ * OTHER_STORE_URL (the sister site). Unset = both brands on one site (development).
+ */
+const STORE_BRAND = process.env.STORE_BRAND === 'mruk' || process.env.STORE_BRAND === 'skywood' ? process.env.STORE_BRAND : undefined;
+const OTHER_BRAND = STORE_BRAND === 'mruk' ? 'skywood' : STORE_BRAND === 'skywood' ? 'mruk' : undefined;
+
 const PASS_THROUGH = /^\/(mruk|skywood|admin|azania|api|_next|brand|img|icons|sw\.js|manifest\.webmanifest|favicon|robots\.txt|sitemap\.xml|offline)/;
 
 function csp(nonce: string, dev: boolean) {
@@ -33,7 +42,14 @@ function csp(nonce: string, dev: boolean) {
 export function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const host = (req.headers.get('host') ?? '').split(':')[0]!.toLowerCase();
-  const brand = HOST_BRAND[host];
+  const brand = HOST_BRAND[host] ?? STORE_BRAND;
+
+  if (OTHER_BRAND && (url.pathname === `/${OTHER_BRAND}` || url.pathname.startsWith(`/${OTHER_BRAND}/`))) {
+    const other = process.env.OTHER_STORE_URL;
+    if (other) return NextResponse.redirect(new URL(url.pathname + url.search, other), 308);
+    url.pathname = `/${STORE_BRAND}`;
+    return NextResponse.redirect(url, 307);
+  }
 
   if (url.pathname.startsWith('/admin') && !url.pathname.startsWith('/admin/login') && !req.cookies.get('bt_staff')) {
     url.pathname = '/admin/login';
