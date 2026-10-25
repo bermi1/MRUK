@@ -4,14 +4,14 @@ import { fmtTZS } from '@bt/core';
 import { restockAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
 import { Forbidden, Kpi, Pill, Thumb } from '@/components/admin/ui';
-import { adminFilters, BRAND_NAME } from '@/server/admin/context';
+import { adminFilters, BRAND_NAME, LOW_STOCK, REORDER_STOCK } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Inventory' };
 
 function level(stock: number) {
-  if (stock <= 3) return { label: 'Reorder', cls: 'pill-red' };
-  if (stock <= 6) return { label: 'Low', cls: 'pill-amber' };
+  if (stock <= REORDER_STOCK) return { label: 'Reorder', cls: 'pill-red' };
+  if (stock <= LOW_STOCK) return { label: 'Low', cls: 'pill-amber' };
   return { label: 'Healthy', cls: 'pill-green' };
 }
 
@@ -22,10 +22,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const f = await adminFilters(ctx);
   const show = sp.show === 'low' ? 'low' : 'all';
   const all = await prisma.product.findMany({ where: { brandKey: { in: f.brands } }, orderBy: [{ stock: 'asc' }, { name: 'asc' }], select: { id: true, brandKey: true, model: true, name: true, price: true, stock: true, images: true, hidden: true } });
-  const rows = show === 'low' ? all.filter((p) => p.stock <= 6) : all;
+  const rows = show === 'low' ? all.filter((p) => p.stock <= LOW_STOCK) : all;
   const units = all.reduce((a, p) => a + p.stock, 0);
   const value = all.reduce((a, p) => a + p.stock * p.price, 0);
-  const need = all.filter((p) => p.stock <= 6).length;
+  const need = all.filter((p) => p.stock <= LOW_STOCK).length;
 
   return (
     <div className="ad-stack">
@@ -33,7 +33,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <Kpi label="Total SKUs" value={all.length} />
         <Kpi label="Units on hand" value={units.toLocaleString('en-US')} />
         <Kpi label="Stock value (retail)" value={`TZS ${(value / 1e6).toFixed(1)}M`} />
-        <Kpi label="Low or reorder" value={<span style={{ color: '#B4462E' }}>{need}</span>} delta="Low ≤ 6 · Reorder ≤ 3" color="#8A8EA3" />
+        <Kpi label="Low or reorder" value={<span style={{ color: '#B4462E' }}>{need}</span>} delta={`Low ≤ ${LOW_STOCK} · Reorder ≤ ${REORDER_STOCK}`} color="#8A8EA3" />
       </div>
       <section className="ad-card">
         <div className="ad-between">

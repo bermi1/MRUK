@@ -3,7 +3,7 @@ import { prisma, type Prisma } from '@bt/db';
 import { fmtDate, fmtTZS, formatTzPhone, paymentLabel, type PaymentMethod } from '@bt/core';
 import { invoiceStatusAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
-import { Forbidden, INVOICE_PILL, Pill } from '@/components/admin/ui';
+import { Forbidden, INVOICE_PILL, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { waLink } from '@/lib/format';
 import { adminFilters, orderWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -11,6 +11,7 @@ import { requireStaff } from '@/server/auth';
 export const metadata = { title: 'Invoices' };
 
 const TABS = ['all', 'issued', 'paid', 'void'] as const;
+const PER = 50;
 
 export default async function InvoicesPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const ctx = await requireStaff();
@@ -20,9 +21,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const tab = (TABS as readonly string[]).includes(sp.status ?? '') ? sp.status! : 'all';
   const q = (sp.q ?? '').trim().toUpperCase().slice(0, 40);
   const where: Prisma.InvoiceWhereInput = { order: orderWhere(f), ...(tab !== 'all' ? { status: tab } : {}), ...(q ? { OR: [{ number: { contains: q } }, { order: { number: { contains: q } } }] } : {}) };
-  const [list, counts] = await Promise.all([
-    prisma.invoice.findMany({ where, include: { order: { select: { number: true, contactName: true } } }, orderBy: { issuedAt: 'desc' }, take: 100 }),
+  const page = pageParam(sp.page);
+  const [list, counts, total] = await Promise.all([
+    prisma.invoice.findMany({ where, include: { order: { select: { number: true, contactName: true } } }, orderBy: { issuedAt: 'desc' }, skip: (page - 1) * PER, take: PER }),
     prisma.invoice.groupBy({ by: ['status'], where: { order: orderWhere(f) }, _count: { _all: true } }),
+    prisma.invoice.count({ where }),
   ]);
   const selNo = sp.no && /^INV-\d{4}-\d{3,8}$/.test(sp.no) ? sp.no : list[0]?.number;
   const inv = selNo ? await prisma.invoice.findFirst({ where: { number: selNo, order: { brandKey: { in: f.allowed } } }, include: { order: { include: { items: true, brand: true, payments: { take: 1, orderBy: { createdAt: 'desc' } } } } } }) : null;
@@ -32,7 +35,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const count = (s: string) => (s === 'all' ? counts.reduce((a, c) => a + c._count._all, 0) : (counts.find((c) => c.status === s)?._count._all ?? 0));
 
   return (
-    <div className="ad-detail" style={{ gridTemplateColumns: '400px minmax(0, 1fr)' }}>
+    <div className="ad-detail list-left">
       <section className="ad-card tight" style={{ position: 'static' }}>
         <div className="ad-between" style={{ padding: '0 4px 10px' }}>
           <h2 className="ad-h">Invoices</h2>
@@ -50,7 +53,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         </nav>
         <div style={{ marginTop: 6 }}>
           {list.map((v) => (
-            <Link key={v.id} href={link({ no: v.number })} className={`ad-listcard ${v.number === inv?.number ? 'sel' : ''}`}>
+            <Link key={v.id} href={link({ ...(page > 1 ? { page: String(page) } : {}), no: v.number })} className={`ad-listcard ${v.number === inv?.number ? 'sel' : ''}`}>
               <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: '#12164A' }}>
                 {v.number}
               </span>
@@ -65,6 +68,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
           ))}
           {!list.length && <div className="ad-empty">No invoices</div>}
         </div>
+        <Pager page={page} per={PER} total={total} href={(n) => link({ page: String(n) })} />
       </section>
 
       {inv ? (
@@ -129,6 +133,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 </div>
               </div>
             </div>
+            <div className="ad-scroll">
             <table className="ad-table" style={{ marginTop: 16, fontSize: 13.5 }}>
               <thead>
                 <tr>
@@ -170,7 +175,8 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 )}
               </tbody>
             </table>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24, marginTop: 14, alignItems: 'end' }}>
+            </div>
+            <div className="ad-invtotals" style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 24, marginTop: 14, alignItems: 'end' }}>
               <div className="ad-muted2" style={{ fontSize: 12, lineHeight: 1.6 }}>
                 Prices include VAT at 18%.
                 <br />

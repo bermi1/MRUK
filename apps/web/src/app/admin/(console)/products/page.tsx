@@ -31,7 +31,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const write = ctx.can('products.write');
 
   return (
-    <div className="ad-detail" style={write ? undefined : { gridTemplateColumns: '1fr' }}>
+    <div className={write ? 'ad-detail' : 'ad-detail single'}>
       <section className="ad-card">
         <div className="ad-between">
           <div>

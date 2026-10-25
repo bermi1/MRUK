@@ -260,7 +260,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {ctx.can('orders.write') && nexts.length > 0 && (
             <div className="ad-btns">
               {nexts.map((s) => (
-                <ActBtn key={s} action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : undefined}>
+                <ActBtn key={s} action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : s === 'rejected' ? `Reject order ${o.number}? Stock is returned and payments refunded.` : undefined}>
                   {actionLabel(o.status, s)}
                 </ActBtn>
               ))}

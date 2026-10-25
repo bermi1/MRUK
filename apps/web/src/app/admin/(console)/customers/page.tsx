@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma, type Prisma } from '@bt/db';
 import { ADVANCE_STATUS_LABEL, fmtTZS, formatTzPhone, type AdvanceStatus } from '@bt/core';
-import { Forbidden } from '@/components/admin/ui';
+import { Forbidden, Pager, pageParam } from '@/components/admin/ui';
 import { initials } from '@/lib/format';
 import { adminFilters, orderWhere, REVENUE_STATUSES } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -10,6 +10,7 @@ export const metadata = { title: 'Customers' };
 
 const CHANNEL: Record<string, string> = { web: 'Web', app: 'App', azania: 'Azania app' };
 const ACTIVE_ADV = ['submitted', 'approved', 'disbursed', 'repaying'];
+const PER = 50;
 
 export default async function CustomersPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const ctx = await requireStaff();
@@ -24,15 +25,20 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     orders: { some: ow },
     ...(q ? { OR: [{ name: { contains: q, mode: 'insensitive' } }, ...(digits.length >= 3 ? [{ phone: { contains: digits.replace(/^0/, '') } }] : []), { email: { contains: q, mode: 'insensitive' } }] } : {}),
   };
-  const customers = await prisma.customer.findMany({
+  const page = pageParam(sp.page);
+  const [total, customers] = await Promise.all([
+    prisma.customer.count({ where }),
+    prisma.customer.findMany({
     where,
-    take: 100,
+    skip: (page - 1) * PER,
+    take: PER,
     orderBy: { createdAt: 'desc' },
     include: {
       addresses: { where: { isDefault: true }, take: 1 },
       orders: { where: ow, orderBy: { createdAt: 'desc' }, select: { total: true, status: true, channel: true, region: true, advance: { select: { status: true, termMonths: true } } } },
     },
-  });
+  }),
+  ]);
   const rows = customers
     .map((c) => {
       const ltv = c.orders.filter((o) => REVENUE_STATUSES.includes(o.status)).reduce((a, o) => a + o.total, 0);
@@ -44,15 +50,14 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           ? { text: 'Completed', color: '#16825D' }
           : { text: 'None', color: '#8A8EA3' };
       return { c, ltv, adv, region: c.addresses[0]?.region ?? c.orders[0]?.region ?? '—', channel: CHANNEL[c.orders[0]?.channel ?? ''] ?? '—' };
-    })
-    .sort((a, b) => b.ltv - a.ltv);
+    });
 
   return (
     <section className="ad-card">
       <div className="ad-between">
         <div>
           <h2 className="ad-h">Customers</h2>
-          <p className="ad-sub">Records linked to orders, payments and warranties{f.brand !== 'all' ? ` · ${f.brand === 'mruk' ? 'Mr UK' : 'Skywood'} buyers` : ''}</p>
+          <p className="ad-sub">{total} customer{total === 1 ? '' : 's'} · newest first · records linked to orders, payments and warranties{f.brand !== 'all' ? ` · ${f.brand === 'mruk' ? 'Mr UK' : 'Skywood'} buyers` : ''}</p>
         </div>
         <form action="/admin/customers" role="search" className="ad-row">
           <input className="ad-input" name="q" defaultValue={q} placeholder="Name, phone or email" aria-label="Search customers" style={{ width: 240 }} />
@@ -105,6 +110,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
           </tbody>
         </table>
       </div>
+      <Pager page={page} per={PER} total={total} href={(n) => `/admin/customers?${new URLSearchParams({ ...(q ? { q } : {}), page: String(n) })}`} />
     </section>
   );
 }

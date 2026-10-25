@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@bt/db';
 import { fmtTZS, PAYMENT_METHOD_INFO, paymentLabel, type PaymentMethod } from '@bt/core';
 import { Forbidden, Kpi, Meter, OrderPill } from '@/components/admin/ui';
-import { adminFilters, durationLabel, isoDayEAT, monthName, orderWhere, REVENUE_STATUSES, startOfDayEAT, startOfMonthEAT } from '@/server/admin/context';
+import { adminFilters, durationLabel, LOW_STOCK, REORDER_STOCK, isoDayEAT, monthName, orderWhere, REVENUE_STATUSES, startOfDayEAT, startOfMonthEAT } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 import { releaseExpiredReservations } from '@/server/orders';
 
@@ -39,8 +39,8 @@ export default async function Dashboard() {
     prisma.order.aggregate({ where: { ...rev, createdAt: { gte: lastMonth, lt: month } }, _sum: { total: true } }),
     prisma.salaryAdvanceApplication.findMany({ where: { status: 'submitted', order: ow }, select: { createdAt: true } }),
     prisma.salaryAdvanceApplication.findMany({ where: { decidedAt: { gte: new Date(now.getTime() - 30 * 86_400_000) }, order: ow }, select: { createdAt: true, decidedAt: true } }),
-    prisma.product.count({ where: { brandKey: { in: f.brands }, hidden: false, stock: { lte: 5 } } }),
-    prisma.product.count({ where: { brandKey: { in: f.brands }, hidden: false, stock: { lte: 3 } } }),
+    prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } } }),
+    prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: REORDER_STOCK } } }),
     ctx.can('orders') ? prisma.order.findMany({ where: ow, orderBy: { createdAt: 'desc' }, take: 6 }) : Promise.resolve([]),
     prisma.order.findMany({ where: { ...rev, createdAt: { gte: days14 } }, select: { total: true, paymentMethod: true, createdAt: true } }),
     prisma.order.groupBy({ by: ['paymentMethod'], where: { ...ow, createdAt: { gte: month }, status: { notIn: ['cancelled'] } }, _count: { _all: true } }),
