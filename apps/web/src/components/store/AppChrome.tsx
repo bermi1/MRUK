@@ -4,13 +4,14 @@ import { usePathname } from 'next/navigation';
 import { BagIcon, GridIcon, HomeIcon, SearchIcon, TagIcon, UserIcon } from '../icons';
 
 /** Phone chrome (<768px): brand switch on top, bottom bar with a raised centre cart. */
-export function AppBar({ brand }: { brand: string }) {
+export function AppBar({ brand, menu }: { brand: string; menu?: React.ReactNode }) {
   const path = usePathname();
   const rest = path.replace(/^\/(mruk|skywood)/, '');
   // Keep the user on the same kind of page when switching brand (product/cart pages are brand-specific).
   const keep = /^\/(deals|suppliers|support|track|compare|account)?$/.test(rest) ? rest : '';
   return (
     <header className="appbar m-flex m-only">
+      {menu}
       <nav className="brand-switch" aria-label="Brand">
         <Link href={`/mruk${keep}`} className={brand === 'mruk' ? 'on' : ''}>
           Mr UK

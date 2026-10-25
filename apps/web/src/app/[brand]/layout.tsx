@@ -2,7 +2,15 @@ import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { AppBar, TabBar } from '@/components/store/AppChrome';
 import { Footer } from '@/components/store/Footer';
-import { Header, type MegaProduct } from '@/components/store/Header';
+import { MrukHeader } from '@/components/store/brands/mruk/Header';
+import { MrukMobileMenu } from '@/components/store/brands/mruk/MobileMenu';
+import type { HeaderProps, MegaProduct, MobileMenuProps } from '@/components/store/brands/shared';
+import { SkywoodHeader } from '@/components/store/brands/skywood/Header';
+import { SkywoodMobileMenu } from '@/components/store/brands/skywood/MobileMenu';
+import { RevealObserver } from '@/components/store/Reveal';
+import { archivo, fraunces } from '@/fonts/brand';
+import '@/styles/mruk.css';
+import '@/styles/skywood.css';
 import { ToastProvider } from '@/components/store/Toast';
 import { WhatsAppIcon } from '@/components/icons';
 import { waLink } from '@/lib/format';
@@ -43,28 +51,77 @@ export default async function BrandLayout({ children, params }: { children: Reac
   if (!isBrandKey(key)) notFound();
   const [brand, cms, cats, products, cartCount, cmp, customer, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT()]);
   const mega: Record<string, MegaProduct[]> = Object.fromEntries(
-    cats.map((c) => [c.id, photoFirst(products.filter((p) => p.cat === c.id)).slice(0, 4).map((p) => ({ id: p.id, model: p.model, name: p.name, price: p.price, img: p.img }))]),
+    cats.map((c) => [c.id, photoFirst(products.filter((p) => p.cat === c.id)).slice(0, 4).map((p) => ({ id: p.id, model: p.model, name: p.name, sub: p.sub, price: p.price, img: p.img }))]),
   );
+  const header: HeaderProps = {
+    brand,
+    cms: { announcement: cms.announcement, megaPromo: cms.megaPromo },
+    cats,
+    mega,
+    cartCount,
+    compareCount: cmp.length,
+    user: customer ? { name: customer.name, phone: customer.phone, email: customer.email } : null,
+    labels: {
+      track: t('trackOrder'),
+      suppliers: t('suppliersNearYou'),
+      support: t('support'),
+      signIn: t('signIn'),
+      compare: t('compare'),
+      cart: t('cart'),
+      deals: t('deals'),
+      search: t('searchHint', { brand: brand.name }),
+      searchShort: t('searchShort'),
+      allBrands: t('allBrands'),
+      allCategories: t('allCategories'),
+      menu: t('menu'),
+      close: t('close'),
+      featured: t('featured'),
+      viewAllN: t('viewAllN'),
+      productsN: t('productsN'),
+      helpAndServices: t('helpAndServices'),
+      account: t('account'),
+      perMonth: t('perMonthShort'),
+    },
+  };
+  const menu: MobileMenuProps = {
+    brand: key,
+    brandName: brand.name,
+    cats,
+    announcement: cms.announcement,
+    labels: {
+      menu: t('menu'),
+      close: t('close'),
+      openMenu: t('openMenu'),
+      search: t('searchHint', { brand: brand.name }),
+      searchShort: t('searchShort'),
+      productsN: t('productsN'),
+      helpAndServices: t('helpAndServices'),
+      deals: t('deals'),
+      track: t('trackOrder'),
+      suppliers: t('suppliersNearYou'),
+      support: t('support'),
+      allBrands: t('allBrands'),
+      compare: t('compare'),
+      salaryAdvance: t('salaryAdvance'),
+      salaryAdvanceSub: t('salaryAdvanceSub'),
+    },
+  };
+  const sky = key === 'skywood';
   return (
-    <div className="brand-root" data-brand={key} style={themeVars(brand)}>
+    <div className={`brand-root ${archivo.variable} ${fraunces.variable}`} data-brand={key} style={themeVars(brand)}>
       <ToastProvider>
-        <AppBar brand={key} />
-        <Header
-          brand={brand}
-          cms={{ announcement: cms.announcement, megaPromo: cms.megaPromo }}
-          cats={cats}
-          mega={mega}
-          cartCount={cartCount}
-          compareCount={cmp.length}
-          user={customer ? { name: customer.name, phone: customer.phone, email: customer.email } : null}
-          labels={{ track: t('trackOrder'), suppliers: t('suppliersNearYou'), support: t('support'), signIn: t('signIn'), compare: t('compare'), cart: t('cart'), deals: t('deals'), search: t('searchHint', { brand: brand.name }), allBrands: t('allBrands') }}
-        />
+        <a href="#main" className="skip">
+          Skip to content
+        </a>
+        <AppBar brand={key} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
+        {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
         <Footer brand={brand} cats={cats} t={t} />
         <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
           <WhatsAppIcon />
         </a>
         <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), deals: t('deals'), account: t('account') }} />
+        <RevealObserver />
       </ToastProvider>
     </div>
   );

@@ -620,3 +620,25 @@ textarea.input { resize: vertical; }
   [data-brand='skywood'] .hero-copy h1 { font-weight: 420; }
 }
 [data-brand='skywood'] .grid-3 > article { border-radius: var(--sw-r-card) !important; }
+
+/* =====================================================================================
+   Shared by both brand designs (brand looks live in mruk.css and skywood.css).
+   ===================================================================================== */
+.skip { position: fixed; left: 12px; top: 12px; z-index: 200; padding: 12px 18px; border-radius: 10px; background: #fff; color: var(--text); font-weight: 600; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); transform: translateY(-160%); transition: transform 0.2s; }
+.skip:focus { transform: none; }
+
+/* Scroll reveal (components/store/Reveal.tsx). Hidden only once JS has marked <html class="rv">. */
+@media (prefers-reduced-motion: no-preference) {
+  html.rv [data-reveal]:not(.in) { opacity: 0; transform: translateY(28px); }
+  html.rv [data-reveal] { transition: opacity 0.8s var(--ease), transform 0.8s var(--ease); transition-delay: calc(var(--i, 0) * 70ms); }
+}
+
+/* Product placeholder: category line-art + model number, designed rather than "missing". */
+.pimg .ph { overflow: hidden; }
+.ph-glyph { position: absolute; left: 50%; top: 44%; width: 46%; max-width: 240px; height: auto; translate: -50% -50%; opacity: 0.3; pointer-events: none; }
+.ph-xs .ph-glyph, .ph-sm .ph-glyph { width: 52%; top: 42%; }
+.ph-xs .ph-model { display: none; }
+.ph-model { position: relative; }
+.pc { position: relative; }
+.pc .pc-add, .pc .pc-badge { position: relative; z-index: 3; }
+.pc .pc-badge { position: absolute; }
