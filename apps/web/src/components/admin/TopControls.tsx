@@ -12,9 +12,9 @@ export function TopControls({ brand, brands, branch, branches }: { brand: string
   ].filter(([k]) => k === 'all' ? brands.length > 1 : brands.includes(k!));
   return (
     <>
-      <div className="ad-seg" role="group" aria-label="Brand filter" style={{ marginLeft: 'auto', opacity: pending ? 0.7 : 1 }}>
+      <div className="ad-seg" role="group" aria-label="Brand shown across the console" style={{ marginLeft: 'auto', opacity: pending ? 0.7 : 1 }}>
         {segs.map(([k, l]) => (
-          <button key={k} type="button" aria-pressed={brand === k} onClick={() => set('brand', k!)}>
+          <button key={k} type="button" className={`b-${k}`} aria-pressed={brand === k} disabled={pending} onClick={() => set('brand', k!)}>
             {l}
           </button>
         ))}

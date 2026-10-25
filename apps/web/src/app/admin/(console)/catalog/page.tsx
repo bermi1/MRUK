@@ -1,7 +1,7 @@
 import { prisma } from '@bt/db';
 import { updateCategoryAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Pill } from '@/components/admin/ui';
+import { BrandMark, Forbidden, Pill } from '@/components/admin/ui';
 import { adminFilters } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
@@ -24,17 +24,11 @@ export default async function CatalogPage() {
         return (
           <section key={b.key} className="ad-card ad-stack s12" aria-label={b.name}>
             <div className="ad-between">
-              <div className="ad-row" style={{ gap: 12 }}>
-                <span style={{ width: 44, height: 44, borderRadius: 12, background: t.primary, color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{b.key === 'mruk' ? 'UK' : 'SW'}</span>
-                <div>
-                  <h2 className="ad-h" style={{ fontSize: 16 }}>
-                    {b.name}
-                  </h2>
-                  <p className="ad-sub">
-                    {b.domain} · {b._count.products} products
-                  </p>
-                </div>
-              </div>
+              <h2 className="ad-h" style={{ fontSize: 16 }}>
+                <BrandMark brand={b.key}>
+                  {b.domain} · {b._count.products} products
+                </BrandMark>
+              </h2>
               <div className="ad-row" style={{ gap: 6 }} aria-label="Brand colours">
                 {[t.primary, t.hi, t.accent].map((c, i) => (
                   <span key={i} title={c} style={{ width: 22, height: 22, borderRadius: 6, background: c, border: '1px solid #ECEDF2' }} />

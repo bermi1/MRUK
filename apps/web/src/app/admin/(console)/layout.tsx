@@ -111,7 +111,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
         </div>
       </aside>
       <div className="ad-main">
-        <header className="ad-top">
+        <header className="ad-top" data-brand={f.brand}>
           <PageTitle titles={TITLES} />
           {!ctx.mustChangePassword && (
             <>

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma, type Prisma } from '@bt/db';
 import { ADVANCE_STATUS_LABEL, fmtTZS, formatTzPhone, type AdvanceStatus } from '@bt/core';
-import { Forbidden, Pager, pageParam } from '@/components/admin/ui';
+import { BrandChip, Forbidden, Pager, pageParam } from '@/components/admin/ui';
 import { initials } from '@/lib/format';
 import { adminFilters, orderWhere, REVENUE_STATUSES } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -35,7 +35,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
     orderBy: { createdAt: 'desc' },
     include: {
       addresses: { where: { isDefault: true }, take: 1 },
-      orders: { where: ow, orderBy: { createdAt: 'desc' }, select: { total: true, status: true, channel: true, region: true, advance: { select: { status: true, termMonths: true } } } },
+      orders: { where: ow, orderBy: { createdAt: 'desc' }, select: { brandKey: true, total: true, status: true, channel: true, region: true, advance: { select: { status: true, termMonths: true } } } },
     },
   }),
   ]);
@@ -49,7 +49,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         : advs.some((a) => a.status === 'closed')
           ? { text: 'Completed', color: '#16825D' }
           : { text: 'None', color: '#8A8EA3' };
-      return { c, ltv, adv, region: c.addresses[0]?.region ?? c.orders[0]?.region ?? '—', channel: CHANNEL[c.orders[0]?.channel ?? ''] ?? '—' };
+      return { c, ltv, adv, brands: [...new Set(c.orders.map((o) => o.brandKey))].sort(), region: c.addresses[0]?.region ?? c.orders[0]?.region ?? '—', channel: CHANNEL[c.orders[0]?.channel ?? ''] ?? '—' };
     });
 
   return (
@@ -80,7 +80,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ c, ltv, adv, region, channel }) => (
+            {rows.map(({ c, ltv, adv, brands, region, channel }) => (
               <tr key={c.id}>
                 <td>
                   <div className="ad-row">
@@ -88,6 +88,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                     <Link href={`/admin/orders?q=${encodeURIComponent(c.phone.slice(4))}`} style={{ fontWeight: 500, color: '#12152B', textDecoration: 'none' }}>
                       {c.name || 'Unnamed'}
                     </Link>
+                    {brands.map((b) => (
+                      <BrandChip key={b} brand={b} />
+                    ))}
                   </div>
                 </td>
                 <td className="ad-muted2">{formatTzPhone(c.phone)}</td>

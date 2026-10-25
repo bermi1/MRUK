@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
 import { fmtTZS, PAYMENT_METHOD_INFO, paymentLabel, type PaymentMethod } from '@bt/core';
-import { Forbidden, Kpi, Meter, OrderPill } from '@/components/admin/ui';
+import { BrandChip, BrandMark, Forbidden, Kpi, Meter, OrderPill } from '@/components/admin/ui';
 import { adminFilters, durationLabel, LOW_STOCK, REORDER_STOCK, isoDayEAT, monthName, orderWhere, REVENUE_STATUSES, startOfDayEAT, startOfMonthEAT } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 import { releaseExpiredReservations } from '@/server/orders';
@@ -47,6 +47,25 @@ export default async function Dashboard() {
     prisma.order.groupBy({ by: ['region'], where: { ...rev, createdAt: { gte: month } }, _sum: { total: true }, orderBy: { _sum: { total: 'desc' } }, take: 6 }),
   ]);
 
+  const [bRev, bOrders, bApps, bWaiting, bLow] = await Promise.all([
+    prisma.order.groupBy({ by: ['brandKey'], where: { ...rev, createdAt: { gte: month } }, _sum: { total: true } }),
+    prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, createdAt: { gte: month } }, _count: { _all: true } }),
+    prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, createdAt: { gte: month }, advance: { isNot: null } }, _count: { _all: true } }),
+    prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, advance: { is: { status: 'submitted' } } }, _count: { _all: true } }),
+    prisma.product.groupBy({ by: ['brandKey'], where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } }, _count: { _all: true } }),
+  ]);
+  const perf = (b: string | null) => {
+    const pick = <T extends { brandKey: string }>(rows: T[], v: (r: T) => number) => rows.filter((r) => !b || r.brandKey === b).reduce((a, r) => a + v(r), 0);
+    return {
+      sales: pick(bRev, (r) => r._sum.total ?? 0),
+      orders: pick(bOrders, (r) => r._count._all),
+      apps: pick(bApps, (r) => r._count._all),
+      waiting: pick(bWaiting, (r) => r._count._all),
+      low: pick(bLow, (r) => r._count._all),
+    };
+  };
+  const perfCards: { key: string | null; data: ReturnType<typeof perf> }[] = [...f.brands.map((b) => ({ key: b as string | null, data: perf(b) })), ...(f.brands.length > 1 ? [{ key: null, data: perf(null) }] : [])];
+
   const dToday = delta(ordersToday, ordersYesterday, 'yesterday');
   const revNow = revMonth._sum.total ?? 0;
   const dRev = delta(revNow, revLast._sum.total ?? 0, monthName(lastMonth));
@@ -74,6 +93,45 @@ export default async function Dashboard() {
         <Kpi label={`Revenue, ${monthName(now)}`} value={`TZS ${millions(revNow)}`} delta={dRev.text} color={dRev.up ? '#16825D' : '#B4462E'} />
         <Kpi label="Awaiting Azania Bank" value={awaiting.length} delta={avgDecision ? `Avg. approval ${durationLabel(avgDecision)}` : oldest ? `Oldest waiting ${durationLabel(oldest)}` : 'Queue is clear'} color="#0070A8" />
         <Kpi label="Low-stock SKUs" value={lowStock} delta={reorder ? `${reorder} need reorder today` : 'Stock healthy'} color={reorder ? '#B4462E' : '#16825D'} />
+      </div>
+
+      <div className="ad-bperf" style={{ ['--cols' as string]: perfCards.length }} aria-label={`Brand performance, ${monthName(now)}`}>
+        {perfCards.map(({ key, data }) => (
+          <section key={key ?? 'all'} className={`ad-card ${key ?? ''}`} data-testid={`perf-${key ?? 'all'}`}>
+            {key ? (
+              <BrandMark brand={key}>{monthName(now)} to date</BrandMark>
+            ) : (
+              <div>
+                <h2 className="ad-h">Both brands combined</h2>
+                <p className="ad-sub">{monthName(now)} to date</p>
+              </div>
+            )}
+            <div className="m">
+              <div>
+                <div className="l">Sales</div>
+                <div className="v">TZS {millions(data.sales)}</div>
+                <div className="d">Confirmed orders</div>
+              </div>
+              <div>
+                <div className="l">Orders</div>
+                <div className="v">{data.orders.toLocaleString('en-US')}</div>
+                <div className="d">Placed this month</div>
+              </div>
+              <div>
+                <div className="l">Salary Advance</div>
+                <div className="v">{data.apps}</div>
+                <div className="d">{data.waiting ? `${data.waiting} awaiting Azania Bank` : 'None waiting'}</div>
+              </div>
+              <div>
+                <div className="l">Low stock</div>
+                <div className="v" style={data.low ? { color: '#B4462E' } : undefined}>
+                  {data.low}
+                </div>
+                <div className="d">SKUs at {LOW_STOCK} or fewer</div>
+              </div>
+            </div>
+          </section>
+        ))}
       </div>
 
       <div className="ad-split">
@@ -157,6 +215,9 @@ export default async function Dashboard() {
                       <Link className="num" href={`/admin/orders?o=${o.number}`} style={{ textDecoration: 'none' }}>
                         {o.number}
                       </Link>
+                      <div style={{ marginTop: 3 }}>
+                        <BrandChip brand={o.brandKey} />
+                      </div>
                     </td>
                     <td>{o.contactName}</td>
                     <td className="ad-muted2">{CHANNEL[o.channel] ?? o.channel}</td>

@@ -3,8 +3,8 @@ import { prisma } from '@bt/db';
 import { fmtTZS } from '@bt/core';
 import { restockAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Kpi, Pill, Thumb } from '@/components/admin/ui';
-import { adminFilters, BRAND_NAME, LOW_STOCK, REORDER_STOCK } from '@/server/admin/context';
+import { BrandChip, Forbidden, Kpi, Pill, Thumb } from '@/components/admin/ui';
+import { adminFilters, LOW_STOCK, REORDER_STOCK } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Inventory' };
@@ -74,7 +74,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                         <div>
                           <div style={{ fontWeight: 500 }}>{p.name}</div>
                           <div className="ad-muted" style={{ fontSize: 11.5 }}>
-                            {BRAND_NAME[p.brandKey]}
+                            <BrandChip brand={p.brandKey} />
                             {p.hidden ? ' · hidden' : ''}
                           </div>
                         </div>

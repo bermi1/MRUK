@@ -4,9 +4,9 @@ import { fmtDateTime, formatTzPhone } from '@bt/core';
 import { assignTicketAction, replyTicketAction, ticketStatusAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Pager, pageParam, Pill, TICKET_PILL } from '@/components/admin/ui';
+import { BrandChip, Forbidden, Pager, pageParam, Pill, TICKET_PILL } from '@/components/admin/ui';
 import { waLink } from '@/lib/format';
-import { adminFilters, BRAND_NAME } from '@/server/admin/context';
+import { adminFilters } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Support tickets' };
@@ -64,7 +64,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
                   {x.name} · {x.issue}
                 </span>
                 <span className="ad-muted2" style={{ display: 'block', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {BRAND_NAME[x.brandKey]} · {productNames.get(x.productId) ?? 'No product'} · {x.description}
+                  <BrandChip brand={x.brandKey} /> {productNames.get(x.productId) ?? 'No product'} · {x.description}
                 </span>
               </span>
               <Pill cls={TICKET_PILL[x.status] ?? 'pill-grey'}>{LABEL[x.status] ?? x.status}</Pill>
@@ -81,8 +81,9 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
               {t.number}
             </span>
             <span className="ad-row">
+              <BrandChip brand={t.brandKey} />
               <span className="ad-muted" style={{ fontSize: 12.5 }}>
-                {t.brand.name} · via {t.channel}
+                via {t.channel}
               </span>
               <Pill cls={TICKET_PILL[t.status] ?? 'pill-grey'}>{LABEL[t.status]}</Pill>
             </span>

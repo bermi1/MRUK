@@ -19,7 +19,7 @@ import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
 import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
 import { RateLimitError } from '@/server/ratelimit';
-import { BRAND_COOKIE, BRANCH_COOKIE } from '@/server/admin/context';
+import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue } from '@/server/admin/context';
 import { storePublicImage, UploadError } from '@/server/admin/files';
 
 type Msg = { message?: string };
@@ -112,10 +112,10 @@ export async function staffLogoutAction() {
 
 export async function setAdminFilterAction(kind: 'brand' | 'branch', value: string): Promise<ActionResult> {
   try {
-    await requireStaff();
+    const ctx = await requireStaff();
     const k = z.enum(['brand', 'branch']).parse(kind);
     const v = k === 'brand' ? z.enum(['all', 'mruk', 'skywood']).parse(value) : z.string().regex(/^[A-Za-z .'-]{2,40}$|^all$/).parse(value);
-    (await cookies()).set(k === 'brand' ? BRAND_COOKIE : BRANCH_COOKIE, v, { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 365 * 86400, secure: process.env.NODE_ENV === 'production' });
+    (await cookies()).set(k === 'brand' ? BRAND_COOKIE : BRANCH_COOKIE, filterCookieValue(ctx, v), { httpOnly: true, sameSite: 'lax', path: '/', maxAge: 365 * 86400, secure: process.env.NODE_ENV === 'production' });
     revalidateAdmin();
     return { ok: true };
   } catch (e) {

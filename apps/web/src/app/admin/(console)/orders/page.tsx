@@ -3,7 +3,7 @@ import { prisma, type Prisma } from '@bt/db';
 import { fmtDateTime, fmtTZS, formatTzPhone, nextOrderStatuses, ORDER_STATUS_LABEL, paymentLabel, type OrderStatus, type PaymentMethod } from '@bt/core';
 import { transitionOrderAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
-import { Forbidden, OrderPill, Thumb } from '@/components/admin/ui';
+import { BrandChip, Forbidden, OrderPill, Thumb } from '@/components/admin/ui';
 import { adminFilters, orderWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 import { releaseExpiredReservations } from '@/server/orders';
@@ -100,6 +100,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                     <Link href={qs({ o: r.number })} className="num" style={{ textDecoration: 'none' }} aria-label={`Open order ${r.number}`}>
                       {r.number}
                     </Link>
+                    <div style={{ marginTop: 3 }}>
+                      <BrandChip brand={r.brandKey} />
+                    </div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 500 }}>{r.contactName}</div>
@@ -151,8 +154,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       {o ? (
         <aside className="ad-card ad-stack s12" aria-label={`Order ${o.number}`}>
           <div className="ad-between">
-            <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: '#12164A' }}>
-              {o.number}
+            <span className="ad-row" style={{ gap: 8 }}>
+              <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: '#12164A' }}>
+                {o.number}
+              </span>
+              <BrandChip brand={o.brandKey} />
             </span>
             <OrderPill status={o.status} />
           </div>

@@ -3,7 +3,7 @@ import { prisma, type Prisma } from '@bt/db';
 import { fmtDate, fmtTZS, formatTzPhone, paymentLabel, type PaymentMethod } from '@bt/core';
 import { invoiceStatusAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
-import { Forbidden, INVOICE_PILL, Pager, pageParam, Pill } from '@/components/admin/ui';
+import { BrandChip, Forbidden, INVOICE_PILL, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { waLink } from '@/lib/format';
 import { adminFilters, orderWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -23,7 +23,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const where: Prisma.InvoiceWhereInput = { order: orderWhere(f), ...(tab !== 'all' ? { status: tab } : {}), ...(q ? { OR: [{ number: { contains: q } }, { order: { number: { contains: q } } }] } : {}) };
   const page = pageParam(sp.page);
   const [list, counts, total] = await Promise.all([
-    prisma.invoice.findMany({ where, include: { order: { select: { number: true, contactName: true } } }, orderBy: { issuedAt: 'desc' }, skip: (page - 1) * PER, take: PER }),
+    prisma.invoice.findMany({ where, include: { order: { select: { number: true, contactName: true, brandKey: true } } }, orderBy: { issuedAt: 'desc' }, skip: (page - 1) * PER, take: PER }),
     prisma.invoice.groupBy({ by: ['status'], where: { order: orderWhere(f) }, _count: { _all: true } }),
     prisma.invoice.count({ where }),
   ]);
@@ -54,8 +54,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
         <div style={{ marginTop: 6 }}>
           {list.map((v) => (
             <Link key={v.id} href={link({ ...(page > 1 ? { page: String(page) } : {}), no: v.number })} className={`ad-listcard ${v.number === inv?.number ? 'sel' : ''}`}>
-              <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: '#12164A' }}>
-                {v.number}
+              <span className="ad-row" style={{ gap: 6 }}>
+                <span className="mono" style={{ fontSize: 12.5, fontWeight: 600, color: '#12164A' }}>
+                  {v.number}
+                </span>
+                <BrandChip brand={v.order.brandKey} />
               </span>
               <span style={{ fontSize: 13.5, fontWeight: 600, textAlign: 'right' }}>{fmtTZS(v.amount)}</span>
               <span className="ad-muted2" style={{ fontSize: 12.5 }}>
@@ -74,6 +77,9 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       {inv ? (
         <div className="ad-stack s12" style={{ position: 'static' }}>
           <div className="ad-row" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <span style={{ marginRight: 'auto' }}>
+              <BrandChip brand={inv.order.brandKey} />
+            </span>
             {write && inv.status === 'issued' && (
               <ActBtn action={invoiceStatusAction.bind(null, inv.number, 'paid')} className="ad-btn ok">
                 Mark paid

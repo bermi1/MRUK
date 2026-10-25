@@ -22,14 +22,25 @@ export interface AdminFilters {
 
 export const BRAND_NAME: Record<string, string> = { mruk: 'Mr UK', skywood: 'Skywood' };
 
+/** Filter cookies are remembered per staff member: "<staffId>:<value>"; another person's value on a shared PC is ignored. */
+export function filterCookieValue(ctx: StaffContext, value: string): string {
+  return `${ctx.id}:${value}`;
+}
+
+function ownValue(ctx: StaffContext, raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const i = raw.indexOf(':');
+  return i > 0 && raw.slice(0, i) === ctx.id ? raw.slice(i + 1) : undefined;
+}
+
 /** Header filters from cookies, always narrowed to the staff member's brand scope. */
 export async function adminFilters(ctx: StaffContext): Promise<AdminFilters> {
   const jar = await cookies();
-  const b = jar.get(BRAND_COOKIE)?.value;
+  const b = ownValue(ctx, jar.get(BRAND_COOKIE)?.value);
   const requested = b === 'mruk' || b === 'skywood' ? b : null;
   const brands = brandScope(ctx, requested);
   const brand: AdminBrand = brands.length === 1 && requested === brands[0] ? (requested as AdminBrand) : brands.length === 1 ? (brands[0] as AdminBrand) : 'all';
-  const br = jar.get(BRANCH_COOKIE)?.value ?? '';
+  const br = ownValue(ctx, jar.get(BRANCH_COOKIE)?.value) ?? '';
   const branch = br && br !== 'all' && /^[A-Za-z .'-]{2,40}$/.test(br) ? br : null;
   return { brands, allowed: brandScope(ctx, null), brand, branch };
 }

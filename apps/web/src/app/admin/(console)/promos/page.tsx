@@ -4,7 +4,7 @@ import { fmtDate, fmtTZS } from '@bt/core';
 import { createFlashAction, deleteDiscountAction, deleteFlashAction, saveDiscountAction, toggleDiscountAction, toggleFlashAction, toggleHotAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Kpi, Pill } from '@/components/admin/ui';
+import { BrandChip, Forbidden, Kpi, Pill } from '@/components/admin/ui';
 import { adminFilters, BRAND_NAME, isoDayEAT, monthName, orderWhere, startOfMonthEAT } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
@@ -98,9 +98,7 @@ export default async function PromosPage() {
                   <span className="im">{p.images[0] ? <img src={p.images[0]} alt="" loading="lazy" /> : p.model.slice(0, 10)}</span>
                   <span className="nm">{p.name}</span>
                   <span className="ad-between" style={{ width: '100%' }}>
-                    <span className="ad-muted" style={{ fontSize: 11 }}>
-                      {BRAND_NAME[p.brandKey]}
-                    </span>
+                    <BrandChip brand={p.brandKey} />
                     <span className={`ad-pill ${on ? 'pill-hot' : 'pill-grey'}`} style={{ fontSize: 10.5, padding: '2px 8px' }}>
                       {on ? 'HOT' : 'Off'}
                     </span>
@@ -134,7 +132,7 @@ export default async function PromosPage() {
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{c.title}</span>
                 <Pill cls="pill-green">−{c.save}%</Pill>
                 <span className="ad-muted" style={{ fontSize: 12 }}>
-                  {BRAND_NAME[c.brand]} · {c.items.map((id) => byId.get(id)?.name).filter(Boolean).join(' + ')}
+                  <BrandChip brand={c.brand} /> {c.items.map((id) => byId.get(id)?.name).filter(Boolean).join(' + ')}
                 </span>
                 <span className="ad-ok" style={{ fontSize: 12, textAlign: 'right' }}>
                   Live
@@ -154,7 +152,7 @@ export default async function PromosPage() {
                       <td>
                         <div style={{ fontWeight: 500 }}>{p?.name ?? pr.productId ?? pr.title}</div>
                         <div className="ad-muted" style={{ fontSize: 11.5 }}>
-                          {BRAND_NAME[pr.brandKey]} · −{pr.percent}%{p ? ` · ${fmtTZS(Math.round((p.price * (100 - pr.percent)) / 100))}` : ''}
+                          <BrandChip brand={pr.brandKey} /> −{pr.percent}%{p ? ` · ${fmtTZS(Math.round((p.price * (100 - pr.percent)) / 100))}` : ''}
                         </div>
                       </td>
                       <td className="r">
@@ -238,7 +236,9 @@ export default async function PromosPage() {
                         </details>
                       )}
                     </td>
-                    <td style={{ verticalAlign: 'top' }}>{c.brandKey ? BRAND_NAME[c.brandKey] : 'Both'}</td>
+                    <td style={{ verticalAlign: 'top' }}>
+                      <BrandChip brand={c.brandKey} />
+                    </td>
                     <td style={{ verticalAlign: 'top' }}>{c.percent ? `${c.percent}% off` : 'Promo (0%)'}</td>
                     <td className="ad-muted2" style={{ verticalAlign: 'top' }}>
                       {c.minSubtotal ? fmtTZS(c.minSubtotal) : '—'}

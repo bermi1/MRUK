@@ -74,6 +74,33 @@ export function Meter({ pct, color = '#283A6E', lg }: { pct: number; color?: str
   );
 }
 
+export const BRAND_LABEL: Record<string, string> = { mruk: 'Mr UK', skywood: 'Skywood' };
+
+/** Small brand tag for rows and cards: Mr UK navy, Skywood ink with gold. Same look everywhere. */
+export function BrandChip({ brand, title }: { brand: string | null | undefined; title?: string }) {
+  if (!brand) return <span className="ad-bchip both">Both brands</span>;
+  return (
+    <span className={`ad-bchip ${brand}`} title={title ?? `${BRAND_LABEL[brand] ?? brand} store`}>
+      {BRAND_LABEL[brand] ?? brand}
+    </span>
+  );
+}
+
+/** Brand header with logo (CMS, products, catalogue, dashboard brand cards). */
+export function BrandMark({ brand, children }: { brand: string; children?: React.ReactNode }) {
+  return (
+    <span className={`ad-bmark ${brand}`}>
+      <span className="lg">
+        <img src={`/brand/${brand}-white.png`} alt="" />
+      </span>
+      <span>
+        <b>{BRAND_LABEL[brand] ?? brand}</b>
+        {children ? <small>{children}</small> : null}
+      </span>
+    </span>
+  );
+}
+
 /** "1–50 of 230 · Previous / Next" for long lists. `href(page)` builds the link for a page. */
 export function Pager({ page, per, total, href }: { page: number; per: number; total: number; href: (page: number) => string }) {
   if (total <= per) return null;
