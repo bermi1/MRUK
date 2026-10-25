@@ -1,8 +1,7 @@
 /** Designed placeholder while a category streams in (shimmer respects reduced motion). */
 export default function Loading() {
   return (
-    <div className="wrap skel-page" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading…</span>
+    <div className="wrap skel-page" aria-busy="true">
       <div className="skel skel-hero" />
       <div className="skel-row">
         {Array.from({ length: 5 }, (_, i) => (

@@ -68,7 +68,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
             </nav>
           </div>
           <Link href={b} className="sw-logo" aria-label={`${brand.name} home`}>
-            <img src={brand.logo} alt={brand.name} width={132} height={30} />
+            <img src={brand.logo} alt={brand.name} width={104} height={30} />
           </Link>
           <div className="sw-right" onMouseEnter={m.leave}>
             <button type="button" className="sw-icon" onClick={() => setSearch((s) => !s)} aria-expanded={search} aria-controls="sw-search">
@@ -202,7 +202,7 @@ function SkywoodIndex({
         <button type="button" className="sw-index-close" onClick={close} data-autofocus>
           {labels.close} <span aria-hidden="true">×</span>
         </button>
-        <img src="/brand/skywood-white.png" alt={brand.name} width={120} height={28} />
+        <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} />
         <Link href="/" className="sw-index-brands">
           {labels.allBrands}
         </Link>

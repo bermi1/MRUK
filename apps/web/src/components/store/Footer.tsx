@@ -75,11 +75,11 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
       </div>
       <div className="wrap mu-foot-grid">
         <div className="mu-foot-brand">
-          <img src="/brand/mruk-white.png" alt={brand.name} width={120} height={40} loading="lazy" />
+          <img src="/brand/mruk-white.png" alt={brand.name} width={58} height={40} loading="lazy" />
           <p>{brand.tagline}</p>
           <div className="mu-foot-partner">
             <span>{t('advancePartner')}</span>
-            <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={120} height={30} loading="lazy" />
+            <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
           </div>
         </div>
         <Columns brand={brand} cats={cats} t={t} headClass="mu-foot-h" />
@@ -115,7 +115,7 @@ function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryVie
         </p>
         <div className="sw-foot-grid">
           <div className="sw-foot-brand">
-            <img src="/brand/skywood-white.png" alt={brand.name} width={120} height={28} loading="lazy" />
+            <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} loading="lazy" />
             <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="sw-foot-concierge">
               <span className="sw-eyebrow light">{t('concierge')}</span>
               {t('chatWhatsApp')} →

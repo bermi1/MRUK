@@ -15,6 +15,7 @@
   --mu-line: #e4e7f0;
   --mu-display: var(--font-archivo), 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --monthly: var(--mu-sky-d);
+  --muted: #676c84; /* 5.2:1 on white (README muted #8A8EA3 is 3.2:1, too light for text) */
   --focus: var(--mu-sky);
 }
 [data-brand='mruk'] :is(h1, h2, h3, .h1, .h1-xl, .sec-head h2) { font-family: var(--mu-display); }
@@ -28,8 +29,8 @@
 
 .mu-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 26px; border-radius: 999px; font-size: 15.5px; font-weight: 700; white-space: nowrap; transition: transform 0.2s var(--ease), background 0.2s, box-shadow 0.2s; }
 .mu-btn:active { transform: scale(0.97); }
-.mu-btn-sky { background: var(--mu-sky); color: #fff; box-shadow: 0 10px 28px rgba(0, 152, 218, 0.38); }
-.mu-btn-sky:hover { background: #0aa6ea; box-shadow: 0 14px 34px rgba(0, 152, 218, 0.5); }
+.mu-btn-sky { background: var(--mu-sky); color: var(--mu-ink); box-shadow: 0 10px 28px rgba(0, 152, 218, 0.38); }
+.mu-btn-sky:hover { background: #22b0ee; box-shadow: 0 14px 34px rgba(0, 152, 218, 0.5); }
 .mu-btn-sky span { transition: transform 0.2s var(--ease); }
 .mu-btn-sky:hover span { transform: translateX(3px); }
 .mu-btn-ghost { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.4); }
@@ -71,7 +72,7 @@
 .mu-act small { font-size: 11.5px; font-weight: 500; color: var(--muted2); }
 .mu-cart { display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 8px 0 18px; border-radius: 999px; background: var(--mu-navy); color: #fff; font-size: 14px; font-weight: 700; margin-left: 4px; transition: background 0.2s; }
 .mu-cart:hover { background: var(--mu-navy-d); }
-.mu-count { min-width: 32px; height: 32px; border-radius: 999px; background: var(--mu-sky); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; padding: 0 8px; }
+.mu-count { min-width: 32px; height: 32px; border-radius: 999px; background: var(--mu-sky); color: var(--mu-ink); font-weight: 800; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; padding: 0 8px; }
 .mu-nav { border-top: 1px solid var(--mu-line); border-bottom: 1px solid var(--mu-line); }
 .mu-nav .wrap { height: 50px; display: flex; align-items: stretch; justify-content: space-between; gap: 16px; }
 .mu-nav ul { display: flex; align-items: stretch; gap: 2px; margin: 0; padding: 0; list-style: none; min-width: 0; overflow: hidden; }
@@ -236,8 +237,8 @@
 .pc-mruk .pimg { position: absolute; inset: 0; border-radius: 16px; background: linear-gradient(150deg, #f4f6fc 0%, #e3e8f5 100%); }
 .pc-mruk .pimg > img { filter: drop-shadow(0 16px 20px rgba(18, 22, 74, 0.2)); transition: transform 0.5s var(--ease); }
 .pc-mruk:hover .pimg > img { transform: scale(1.05); }
-.pc-mruk .pc-badge { position: absolute; left: 12px; top: 12px; z-index: 2; font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em; padding: 6px 10px; border-radius: 999px; background: var(--mu-sky); color: #fff; }
-.mu-flash .pc-mruk .pc-badge { background: #d7263d; }
+.pc-mruk .pc-badge { position: absolute; left: 12px; top: 12px; z-index: 2; font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em; padding: 6px 10px; border-radius: 999px; background: var(--mu-sky); color: var(--mu-ink); }
+.mu-flash .pc-mruk .pc-badge { background: #c81f35; color: #fff; }
 .pc-mruk .pc-body { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px 16px; flex: 1; }
 .pc-mruk .pc-model { font-family: var(--font-geist-mono), monospace; font-size: 11.5px; color: var(--muted); }
 .pc-mruk .pc-name { margin: 0; font-family: var(--font-geist), system-ui, sans-serif; font-size: 15.5px; font-weight: 650; line-height: 1.25; color: var(--mu-ink); }
@@ -306,7 +307,7 @@
 .mu-steps li { border-radius: 22px; padding: 22px; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); display: flex; flex-direction: column; gap: 8px; }
 .mu-steps b { font-size: 16.5px; }
 .mu-steps span:last-child { font-size: 13.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.72); }
-.mu-step-n { width: 40px; height: 40px; border-radius: 12px; background: var(--mu-sky); font-family: var(--mu-display); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+.mu-step-n { width: 40px; height: 40px; border-radius: 12px; background: var(--mu-sky); color: var(--mu-ink); font-family: var(--mu-display); font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
 
 /* Reviews + showrooms */
 .mu-social { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }

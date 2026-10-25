@@ -24,7 +24,7 @@ export function SkywoodMobileMenu({ brand, brandName, cats, labels, announcement
               <button type="button" className="sw-mm-close" onClick={close}>
                 {labels.close}
               </button>
-              <img src="/brand/skywood-white.png" alt={brandName} width={104} height={24} />
+              <img src="/brand/skywood-white.png" alt={brandName} width={84} height={24} />
               <Link href={`${b}/search`} className="sw-mm-search">
                 {labels.searchShort}
               </Link>

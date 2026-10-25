@@ -74,7 +74,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             {labels.allCategories}
           </button>
           <Link href={b} className="mu-logo" aria-label={`${brand.name} home`}>
-            <img src={brand.logo} alt={brand.name} width={150} height={44} />
+            <img src={brand.logo} alt={brand.name} width={64} height={44} />
           </Link>
           <form
             className="mu-search"

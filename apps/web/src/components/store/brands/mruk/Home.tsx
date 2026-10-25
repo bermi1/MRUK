@@ -230,7 +230,7 @@ export function MrukHome(props: {
         <div className="wrap">
           <div className="mu-advance-in" data-reveal>
             <div className="mu-advance-copy">
-              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={140} height={36} className="mu-az" loading="lazy" />
+              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={46} height={36} className="mu-az" loading="lazy" />
               <h2>{t('advanceTitle')}</h2>
               <p>{t('fromPerMonth', { amount: fmt(exampleMonthly) })}</p>
               <Link href={`${b}/c/all`} className="mu-btn mu-btn-sky">

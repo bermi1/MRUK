@@ -25,7 +25,7 @@ export function MrukMobileMenu({ brand, cats, labels, announcement }: MobileMenu
         createPortal(
           <div className="mu-mm" role="dialog" aria-modal="true" aria-label={labels.menu} ref={panel}>
             <div className="mu-mm-top">
-              <img src="/brand/mruk.png" alt="Mr UK" width={92} height={28} />
+              <img src="/brand/mruk.png" alt="Mr UK" width={41} height={28} />
               <button type="button" className="mu-mm-close" onClick={close} aria-label={labels.close}>
                 <span aria-hidden="true">×</span>
               </button>

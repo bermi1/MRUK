@@ -6,8 +6,8 @@ import '@/styles/globals.css';
 import { SwRegister } from '@/components/SwRegister';
 
 const geist = localFont({ src: '../fonts/Geist-latin.woff2', variable: '--font-geist', weight: '100 900', display: 'swap' });
-const geistMono = localFont({ src: '../fonts/GeistMono-latin.woff2', variable: '--font-geist-mono', weight: '100 900', display: 'swap' });
-const caveat = localFont({ src: '../fonts/Caveat-latin.woff2', variable: '--font-caveat', weight: '400 700', display: 'swap' });
+const geistMono = localFont({ src: '../fonts/GeistMono-latin.woff2', variable: '--font-geist-mono', weight: '100 900', display: 'swap', preload: false });
+const caveat = localFont({ src: '../fonts/Caveat-latin.woff2', variable: '--font-caveat', weight: '400 700', display: 'swap', preload: false });
 
 // Every page reads live data (prices, stock, CMS): render on request, never at build time.
 export const dynamic = 'force-dynamic';

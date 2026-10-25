@@ -173,7 +173,7 @@ export function SkywoodHome(props: {
             </p>
             <h2>{t('swAdvanceTitle')}</h2>
             <p>{t('swAdvanceBody')}</p>
-            <img src="/brand/azania-bank.png" alt="Azania Bank" width={132} height={34} loading="lazy" className="sw-az" />
+            <img src="/brand/azania-bank.png" alt="Azania Bank" width={44} height={34} loading="lazy" className="sw-az" />
           </div>
           <ul className="sw-adv-terms">
             {[3, 6, 12].map((m, k) => (
