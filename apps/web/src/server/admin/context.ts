@@ -1,7 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { prisma, type Prisma } from '@bt/db';
-import { brandScope, type StaffContext } from '../auth';
+import { brandScope, staffContextOf, type StaffContext } from '../auth';
 import { currentStaffSession } from '../session';
 
 export const BRAND_COOKIE = 'bt_admin_brand';
@@ -47,25 +47,16 @@ export function pickBrand(ctx: StaffContext, f: AdminFilters, q?: string | strin
   return (allowed[0] as 'mruk' | 'skywood' | undefined) ?? null;
 }
 
-/** Staff context for route handlers: never redirects, returns null when not signed in. */
+/** Staff context for route handlers: never redirects, returns null when not signed in (or a temporary password is pending). */
 export async function staffForRoute(): Promise<StaffContext | null> {
   const s = await currentStaffSession();
-  if (!s || s.kind !== 'staff' || !s.staff) return null;
-  const staff = s.staff;
-  const permissions = staff.role.permissions;
-  const can = (p: string) => permissions.includes('*') || permissions.includes(p);
-  return {
-    id: staff.id,
-    email: staff.email,
-    name: staff.name,
-    role: staff.roleId,
-    roleName: staff.role.name,
-    permissions,
-    brands: staff.brands,
-    can,
-    canBrand: (b: string) => staff.brands.includes('*') || staff.brands.includes(b),
-  };
+  if (!s || s.kind !== 'staff' || !s.staff || s.staff.mustChangePassword) return null;
+  return staffContextOf(s);
 }
+
+/** Stock levels (prototype): Low at 6 units or fewer, Reorder at 3 or fewer. */
+export const LOW_STOCK = 6;
+export const REORDER_STOCK = 3;
 
 /** Live counts for the sidebar badges. */
 export async function navCounts(ctx: StaffContext, f: AdminFilters) {
@@ -73,7 +64,7 @@ export async function navCounts(ctx: StaffContext, f: AdminFilters) {
   const [orders, advances, lowStock, tickets] = await Promise.all([
     ctx.can('orders') ? prisma.order.count({ where: { ...ow, status: { in: ['approved', 'packed'] } } }) : 0,
     ctx.can('advance') ? prisma.salaryAdvanceApplication.count({ where: { status: 'submitted', order: ow } }) : 0,
-    ctx.can('inventory') ? prisma.product.count({ where: { brandKey: { in: f.brands }, hidden: false, stock: { lte: 5 } } }) : 0,
+    ctx.can('inventory') ? prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } } }) : 0,
     ctx.can('tickets') ? prisma.ticket.count({ where: { brandKey: { in: f.brands }, status: 'new' } }) : 0,
   ]);
   return { orders, advances, lowStock, tickets };

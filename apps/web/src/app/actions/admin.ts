@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { hashPassword, prisma, type Prisma } from '@bt/db';
 import { ORDER_STATUSES, type OrderStatus } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
-import { AuthError, beginTotpEnrolment, requireStaff, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
+import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
 import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
 import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
@@ -158,6 +158,7 @@ export async function bankDecisionAction(id: string): Promise<ActionResult<Msg>>
     const d = await requestBankDecision(a.id, integrations.bank.name);
     await audit(ctx.email, 'advance.bank_decision', 'SalaryAdvanceApplication', a.id, { order: a.order.number, result: d.status });
     revalidateAdmin();
+    if (d.status === 'rejected') revalidateStore(); // reserved stock returned
     return { message: d.status === 'pending' ? 'Azania Bank is still reviewing this application' : `Azania Bank ${d.status === 'approved' ? 'approved' : 'declined'} the application. ${d.note}` };
   });
 }
@@ -166,10 +167,12 @@ export async function decideAdvanceAction(id: string, decision: 'approved' | 're
   return run('advance.write', async (ctx) => {
     const a = await loadApp(ctx, id);
     const dec = z.enum(['approved', 'rejected']).parse(decision);
+    if (a.status !== 'submitted') throw new Error('This application has already been decided. Reload the page.');
     const note = textZ(300, dec === 'rejected' ? 3 : 0).parse(fields(fd).note ?? '');
     await decideAdvance(a.id, dec, ctx.name, note || `Manual ${dec === 'approved' ? 'approval' : 'decision'} by ${ctx.name}`);
     await audit(ctx.email, `advance.${dec}`, 'SalaryAdvanceApplication', a.id, { order: a.order.number, manual: true });
     revalidateAdmin();
+    if (dec === 'rejected') revalidateStore(); // reserved stock returned
     return { message: dec === 'approved' ? 'Application approved' : 'Application rejected' };
   });
 }
@@ -620,6 +623,18 @@ export async function ticketStatusAction(id: string, status: string): Promise<Ac
 
 // Settings and users (owner only) -----------------------------------------------------------
 
+/** Random temporary password that passes the strength rules (upper, lower, digits, symbol). */
+function tempPassword(): string {
+  return `Tmp-${randomBytes(6).toString('base64url')}-${randomBytes(3).toString('hex')}9`;
+}
+
+/** Keep at least one active Super admin so nobody is locked out of Settings. */
+async function assertOwnerRemains(userId: string, nextRole: string, nextActive: boolean) {
+  if (nextRole === 'owner' && nextActive) return;
+  const others = await prisma.staffUser.count({ where: { roleId: 'owner', active: true, id: { not: userId } } });
+  if (!others) throw new Error('Keep at least one active Super admin');
+}
+
 function brandsFrom(fd: FormData): string[] {
   const picked = fd.getAll('brands').filter((x): x is string => x === 'mruk' || x === 'skywood');
   const uniq = [...new Set(picked)];
@@ -633,11 +648,11 @@ export async function createStaffAction(fd: FormData): Promise<ActionResult<Msg>
     if (!role) throw new Error('Choose a role');
     const brands = brandsFrom(fd);
     if (!brands.length) throw new Error('Choose at least one brand');
-    const temp = `${randomBytes(6).toString('base64url')}-${randomBytes(4).toString('hex')}`;
-    const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: role.id, brands, passwordHash: hashPassword(temp) } });
+    const temp = tempPassword();
+    const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: role.id, brands, passwordHash: hashPassword(temp), mustChangePassword: true } });
     await audit(ctx.email, 'staff.create', 'StaffUser', u.id, { role: role.id, brands });
     revalidateAdmin();
-    return { message: `Created. Temporary password (shown once): ${temp} — they set up 2FA on first sign-in.` };
+    return { message: `Created. Temporary password (shown once): ${temp} — they set up 2FA and choose their own password at first sign-in.` };
   });
 }
 
@@ -652,6 +667,7 @@ export async function updateStaffAction(id: string, fd: FormData): Promise<Actio
     if (!brands.length) throw new Error('Choose at least one brand');
     const active = checkbox(f.active);
     if (u.id === ctx.id && (!active || roleId !== u.roleId)) throw new Error('You cannot change your own role or deactivate yourself');
+    if (u.roleId === 'owner' && u.active) await assertOwnerRemains(u.id, roleId, active);
     await prisma.staffUser.update({ where: { id: u.id }, data: { roleId, brands, active } });
     if (!active || roleId !== u.roleId) await prisma.session.deleteMany({ where: { staffId: u.id } });
     await audit(ctx.email, 'staff.update', 'StaffUser', u.id, { role: { from: u.roleId, to: roleId }, brands, active });
@@ -673,6 +689,37 @@ export async function resetStaffTotpAction(id: string): Promise<ActionResult<Msg
   });
 }
 
+export async function setTempPasswordAction(id: string): Promise<ActionResult<Msg>> {
+  return run('settings', async (ctx) => {
+    const u = await prisma.staffUser.findUnique({ where: { id: idZ.parse(id) } });
+    if (!u) throw new Error('User not found');
+    if (u.id === ctx.id) throw new Error('Change your own password from My account');
+    const temp = tempPassword();
+    await prisma.staffUser.update({ where: { id: u.id }, data: { passwordHash: hashPassword(temp), mustChangePassword: true, passwordChangedAt: null, failedLogins: 0, lockedUntil: null } });
+    await prisma.session.deleteMany({ where: { staffId: u.id } });
+    await audit(ctx.email, 'staff.password_reset', 'StaffUser', u.id, { mustChange: true, sessionsRevoked: true });
+    revalidateAdmin();
+    return { message: `Temporary password (shown once): ${temp} — they must choose a new one at next sign-in.` };
+  });
+}
+
+// My account ---------------------------------------------------------------------------------
+
+export async function changeOwnPasswordAction(fd: FormData): Promise<ActionResult<Msg>> {
+  try {
+    const ctx = await requireStaff(undefined, { allowPasswordChange: true });
+    const f = z
+      .object({ current: z.string().min(1, 'Enter your current password').max(200), next: z.string().min(1, 'Enter a new password').max(200), confirm: z.string().max(200) })
+      .parse(fields(fd));
+    if (f.next !== f.confirm) return { ok: false, error: 'The new passwords do not match', field: 'confirm' };
+    await changeOwnStaffPassword(ctx, f.current, f.next);
+    revalidateAdmin();
+    return { ok: true, data: { message: 'Password changed. Other devices have been signed out.' } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 const NOTIFY_KEYS = ['orders', 'bank', 'stock', 'tickets', 'daily'] as const;
 
 export async function saveNotificationsAction(fd: FormData): Promise<ActionResult<Msg>> {
@@ -690,7 +737,9 @@ export async function saveSecurityAction(fd: FormData): Promise<ActionResult<Msg
   return run('settings', async (ctx) => {
     const f = fields(fd);
     const cur = ((await prisma.setting.findUnique({ where: { key: 'security' } }))?.value ?? {}) as Record<string, unknown>;
-    const value = { ...cur, sessionTimeoutMinutes: intZ(5, 480).parse(f.sessionTimeoutMinutes), require2fa: checkbox(f.require2fa) };
+    // Two-factor sign-in is always enforced; drop the old no-op "require2fa" toggle value.
+    const { require2fa: _old, ...rest } = cur;
+    const value = { ...rest, sessionTimeoutMinutes: intZ(5, 480).parse(f.sessionTimeoutMinutes) };
     await prisma.setting.upsert({ where: { key: 'security' }, create: { key: 'security', value }, update: { value } });
     await audit(ctx.email, 'settings.security', 'Setting', 'security', value as Prisma.InputJsonValue);
     revalidateAdmin();

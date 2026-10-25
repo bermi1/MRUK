@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { staffLogoutAction } from '@/app/actions/admin';
 import { NavLink, PageTitle } from '@/components/admin/NavLink';
+import { SideToggle } from '@/components/admin/SideToggle';
 import { TopControls } from '@/components/admin/TopControls';
 import { ICON } from '@/components/admin/ui';
 import { initials } from '@/lib/format';
@@ -25,10 +26,12 @@ const TITLES: Record<string, string> = {
   reports: 'Reports',
   settings: 'Settings and users',
   search: 'Search',
+  account: 'My account',
 };
 
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await requireStaff();
+  // The password page lives inside this layout, so the layout itself must allow a pending password change.
+  const ctx = await requireStaff(undefined, { allowPasswordChange: true });
   const f = await adminFilters(ctx);
   const [counts, branches] = await Promise.all([navCounts(ctx, f), branchOptions()]);
   const nav: { group?: string; href: string; label: string; d: string; perm: string; badge?: number }[] = [
@@ -46,7 +49,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     { href: '/admin/reports', label: 'Reports', d: ICON.rep, perm: 'reports' },
     { href: '/admin/settings', label: 'Settings and users', d: ICON.set, perm: 'settings' },
   ];
-  const visible = nav.filter((n) => ctx.can(n.perm));
+  const visible = ctx.mustChangePassword ? [] : nav.filter((n) => ctx.can(n.perm));
   // Keep group headings when the first item of a group is hidden.
   let lastGroup = '';
   const groupOf = (i: number) => {
@@ -57,6 +60,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   return (
     <div className="ad-shell">
       <aside className="ad-side" aria-label="Admin navigation">
+        <div className="ad-sidehead">
         <Link href="/admin" className="ad-brand">
           <span className="logo">
             <img src="/brand/mruk.png" alt="Mr UK" />
@@ -66,7 +70,9 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
             <small>Mr UK and Skywood</small>
           </span>
         </Link>
-        <nav>
+          <SideToggle />
+        </div>
+        <nav id="ad-sidenav">
           {visible.map((n, i) => {
             const g = groupOf(i);
             const head = g !== lastGroup ? g : '';
@@ -93,10 +99,10 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           <span className="av" aria-hidden="true">
             {initials(ctx.name)}
           </span>
-          <span style={{ minWidth: 0 }}>
+          <Link href="/admin/account" className="ad-me" title="My account and password">
             <b>{ctx.name}</b>
-            <small>{ctx.roleName}</small>
-          </span>
+            <small>{ctx.roleName} · My account</small>
+          </Link>
           <form action={staffLogoutAction}>
             <button type="submit" className="ad-signout">
               Sign out
@@ -107,6 +113,8 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
       <div className="ad-main">
         <header className="ad-top">
           <PageTitle titles={TITLES} />
+          {!ctx.mustChangePassword && (
+            <>
           <form action="/admin/search" className="ad-search" role="search">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A8EA3" strokeWidth="2" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
@@ -115,8 +123,18 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
             <input name="q" type="search" placeholder="Search orders, SKUs, customers, invoices" aria-label="Search orders, products, customers and invoices" maxLength={80} />
           </form>
           <TopControls brand={f.brand} brands={f.allowed} branch={f.branch ?? 'all'} branches={branches} />
+            </>
+          )}
         </header>
         <main className="ad-body" id="main">
+          {ctx.usingIssuedPassword && !ctx.mustChangePassword && (
+            <div className="ad-alert warn ad-pwbanner" role="status">
+              <span>You are still using the password you were given. Choose your own password to keep this account safe.</span>
+              <Link className="ad-btn sm" href="/admin/account">
+                Change password
+              </Link>
+            </div>
+          )}
           {children}
         </main>
       </div>

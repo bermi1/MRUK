@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ADVANCE_STATUS_LABEL, ORDER_STATUS_LABEL, type AdvanceStatus, type OrderStatus } from '@bt/core';
 
 export const ORDER_PILL: Record<string, string> = {
@@ -71,6 +72,35 @@ export function Meter({ pct, color = '#283A6E', lg }: { pct: number; color?: str
       <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, background: color }} />
     </div>
   );
+}
+
+/** "1–50 of 230 · Previous / Next" for long lists. `href(page)` builds the link for a page. */
+export function Pager({ page, per, total, href }: { page: number; per: number; total: number; href: (page: number) => string }) {
+  if (total <= per) return null;
+  return (
+    <nav className="ad-between" aria-label="Pages" style={{ marginTop: 12, fontSize: 13 }}>
+      <span className="ad-muted2">
+        {(page - 1) * per + 1}–{Math.min(total, page * per)} of {total}
+      </span>
+      <span className="ad-row">
+        {page > 1 && (
+          <Link className="ad-btn line sm" href={href(page - 1)}>
+            Previous
+          </Link>
+        )}
+        {page * per < total && (
+          <Link className="ad-btn line sm" href={href(page + 1)}>
+            Next
+          </Link>
+        )}
+      </span>
+    </nav>
+  );
+}
+
+/** Page number from a query string value (1…max). */
+export function pageParam(v: string | undefined, max = 1000): number {
+  return Math.max(1, Math.min(max, Math.floor(Number(v)) || 1));
 }
 
 export const ICON = {

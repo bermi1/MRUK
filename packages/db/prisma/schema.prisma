@@ -402,6 +402,10 @@ model StaffUser {
   failedLogins  Int       @default(0)
   lockedUntil   DateTime?
   lastLoginAt   DateTime?
+  /// Set when an owner issues a temporary password; the next sign-in must choose a new one.
+  mustChangePassword Boolean   @default(false)
+  /// Null until the staff member chooses their own password (seeded or invited accounts).
+  passwordChangedAt  DateTime?
   createdAt     DateTime  @default(now())
   role          Role      @relation(fields: [roleId], references: [id])
   sessions      Session[]
