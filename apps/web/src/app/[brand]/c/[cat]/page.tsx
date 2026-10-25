@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ProductRow, ProductTile } from '@/components/store/ProductTile';
+import { CatGlyph, glyphKind } from '@/components/store/CatGlyph';
 import { SafeImg } from '@/components/store/SafeImg';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
@@ -46,7 +47,10 @@ export default async function CategoryPage({ params, searchParams }: { params: P
           <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(26px, 3.4vw, 44px)', fontWeight: 600, letterSpacing: '-.03em' }}>{cat?.name ?? 'All products'}</h1>
           <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{list.length} products · Salary Advance on every item</div>
         </div>
-        <div className="art">{heroImg && <SafeImg src={heroImg} alt="" />}</div>
+        <div className="art">
+          <CatGlyph kind={glyphKind(cat?.id ?? 'all', cat?.name)} className="cathero-glyph" strokeWidth={1} />
+          {heroImg && <SafeImg src={heroImg} alt="" />}
+        </div>
       </div>
       {!cat && (
         <div className="nsb" style={{ display: 'flex', gap: 8, marginTop: 18, overflowX: 'auto' }}>

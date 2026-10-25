@@ -642,3 +642,16 @@ textarea.input { resize: vertical; }
 .pc { position: relative; }
 .pc .pc-add, .pc .pc-badge { position: relative; z-index: 3; }
 .pc .pc-badge { position: absolute; }
+
+/* Category tiles on both brands: photo panel on top, details underneath (no text over images). */
+.ptile .ph .ph-model, .ptile .ph .sub { display: none; }
+.ptile .ph-glyph { top: 50%; }
+.cathero .art { overflow: hidden; }
+@media (max-width: 767px) {
+  /* Phone shop grid: 3 compact cards; the quick-add stays a 44px touch target via an invisible hit area. */
+  [data-brand] .grid-5 .ptile .plus { width: 32px; height: 32px; font-size: 17px; position: relative; flex: none; }
+  [data-brand] .grid-5 .ptile .plus::after { content: ''; position: absolute; inset: -6px; }
+  [data-brand] .grid-5 .ptile .meta .row { gap: 4px; }
+  [data-brand] .grid-5 .ptile .meta .row > div:first-child { min-width: 0; }
+  [data-brand] .grid-5 .ptile .meta .row > div:first-child > div:first-child { font-size: 12px !important; }
+}

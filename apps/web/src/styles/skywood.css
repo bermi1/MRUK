@@ -278,7 +278,7 @@
 /* Shared pages, Skywood accents */
 [data-brand='skywood'] .ph-glyph { color: var(--sw-bronze); opacity: 0.42; }
 [data-brand='skywood'] .ph-model { font-family: var(--sw-display); font-weight: 340; }
-[data-brand='skywood'] .ptile .meta div:nth-child(2) { font-family: var(--sw-display); font-weight: 400 !important; font-size: 17px !important; }
+[data-brand='skywood'] .ptile .meta > div:nth-child(2) { font-family: var(--sw-display); font-weight: 400 !important; font-size: 17px !important; }
 [data-brand='skywood'] .foot-grid > div:first-child p { font-family: var(--sw-display); font-size: 20px !important; line-height: 1.3 !important; color: #e8dfd0; font-weight: 300; }
 
 /* Phone chrome */
@@ -360,4 +360,29 @@
   .sw-set-copy h3 { font-size: 24px; }
   .sw-set-price { align-items: flex-start; }
   .sw-visit { margin-top: 72px; }
+}
+
+/* Skywood category tiles: gallery cards (stone photo panel, details on paper). */
+[data-brand='skywood'] .ptile { height: auto; display: flex; flex-direction: column; background: transparent; box-shadow: none; border-radius: 0; color: var(--sw-ink); }
+[data-brand='skywood'] .ptile:hover { transform: none; box-shadow: none; }
+[data-brand='skywood'] .ptile.shade-tb::after { display: none; }
+[data-brand='skywood'] .ptile .pimg { position: relative; inset: auto; aspect-ratio: 4 / 5; border-radius: 0; }
+[data-brand='skywood'] .ptile .pimg > img { padding: 12%; transition: transform 1.2s var(--sw-slow); }
+[data-brand='skywood'] .ptile:hover .pimg > img { transform: scale(1.05); }
+[data-brand='skywood'] .ptile .tags { position: absolute; left: 12px; right: 12px; top: 12px; }
+[data-brand='skywood'] .ptile .meta { position: relative; left: auto; right: auto; bottom: auto; padding: 14px 0 6px; }
+[data-brand='skywood'] .ptile .plus { background: transparent; color: var(--sw-ink); box-shadow: inset 0 0 0 1px var(--line); border-radius: 0; width: 40px; height: 40px; }
+[data-brand='skywood'] .ptile .plus:hover { background: var(--sw-ink); color: var(--sw-gold-hi); }
+[data-brand='skywood'] .cathero { background: #ede6da; color: var(--sw-ink); box-shadow: none; border-radius: 0; height: 240px; }
+[data-brand='skywood'] .cathero .art::after { background: linear-gradient(90deg, #ede6da 0%, rgba(237, 230, 218, 0) 40%); }
+[data-brand='skywood'] .cathero .art img { object-fit: contain; padding: 20px; }
+[data-brand='skywood'] .cathero nav { opacity: 1 !important; color: var(--sw-bronze); }
+[data-brand='skywood'] .cathero h1 { font-size: clamp(32px, 4.4vw, 64px) !important; }
+.cathero-glyph { position: absolute; right: 14%; top: 50%; width: 140px; height: auto; translate: 0 -50%; }
+[data-brand='skywood'] .cathero-glyph { color: var(--sw-bronze); opacity: 0.5; }
+@media (max-width: 767px) {
+  [data-brand='skywood'] .cathero { height: auto; }
+  [data-brand='skywood'] .grid-5 .ptile { aspect-ratio: auto; height: auto; border-radius: 0; }
+  [data-brand='skywood'] .grid-5 .ptile .meta { padding: 8px 0 4px; }
+  [data-brand='skywood'] .grid-5 .ptile .meta > div:nth-child(2) { font-size: 13px !important; }
 }

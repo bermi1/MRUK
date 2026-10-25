@@ -111,7 +111,6 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
               <label className="sr-only" htmlFor="sw-q">
                 {labels.searchShort}
               </label>
-              {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
               <input id="sw-q" name="q" placeholder={labels.search} autoComplete="off" autoFocus onKeyDown={(e) => e.key === 'Escape' && setSearch(false)} />
               <button type="submit" className="sw-search-go">
                 {labels.searchShort} <span aria-hidden="true">→</span>

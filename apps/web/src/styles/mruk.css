@@ -335,6 +335,8 @@
 [data-brand='mruk'] .ptile .pimg { position: relative; inset: auto; aspect-ratio: 1; margin: 8px 8px 0; border-radius: 16px; }
 [data-brand='mruk'] .ptile .meta { position: relative; left: auto; right: auto; bottom: auto; padding: 12px 14px 14px; }
 [data-brand='mruk'] .ptile .glass { color: var(--mu-navy); background: rgba(255, 255, 255, 0.85); }
+[data-brand='mruk'] .ptile .tags { position: absolute; left: 18px; right: 18px; top: 18px; }
+[data-brand='mruk'] .cathero-glyph { position: absolute; right: 12%; top: 50%; width: 150px; height: auto; translate: 0 -50%; color: var(--mu-sky-l); opacity: 0.5; }
 [data-brand='mruk'] .ptile .monthly-light { color: var(--mu-sky-d); }
 [data-brand='mruk'] .ptile .plus { background: var(--mu-navy); color: #fff; width: 40px; height: 40px; }
 [data-brand='mruk'] .ptile:hover { box-shadow: inset 0 0 0 1px transparent, 0 20px 40px rgba(18, 22, 74, 0.14); }
@@ -344,6 +346,7 @@
 [data-brand='mruk'] .cathero .art img { object-fit: contain; padding: 18px; }
 [data-brand='mruk'] .pdp h1 { font-weight: 780 !important; letter-spacing: -0.04em !important; }
 [data-brand='mruk'] .thumbs button { background: var(--mu-cloud); }
+[data-brand='mruk'] .pdp-badge { background: var(--mu-navy); color: #fff; backdrop-filter: none; }
 
 /* Footer, Mr UK */
 [data-brand='mruk'] .foot { background: radial-gradient(40% 80% at 100% 0%, rgba(0, 152, 218, 0.2), rgba(0, 152, 218, 0) 70%), var(--mu-ink); border-top: 4px solid var(--mu-sky); }
