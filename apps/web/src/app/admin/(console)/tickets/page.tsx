@@ -4,14 +4,15 @@ import { fmtDateTime, formatTzPhone } from '@bt/core';
 import { assignTicketAction, replyTicketAction, ticketStatusAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Pill, TICKET_PILL } from '@/components/admin/ui';
+import { BrandChip, Forbidden, Pager, pageParam, Pill, TICKET_PILL } from '@/components/admin/ui';
 import { waLink } from '@/lib/format';
-import { adminFilters, BRAND_NAME } from '@/server/admin/context';
+import { adminFilters } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Support tickets' };
 
 const STATUSES = ['new', 'open', 'waiting', 'resolved'] as const;
+const PER = 50;
 const LABEL: Record<string, string> = { new: 'New', open: 'Open', waiting: 'Waiting on customer', resolved: 'Resolved' };
 
 export default async function TicketsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -20,9 +21,12 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const f = await adminFilters(ctx);
   const st = (STATUSES as readonly string[]).includes(sp.status ?? '') ? sp.status! : 'all';
-  const [list, counts] = await Promise.all([
-    prisma.ticket.findMany({ where: { brandKey: { in: f.brands }, ...(st !== 'all' ? { status: st } : {}) }, orderBy: { createdAt: 'desc' }, take: 100 }),
+  const page = pageParam(sp.page);
+  const listWhere = { brandKey: { in: f.brands }, ...(st !== 'all' ? { status: st } : {}) };
+  const [list, counts, total] = await Promise.all([
+    prisma.ticket.findMany({ where: listWhere, orderBy: { createdAt: 'desc' }, skip: (page - 1) * PER, take: PER }),
     prisma.ticket.groupBy({ by: ['status'], where: { brandKey: { in: f.brands } }, _count: { _all: true } }),
+    prisma.ticket.count({ where: listWhere }),
   ]);
   const selId = sp.id && /^[a-z0-9]{10,40}$/.test(sp.id) ? sp.id : list[0]?.id;
   const t = selId ? await prisma.ticket.findFirst({ where: { id: selId, brandKey: { in: f.allowed } }, include: { messages: { orderBy: { at: 'asc' } }, brand: { select: { name: true } } } }) : null;
@@ -30,10 +34,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const productNames = new Map((await prisma.product.findMany({ where: { id: { in: list.map((x) => x.productId).filter(Boolean) } }, select: { id: true, name: true } })).map((p) => [p.id, p.name]));
   const write = ctx.can('tickets.write');
   const count = (s: string) => (s === 'all' ? counts.reduce((a, c) => a + c._count._all, 0) : (counts.find((c) => c.status === s)?._count._all ?? 0));
-  const href = (extra: Record<string, string>) => `/admin/tickets?${new URLSearchParams({ ...(st !== 'all' ? { status: st } : {}), ...extra })}`;
+  const href = (extra: Record<string, string>) => `/admin/tickets?${new URLSearchParams({ ...(st !== 'all' ? { status: st } : {}), ...(page > 1 ? { page: String(page) } : {}), ...extra })}`;
 
   return (
-    <div className="ad-detail" style={{ gridTemplateColumns: 'minmax(0,1fr) 440px' }}>
+    <div className="ad-detail wide-aside">
       <section className="ad-card">
         <h2 className="ad-h">Support tickets</h2>
         <p className="ad-sub">Requests sent from the Mr UK and Skywood support pages</p>
@@ -60,7 +64,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
                   {x.name} · {x.issue}
                 </span>
                 <span className="ad-muted2" style={{ display: 'block', fontSize: 12.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {BRAND_NAME[x.brandKey]} · {productNames.get(x.productId) ?? 'No product'} · {x.description}
+                  <BrandChip brand={x.brandKey} /> {productNames.get(x.productId) ?? 'No product'} · {x.description}
                 </span>
               </span>
               <Pill cls={TICKET_PILL[x.status] ?? 'pill-grey'}>{LABEL[x.status] ?? x.status}</Pill>
@@ -68,6 +72,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
           ))}
           {!list.length && <div className="ad-empty">No tickets here</div>}
         </div>
+        <Pager page={page} per={PER} total={total} href={(n) => href({ page: String(n) })} />
       </section>
       {t ? (
         <aside className="ad-card ad-stack s12" aria-label={`Ticket ${t.number}`}>
@@ -76,8 +81,9 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
               {t.number}
             </span>
             <span className="ad-row">
+              <BrandChip brand={t.brandKey} />
               <span className="ad-muted" style={{ fontSize: 12.5 }}>
-                {t.brand.name} · via {t.channel}
+                via {t.channel}
               </span>
               <Pill cls={TICKET_PILL[t.status] ?? 'pill-grey'}>{LABEL[t.status]}</Pill>
             </span>

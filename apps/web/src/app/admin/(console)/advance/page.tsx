@@ -4,7 +4,7 @@ import { fmtDate, fmtDateTime, fmtTZS, formatTzPhone, maskTzPhone } from '@bt/co
 import { advanceLifecycleAction, bankDecisionAction, decideAdvanceAction, instalmentPaidAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
-import { AdvancePill, Forbidden, Meter } from '@/components/admin/ui';
+import { AdvancePill, BrandChip, Forbidden, Meter } from '@/components/admin/ui';
 import { adminFilters, ago, monthName, orderWhere, startOfMonthEAT } from '@/server/admin/context';
 import { audit } from '@/server/audit';
 import { requireStaff } from '@/server/auth';
@@ -61,7 +61,9 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
         <span className="mono">{r.contract?.number ?? r.order.number}</span>
         <span>{ago(r.createdAt)}</span>
       </span>
-      <span className="nm">{r.fullName}</span>
+      <span className="nm">
+        {r.fullName} <BrandChip brand={r.order.brandKey} />
+      </span>
       <span className="emp">{r.employer}</span>
       <span className="bot">
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.order.items[0]?.name ?? r.order.number}</span>
@@ -108,6 +110,7 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
                 {a.fullName}
               </h2>
               <AdvancePill status={a.status} />
+              <BrandChip brand={a.order.brandKey} />
               <span className="mono ad-muted2" style={{ fontSize: 12 }}>
                 {a.contract?.number} · <Link href={`/admin/orders?o=${a.order.number}`}>{a.order.number}</Link>
               </span>
@@ -325,7 +328,9 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
                         {r.contract?.number ?? r.order.number}
                       </Link>
                     </td>
-                    <td>{r.fullName}</td>
+                    <td>
+                      {r.fullName} <BrandChip brand={r.order.brandKey} />
+                    </td>
                     <td className="ad-muted2">{r.employer}</td>
                     <td>
                       {r.termMonths} × {fmtTZS(r.monthly)}

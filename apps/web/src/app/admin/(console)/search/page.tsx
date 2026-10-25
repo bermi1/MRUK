@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
 import { fmtDate, fmtTZS, formatTzPhone } from '@bt/core';
-import { OrderPill, Pill, INVOICE_PILL, Thumb } from '@/components/admin/ui';
-import { adminFilters, BRAND_NAME, orderWhere } from '@/server/admin/context';
+import { BrandChip, OrderPill, Pill, INVOICE_PILL, Thumb } from '@/components/admin/ui';
+import { adminFilters, orderWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Search' };
@@ -42,7 +42,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                   <td>
                     <Link className="num" href={`/admin/orders?o=${o.number}`}>
                       {o.number}
-                    </Link>
+                    </Link>{' '}
+                    <BrandChip brand={o.brandKey} />
                   </td>
                   <td>{o.contactName}</td>
                   <td className="ad-muted2">{formatTzPhone(o.contactPhone)}</td>
@@ -74,7 +75,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                       {p.model}
                     </div>
                   </td>
-                  <td className="ad-muted2">{BRAND_NAME[p.brandKey]}</td>
+                  <td>
+                    <BrandChip brand={p.brandKey} />
+                  </td>
                   <td>{p.stock} in stock</td>
                   <td className="r">{fmtTZS(p.price)}</td>
                 </tr>

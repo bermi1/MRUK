@@ -1,9 +1,9 @@
 import { prisma, type Prisma } from '@bt/db';
 import { fmtDateTime } from '@bt/core';
-import { createStaffAction, resetStaffTotpAction, saveNotificationsAction, saveSecurityAction, updateStaffAction } from '@/app/actions/admin';
+import { createStaffAction, resetStaffTotpAction, saveNotificationsAction, saveSecurityAction, setTempPasswordAction, updateStaffAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
-import { Forbidden, Pill } from '@/components/admin/ui';
+import { Forbidden, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { adapterStatus } from '@/server/admin/files';
 import { requireStaff } from '@/server/auth';
 
@@ -34,10 +34,11 @@ const PERMS: [string, string][] = [
 const NOTIFS: [string, string, string][] = [
   ['orders', 'New order', 'Email and SMS to store managers'],
   ['bank', 'Azania Bank decision', 'When a Salary Advance is approved or declined'],
-  ['stock', 'Low stock', 'When a product drops to 5 units or fewer'],
+  ['stock', 'Low stock', 'When a product drops to 6 units or fewer'],
   ['tickets', 'New support ticket', 'Push to the support team'],
   ['daily', 'Daily sales summary', 'Email at 8:00 PM'],
 ];
+const AUDIT_PER = 100;
 const brandText = (b: string[]) => (b.includes('*') ? 'Both brands' : b.map((x) => (x === 'mruk' ? 'Mr UK' : 'Skywood')).join(', ') || 'None');
 
 function BrandBoxes({ brands }: { brands?: string[] }) {
@@ -66,15 +67,17 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const actor = (sp.actor ?? '').trim().slice(0, 80);
   const entity = (sp.entity ?? '').trim().slice(0, 40);
   const auditWhere: Prisma.AuditLogWhereInput = { ...(actor ? { actor: { contains: actor, mode: 'insensitive' } } : {}), ...(entity ? { entity: { equals: entity } } : {}) };
-  const [staff, roles, settings, logs, entities] = await Promise.all([
+  const page = pageParam(sp.page);
+  const [staff, roles, settings, logs, entities, logTotal] = await Promise.all([
     prisma.staffUser.findMany({ include: { role: true }, orderBy: [{ active: 'desc' }, { name: 'asc' }] }),
     prisma.role.findMany({ orderBy: { id: 'asc' } }),
     prisma.setting.findMany({ where: { key: { in: ['notifications', 'security'] } } }),
-    prisma.auditLog.findMany({ where: auditWhere, orderBy: { at: 'desc' }, take: 200 }),
+    prisma.auditLog.findMany({ where: auditWhere, orderBy: { at: 'desc' }, skip: (page - 1) * AUDIT_PER, take: AUDIT_PER }),
     prisma.auditLog.findMany({ distinct: ['entity'], select: { entity: true }, orderBy: { entity: 'asc' } }),
+    prisma.auditLog.count({ where: auditWhere }),
   ]);
   const notif = (settings.find((s) => s.key === 'notifications')?.value ?? {}) as Record<string, boolean>;
-  const sec = (settings.find((s) => s.key === 'security')?.value ?? {}) as { sessionTimeoutMinutes?: number; require2fa?: boolean; backups?: string };
+  const sec = (settings.find((s) => s.key === 'security')?.value ?? {}) as { sessionTimeoutMinutes?: number; backups?: string };
   const adapters = adapterStatus();
   const roleOptions = roles.map((r) => (
     <option key={r.id} value={r.id}>
@@ -84,7 +87,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="ad-stack">
-      <div className="ad-grid2" style={{ gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr)' }}>
+      <div className="ad-grid2 wide-left">
         <div className="ad-stack">
           <section className="ad-card">
             <h2 className="ad-h">Admin users</h2>
@@ -125,13 +128,18 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                                 <input type="checkbox" name="active" defaultChecked={u.active} /> Active (can sign in)
                               </label>
                             </AForm>
-                            {u.totpEnabled && (
-                              <div className="ad-row" style={{ marginTop: 8 }}>
+                            <div className="ad-row" style={{ marginTop: 8, flexWrap: 'wrap' }}>
+                              {u.id !== ctx.id && (
+                                <ActBtn action={setTempPasswordAction.bind(null, u.id)} className="ad-btn line sm" confirm={`Set a temporary password for ${u.name}? They are signed out and must choose a new password at next sign-in.`} showOk>
+                                  Set temporary password
+                                </ActBtn>
+                              )}
+                              {u.totpEnabled && (
                                 <ActBtn action={resetStaffTotpAction.bind(null, u.id)} className="ad-btn danger sm" confirm={`Reset two-factor sign-in for ${u.name}? They will enrol a new authenticator at next sign-in.`} showOk>
                                   Reset 2FA
                                 </ActBtn>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </details>
                       </td>
@@ -141,7 +149,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                       <td className="ad-muted2" style={{ verticalAlign: 'top' }}>
                         {brandText(u.brands)}
                       </td>
-                      <td style={{ verticalAlign: 'top' }}>{u.totpEnabled ? <Pill cls="pill-green">On</Pill> : <Pill cls="pill-amber">Not set up</Pill>}</td>
+                      <td style={{ verticalAlign: 'top' }}>
+                        {u.totpEnabled ? <Pill cls="pill-green">On</Pill> : <Pill cls="pill-amber">Not set up</Pill>}
+                        {u.mustChangePassword && (
+                          <div style={{ marginTop: 4 }}>
+                            <Pill cls="pill-amber">Temp. password</Pill>
+                          </div>
+                        )}
+                      </td>
                       <td className="ad-muted2" style={{ verticalAlign: 'top', fontSize: 12.5 }}>
                         {u.lastLoginAt ? fmtDateTime(u.lastLoginAt) : 'Never'}
                       </td>
@@ -173,7 +188,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </section>
           <section className="ad-card">
             <h2 className="ad-h">Integrations</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+            <div className="ad-intgrid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
               {adapters.map((a) => (
                 <div key={a.key} style={{ borderRadius: 14, border: '1px solid #ECEDF2', padding: 14 }}>
                   <div className="ad-between">
@@ -211,11 +226,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 Staff session timeout (minutes of inactivity)
                 <input name="sessionTimeoutMinutes" type="number" min={5} max={480} defaultValue={sec.sessionTimeoutMinutes ?? 30} required />
               </label>
-              <label className="ad-check">
-                <input type="checkbox" name="require2fa" defaultChecked={sec.require2fa ?? true} /> Require two-factor sign-in for all staff
-              </label>
               <p className="ad-muted2" style={{ fontSize: 12, margin: 0 }}>
-                Two-factor (TOTP) is currently enforced for every staff sign-in regardless of this setting.
+                Two-factor sign-in (authenticator app) is always required for every staff member.
               </p>
             </AForm>
             <div className="ad-stack s8" style={{ marginTop: 14, fontSize: 13.5 }}>
@@ -275,7 +287,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div className="ad-between">
           <div>
             <h2 className="ad-h">Audit log</h2>
-            <p className="ad-sub">Latest 200 entries. Every admin change is recorded; no personal data is stored in the diff.</p>
+            <p className="ad-sub">Newest first. Every admin change is recorded; no personal data is stored in the diff.</p>
           </div>
           <form action="/admin/settings" className="ad-row" role="search">
             <input className="ad-input" name="actor" defaultValue={actor} placeholder="Actor email" aria-label="Filter by actor" style={{ width: 200 }} />
@@ -333,6 +345,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             </tbody>
           </table>
         </div>
+        <Pager page={page} per={AUDIT_PER} total={logTotal} href={(n) => `/admin/settings?${new URLSearchParams({ ...(actor ? { actor } : {}), ...(entity ? { entity } : {}), page: String(n) })}`} />
       </section>
     </div>
   );

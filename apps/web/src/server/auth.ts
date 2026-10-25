@@ -2,8 +2,9 @@ import 'server-only';
 import { randomInt } from 'node:crypto';
 import { redirect } from 'next/navigation';
 import { authenticator } from 'otplib';
-import { decrypt, encrypt, prisma, sha256, verifyPassword } from '@bt/db';
+import { decrypt, encrypt, hashPassword, prisma, sha256, verifyPassword } from '@bt/db';
 import { normalizeTzPhone } from '@bt/core';
+import { checkStaffPassword } from '@/lib/password';
 import { audit } from './audit';
 import { env } from './env';
 import { integrations } from './integrations';
@@ -115,6 +116,12 @@ export async function staffLogout() {
 
 export interface StaffContext {
   id: string;
+  /** Current session row (used to keep this session when revoking the others). */
+  sessionId: string;
+  /** An owner issued a temporary password: everything except changing it is blocked. */
+  mustChangePassword: boolean;
+  /** Still using the password they were given (seeded or invited); never chosen their own. */
+  usingIssuedPassword: boolean;
   email: string;
   name: string;
   role: string;
@@ -125,25 +132,63 @@ export interface StaffContext {
   canBrand: (brand: string) => boolean;
 }
 
-/** Use at the top of every admin page and action. Redirects to login when not signed in. */
-export async function requireStaff(perm?: string): Promise<StaffContext> {
+type StaffSession = NonNullable<Awaited<ReturnType<typeof currentStaffSession>>>;
+
+/** Build the staff context from a signed-in session (shared with route handlers). */
+export function staffContextOf(s: StaffSession): StaffContext {
+  const staff = s.staff!;
+  const permissions = staff.role.permissions;
+  const can = (p: string) => permissions.includes('*') || permissions.includes(p);
+  return {
+    id: staff.id,
+    sessionId: s.id,
+    mustChangePassword: staff.mustChangePassword,
+    usingIssuedPassword: !staff.passwordChangedAt,
+    email: staff.email,
+    name: staff.name,
+    role: staff.roleId,
+    roleName: staff.role.name,
+    permissions,
+    brands: staff.brands,
+    can,
+    canBrand: (b: string) => staff.brands.includes('*') || staff.brands.includes(b),
+  };
+}
+
+export const PASSWORD_PAGE = '/admin/account';
+
+/**
+ * Use at the top of every admin page and action. Redirects to login when not signed in,
+ * and to the password page while a temporary password must be replaced.
+ */
+export async function requireStaff(perm?: string, opts: { allowPasswordChange?: boolean } = {}): Promise<StaffContext> {
   const s = await currentStaffSession();
   if (!s || s.kind !== 'staff' || !s.staff) redirect('/admin/login');
-  const permissions = s.staff.role.permissions;
-  const can = (p: string) => permissions.includes('*') || permissions.includes(p);
-  const ctx: StaffContext = {
-    id: s.staff.id,
-    email: s.staff.email,
-    name: s.staff.name,
-    role: s.staff.roleId,
-    roleName: s.staff.role.name,
-    permissions,
-    brands: s.staff.brands,
-    can,
-    canBrand: (b: string) => s.staff!.brands.includes('*') || s.staff!.brands.includes(b),
-  };
-  if (perm && !can(perm)) throw new AuthError(`Your role (${ctx.roleName}) cannot do this`);
+  const ctx = staffContextOf(s);
+  if (ctx.mustChangePassword && !opts.allowPasswordChange) redirect(`${PASSWORD_PAGE}?required=1`);
+  if (perm && !ctx.can(perm)) throw new AuthError(`Your role (${ctx.roleName}) cannot do this`);
   return ctx;
+}
+
+/**
+ * Signed-in staff member changes their own password: the current password is re-checked,
+ * the new one must pass the strength rules, and every other session is signed out.
+ */
+export async function changeOwnStaffPassword(ctx: StaffContext, current: string, next: string) {
+  await limit('staff-password', 5, 15 * 60, ctx.id);
+  const u = await prisma.staffUser.findUniqueOrThrow({ where: { id: ctx.id } });
+  if (!verifyPassword(current, u.passwordHash)) {
+    await audit(ctx.email, 'staff.password_change_failed', 'StaffUser', u.id);
+    throw new AuthError('Your current password is not right');
+  }
+  const check = checkStaffPassword(next, u.email);
+  if (!check.ok) throw new AuthError(check.error ?? 'Choose a stronger password');
+  if (verifyPassword(next, u.passwordHash)) throw new AuthError('Choose a password different from your current one');
+  await prisma.$transaction([
+    prisma.staffUser.update({ where: { id: u.id }, data: { passwordHash: hashPassword(next), mustChangePassword: false, passwordChangedAt: new Date(), failedLogins: 0, lockedUntil: null } }),
+    prisma.session.deleteMany({ where: { staffId: u.id, id: { not: ctx.sessionId } } }),
+  ]);
+  await audit(ctx.email, 'staff.password_change', 'StaffUser', u.id, { forced: u.mustChangePassword, otherSessionsRevoked: true });
 }
 
 /** Brand filter for queries: staff only see brands they are scoped to. */

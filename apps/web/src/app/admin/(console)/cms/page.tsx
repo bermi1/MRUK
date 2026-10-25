@@ -4,7 +4,7 @@ import { saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoA
 import { AForm } from '@/components/admin/AForm';
 import { ImagePick } from '@/components/admin/PhotoUpload';
 import { SeoEditor } from '@/components/admin/SeoEditor';
-import { Forbidden } from '@/components/admin/ui';
+import { BrandMark, Forbidden } from '@/components/admin/ui';
 import type { CmsView } from '@/lib/types';
 import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -49,28 +49,31 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="ad-stack" style={{ gap: 14 }}>
-      <div className="ad-card ad-between">
-        <div className="ad-row" style={{ gap: 12, flexWrap: 'wrap' }}>
-          <div className="ad-seg" role="group" aria-label="Website">
-            {f.allowed.map((k) => (
-              <Link key={k} href={`/admin/cms?b=${k}`} aria-current={k === brand ? 'true' : undefined}>
-                {BRAND_NAME[k]}
-              </Link>
-            ))}
-          </div>
+      <div className={`ad-brandbar ${brand}`} data-testid="cms-brand">
+        <div className="ad-row" style={{ gap: 14, flexWrap: 'wrap' }}>
+          <BrandMark brand={brand}>Editing the {BRAND_NAME[brand]} website · {b.domain}</BrandMark>
+          {f.allowed.length > 1 && (
+            <div className="ad-seg" role="group" aria-label="Website to edit">
+              {f.allowed.map((k) => (
+                <Link key={k} href={`/admin/cms?b=${k}`} aria-current={k === brand ? 'true' : undefined}>
+                  {BRAND_NAME[k]}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="ad-row" style={{ flexWrap: 'wrap' }}>
           <span className="ad-live">
             <i />
-            Live · edits publish instantly to {b.domain}
+            Live · edits publish instantly
           </span>
-        </div>
-        <div className="ad-row">
           {updated && (
             <span className="ad-muted" style={{ fontSize: 12 }}>
               Last change {updated.at.toLocaleString('en-GB', { timeZone: 'Africa/Dar_es_Salaam', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} · {updated.by}
             </span>
           )}
-          <a className="ad-btn line sm" href={`/${brand}`} target="_blank" rel="noopener">
-            View store
+          <a className="ad-btn sm" href={`/${brand}`} target="_blank" rel="noopener">
+            View live on the {BRAND_NAME[brand]} store
           </a>
         </div>
       </div>
@@ -170,7 +173,8 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
               <AForm action={saveDealsAction.bind(null, brand)} submit="Publish bundles" label="Deals and bundles">
                 <input type="hidden" name="count" value={deals.length} />
                 {deals.map((d, i) => (
-                  <div key={i} className="ad-form" style={{ gridTemplateColumns: 'minmax(0,1fr) 90px 110px', marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
+                  // Key by content so rows remount (and drop stale inputs / ticked "remove" boxes) after a bundle is removed.
+                  <div key={`${i}:${d.title}:${d.items.join(',')}`} className="ad-form ad-dealrow" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
                     <label className="ad-field">
                       {i === cms.deals.length ? 'New bundle name' : 'Bundle name'}
                       <input name={`title_${i}`} defaultValue={d.title} maxLength={60} />
