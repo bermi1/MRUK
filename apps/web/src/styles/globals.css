@@ -433,7 +433,7 @@ textarea.input { resize: vertical; }
 @media (max-width: 900px) { .sup-grid { grid-template-columns: 1fr; } .sup-grid > div:last-child { position: static !important; order: -1; } .sup-grid iframe { height: 260px !important; } }
 .support-top { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: end; }
 .support-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-top: 24px; align-items: start; }
-@media (max-width: 900px) { .support-top, .support-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .support-top, .support-grid { grid-template-columns: minmax(0, 1fr); } }
 
 @media (max-width: 767px) {
   .tabbar.m-only { display: grid !important; }
@@ -691,5 +691,5 @@ textarea.input { resize: vertical; }
 @media (max-width: 767px) { .skel-media { height: 340px; } .skel-hero { height: 120px; } }
 @media (max-width: 767px) {
   /* Long button labels ("Buy with Salary Advance", Kiswahili) wrap instead of pushing past the screen edge. */
-  .pdp .btn { white-space: normal; text-align: center; line-height: 1.2; padding-left: 14px; padding-right: 14px; }
+  .pdp .btn, .card .btn { white-space: normal; text-align: center; line-height: 1.2; padding-left: 14px; padding-right: 14px; }
 }
