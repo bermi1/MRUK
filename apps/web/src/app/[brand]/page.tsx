@@ -2,6 +2,7 @@ import { MrukHome } from '@/components/store/brands/mruk/Home';
 import type { HeroLabels, HeroSlideView } from '@/components/store/brands/shared';
 import { SkywoodHome } from '@/components/store/brands/skywood/Home';
 import type { BrandKey } from '@/lib/types';
+import { getCompareIds } from '@/server/cart';
 import { getBrand, getBundles, getCategories, getCms, getFlashDeals, getProducts, getSuppliers } from '@/server/catalog';
 import { getT } from '@/server/locale';
 
@@ -11,7 +12,7 @@ import { getT } from '@/server/locale';
  */
 export default async function BrandHome({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, cms, cats, products, bundles, suppliers, flash, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getT()]);
+  const [brand, cms, cats, products, bundles, suppliers, flash, compare, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getCompareIds(key), getT()]);
   const b = `/${key}`;
   const byId = (id: string) => products.find((p) => p.id === id);
   const slides: HeroSlideView[] = cms.hero
@@ -44,7 +45,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     scrollHint: t('scrollHint'),
   };
   const cities = [...new Set(suppliers.map((s) => s.city))];
-  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, t };
+  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };
 
   if (key === 'skywood') {
     const heroIds = new Set(cms.hero.map((h) => h.pid));

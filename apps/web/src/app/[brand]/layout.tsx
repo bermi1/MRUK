@@ -111,7 +111,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
     <div className={`brand-root ${archivo.variable} ${fraunces.variable}`} data-brand={key} style={themeVars(brand)}>
       <ToastProvider>
         <a href="#main" className="skip">
-          Skip to content
+          {t('skipToContent')}
         </a>
         <AppBar brand={key} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}

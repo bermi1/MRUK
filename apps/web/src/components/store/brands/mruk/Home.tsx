@@ -48,9 +48,10 @@ export function MrukHome(props: {
   bundles: BundleView[];
   supplierCount: number;
   cities: string[];
+  compare: string[];
   t: T;
 }) {
-  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, t } = props;
+  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, t } = props;
   const b = `/${brand.key}`;
   const perMonth = t('perMonthShort');
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || y.price - x.price).slice(0, 10);
@@ -133,7 +134,7 @@ export function MrukHome(props: {
             <div className="mu-flash-grid">
               {flash.slice(0, 4).map((p, i) => (
                 <div key={p.id} data-reveal style={{ ['--i' as string]: i }}>
-                  <ProductCard p={p} brand="mruk" price={p.dealPrice} was={p.price} badge={t('off', { n: p.off })} perMonth={perMonth} />
+                  <ProductCard p={p} inCompare={compare.includes(p.id)} brand="mruk" price={p.dealPrice} was={p.price} badge={t('off', { n: p.off })} perMonth={perMonth} />
                 </div>
               ))}
             </div>
@@ -171,7 +172,7 @@ export function MrukHome(props: {
           <Head kicker={t('newArrivals')} title={t('newArrivalsSub', { brand: brand.name })} />
           <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail">
             {newest.map((p) => (
-              <ProductCard key={p.id} p={p} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
+              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
             ))}
           </Rail>
         </section>

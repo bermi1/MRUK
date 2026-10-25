@@ -458,3 +458,43 @@
   [data-brand='mruk'] .grid-5 .ptile .meta { padding: 8px 8px 10px; }
   [data-brand='mruk'] .grid-5 .ptile .pimg .ph { justify-content: flex-end; padding-top: 0 !important; }
 }
+
+/* Footer, Mr UK: service cards, dense retail columns, bank partner. */
+.mu-foot { margin-top: 96px; background: radial-gradient(40% 80% at 100% 0%, rgba(0, 152, 218, 0.22), rgba(0, 152, 218, 0) 70%), var(--mu-ink); color: #b9bfdc; }
+.mu-foot-help { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; transform: translateY(-40px); }
+.mu-foot-card { display: flex; align-items: center; gap: 16px; padding: 22px; border-radius: 22px; background: #fff; color: var(--mu-ink); box-shadow: 0 20px 50px rgba(11, 15, 51, 0.25); font-size: 13.5px; color: var(--muted2); transition: transform 0.25s var(--ease); }
+.mu-foot-card:hover { transform: translateY(-3px); }
+.mu-foot-card b { display: block; font-size: 16px; color: var(--mu-ink); margin-bottom: 2px; }
+.mu-foot-ico { width: 48px; height: 48px; border-radius: 14px; background: #e6f5fc; color: var(--mu-sky-d); display: flex; align-items: center; justify-content: center; font-size: 20px; flex: none; }
+.mu-foot-card.wa .mu-foot-ico { background: var(--wa); }
+.mu-foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1.1fr; gap: 32px; padding-top: 14px; padding-bottom: 40px; }
+.mu-foot-brand img { height: 40px; width: auto; }
+.mu-foot-brand p { margin: 14px 0 0; font-family: var(--mu-display); font-size: 22px; font-weight: 750; letter-spacing: -0.03em; color: #fff; }
+.mu-foot-partner { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+.mu-foot-partner img { height: 28px; width: auto; }
+.mu-foot-h { margin: 0 0 6px; color: #fff; font-weight: 700; font-size: 14px; }
+.mu-foot .foot-col { display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; }
+.mu-foot .foot-col a:hover { color: #fff; }
+.mu-accept { display: flex; flex-wrap: wrap; gap: 6px; }
+.mu-accept span { padding: 7px 11px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); font-size: 12.5px; color: #e6e9f7; }
+.mu-foot-bottom { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 18px; padding-bottom: 26px; border-top: 1px solid rgba(255, 255, 255, 0.12); font-size: 12.5px; }
+.mu-foot-bottom a:hover { color: #fff; }
+@media (max-width: 1100px) { .mu-foot-grid { grid-template-columns: 1fr 1fr 1fr; } }
+@media (max-width: 767px) { .mu-foot { display: none; } }
+@media print { .mu-foot, .mu-hdr { display: none !important; } }
+
+/* Condensed header on scroll (transform only, no layout change). */
+.mu-logo img, .mu-search, .mu-allcats { transition: transform 0.3s var(--ease); }
+.mu-hdr.is-scrolled .mu-logo img { transform: scale(0.86); }
+/* Page enter on client navigation: quick, energetic rise. */
+@media (prefers-reduced-motion: no-preference) {
+  html.nav [data-brand='mruk'] main#main > * { animation: muPage 0.45s var(--ease) both; }
+  @supports (animation-timeline: scroll()) {
+    .mu-hero-stage { animation: muStageScroll linear both; animation-timeline: scroll(root); animation-range: 0 600px; }
+    .mu-hero-copy { animation: muCopyScroll linear both; animation-timeline: scroll(root); animation-range: 0 600px; }
+  }
+}
+@keyframes muPage { from { opacity: 0.4; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes muStageScroll { to { transform: translateY(60px) scale(0.92); } }
+@keyframes muCopyScroll { to { transform: translateY(-30px); opacity: 0.5; } }
+.pc-mruk .cmp-tag { background: #fff; box-shadow: 0 4px 12px rgba(18, 22, 74, 0.15); }

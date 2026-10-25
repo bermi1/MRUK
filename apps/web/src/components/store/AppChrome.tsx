@@ -44,7 +44,7 @@ export function TabBar({ brand, cartCount, labels }: { brand: string; cartCount:
       <Link href={`${b}/cart`} aria-label={`${labels.cart} (${cartCount})`}>
         <span className="cart-fab">
           <BagIcon size={24} color="#fff" />
-          <span className="count">{cartCount}</span>
+          <span className="count" key={cartCount}>{cartCount}</span>
         </span>
       </Link>
       <Link href={`${b}/deals`} className={on(`${b}/deals`) ? 'on' : ''}>

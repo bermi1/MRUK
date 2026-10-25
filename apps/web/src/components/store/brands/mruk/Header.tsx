@@ -111,7 +111,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             <Link href={`${b}/cart`} className="mu-cart">
               <BagIcon size={20} color="#fff" />
               <span>{labels.cart}</span>
-              <span className="mu-count" data-testid="cart-count">
+              <span className="mu-count" data-testid="cart-count" key={cartCount}>
                 {cartCount}
               </span>
             </Link>

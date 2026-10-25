@@ -129,6 +129,12 @@ const en = {
   scrollHint: 'Scroll',
   perMonthShort: '{amount}/mo',
   openMenu: 'Open menu',
+  footerHelpLine: 'Need help choosing? Our team answers on WhatsApp.',
+  chatWhatsApp: 'Chat on WhatsApp',
+  privacy: 'Privacy',
+  skipToContent: 'Skip to content',
+  advancePartner: 'Salary Advance partner',
+  concierge: 'Concierge',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -261,6 +267,12 @@ const sw: Record<MessageKey, string> = {
   scrollHint: 'Shuka chini',
   perMonthShort: '{amount}/mwezi',
   openMenu: 'Fungua menyu',
+  footerHelpLine: 'Unahitaji msaada kuchagua? Timu yetu inajibu kwa WhatsApp.',
+  chatWhatsApp: 'Ongea kwa WhatsApp',
+  privacy: 'Faragha',
+  skipToContent: 'Ruka hadi maudhui',
+  advancePartner: 'Mshirika wa Salary Advance',
+  concierge: 'Huduma kwa wateja',
 };
 
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, sw };

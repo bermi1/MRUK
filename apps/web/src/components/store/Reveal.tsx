@@ -1,5 +1,5 @@
 'use client';
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
@@ -11,6 +11,11 @@ import { usePathname } from 'next/navigation';
  */
 export function RevealObserver() {
   const path = usePathname();
+  const first = useRef(path);
+  // Client navigations (not the first load, so the LCP is never delayed) get the brand's page-enter motion.
+  useLayoutEffect(() => {
+    if (first.current !== path) document.documentElement.classList.add('nav');
+  }, [path]);
   useLayoutEffect(() => {
     const root = document.documentElement;
     if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

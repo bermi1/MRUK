@@ -39,10 +39,11 @@ export function SkywoodHome(props: {
   bundles: BundleView[];
   supplierCount: number;
   cities: string[];
+  compare: string[];
   focus: ProductView | undefined;
   t: T;
 }) {
-  const { brand, slides, heroLabels, cats, products, bundles, supplierCount, cities, focus, t } = props;
+  const { brand, slides, heroLabels, cats, products, bundles, supplierCount, cities, compare, focus, t } = props;
   const b = `/${brand.key}`;
   const perMonth = t('perMonthShort');
   const edit = [...products].sort((x, y) => Number(!!y.img) - Number(!!x.img) || y.rating - x.rating).slice(0, 8);
@@ -141,7 +142,7 @@ export function SkywoodHome(props: {
         <div className="sw-edit">
           {edit.map((p, i) => (
             <div key={p.id} data-reveal style={{ ['--i' as string]: i % 4 }}>
-              <ProductCard p={p} brand="skywood" badge={p.tag || undefined} perMonth={perMonth} />
+              <ProductCard p={p} inCompare={compare.includes(p.id)} brand="skywood" badge={p.tag || undefined} perMonth={perMonth} />
             </div>
           ))}
         </div>

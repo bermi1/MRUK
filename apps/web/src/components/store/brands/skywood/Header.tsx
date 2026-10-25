@@ -89,7 +89,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
             </Link>
             <Link href={`${b}/cart`} className="sw-bag">
               {labels.cart}
-              <span className="sw-count" data-testid="cart-count">
+              <span className="sw-count" data-testid="cart-count" key={cartCount}>
                 {cartCount}
               </span>
             </Link>

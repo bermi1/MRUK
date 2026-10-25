@@ -386,3 +386,29 @@
   [data-brand='skywood'] .grid-5 .ptile .meta { padding: 8px 0 4px; }
   [data-brand='skywood'] .grid-5 .ptile .meta > div:nth-child(2) { font-size: 13px !important; }
 }
+
+/* Footer, Skywood: the tagline as an editorial sign-off, quiet columns, gold hairlines. */
+.sw-foot { margin-top: 140px; background: #1a1612; color: #b9b0a2; padding-top: 110px; }
+.sw-foot-line { margin: 0; font-family: var(--sw-display); font-size: clamp(48px, 7vw, 120px); font-weight: 250; line-height: 0.98; letter-spacing: -0.04em; color: #f6f2eb; }
+.sw-foot-line em { display: block; color: var(--sw-gold); }
+.sw-foot-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 40px; margin-top: 90px; padding-top: 40px; border-top: 1px solid rgba(201, 169, 110, 0.25); }
+.sw-foot-brand img { height: 26px; width: auto; }
+.sw-foot-concierge { display: flex; flex-direction: column; gap: 10px; margin-top: 30px; font-family: var(--sw-display); font-size: 22px; font-weight: 300; color: #f6f2eb; }
+.sw-foot-concierge:hover { color: var(--sw-gold-hi); }
+.sw-foot-h { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--sw-gold); }
+.sw-foot .foot-col { display: flex; flex-direction: column; gap: 11px; font-size: 14px; }
+.sw-foot .foot-col a { transition: color 0.3s; }
+.sw-foot .foot-col a:hover { color: #f6f2eb; }
+.sw-foot-bottom { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 70px; padding: 22px 0 30px; border-top: 1px solid rgba(201, 169, 110, 0.18); font-size: 12px; letter-spacing: 0.04em; }
+.sw-foot-bottom a:hover { color: var(--sw-gold-hi); }
+@media (max-width: 767px) { .sw-foot { display: none; } }
+@media print { .sw-foot, .sw-hdr, .sw-ann { display: none !important; } }
+
+/* Condensed header on scroll + slow page enter. */
+.sw-logo img { transition: transform 0.6s var(--sw-slow); }
+.sw-hdr.is-scrolled .sw-logo img { transform: scale(0.88); }
+@media (prefers-reduced-motion: no-preference) {
+  html.nav [data-brand='skywood'] main#main > * { animation: swPage 0.9s var(--sw-slow) both; }
+}
+@keyframes swPage { from { opacity: 0.2; } to { opacity: 1; } }
+.pc-skywood .cmp-tag { border-radius: 0; background: var(--sw-paper); letter-spacing: 0.06em; }
