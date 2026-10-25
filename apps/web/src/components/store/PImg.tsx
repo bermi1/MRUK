@@ -27,7 +27,7 @@ export function PImg({ src, alt, model, sub, size = 'md', cover = false, classNa
         <img ref={ref} src={img(src, W1[size])} srcSet={imgSet(src, W1[size], W2[size])} sizes={`${W1[size]}px`} alt={alt} loading={size === 'xl' ? 'eager' : 'lazy'} fetchPriority={size === 'xl' ? 'high' : undefined} decoding="async" onError={() => setBroken(true)} />
       ) : (
         <div className={`ph ph-${size}`} style={{ fontSize: fs, padding: size === 'xl' ? 40 : size === 'lg' ? 18 : 10 }}>
-          <CatGlyph kind={glyphKind(sub ?? '', model)} className="ph-glyph" strokeWidth={size === 'xs' || size === 'sm' ? 2.2 : 1.4} />
+          <CatGlyph kind={glyphKind(sub ?? '', `${model} ${alt}`)} className="ph-glyph" strokeWidth={size === 'xs' || size === 'sm' ? 2.2 : 1.4} />
           {sub && (size === 'lg' || size === 'xl') && <span className="sub">{sub.toUpperCase()}</span>}
           <span className="ph-model">{size === 'xl' ? model : modelShort(model)}</span>
         </div>
