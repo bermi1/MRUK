@@ -87,7 +87,15 @@ export function MrukHome(props: {
       <div className="wrap">
         {/* Category rail */}
         <section className="mu-sec">
-          <Head kicker={t('shopByCategory')} title={`${brand.tagline}.`} action={<Link href={`${b}/c/all`} className="mu-link d-only">{t('viewAll')} →</Link>} />
+          <Head
+            kicker={t('shopByCategory')}
+            title={`${brand.tagline}.`}
+            action={
+              <Link href={`${b}/c/all`} className="mu-link d-only">
+                {t('viewAll')} →
+              </Link>
+            }
+          />
           <div className="mu-cats nsb">
             {cats.map((c, i) => (
               <Link key={c.id} href={`${b}/c/${c.id}`} className="mu-cat" data-reveal style={{ ['--i' as string]: i }}>
@@ -110,7 +118,10 @@ export function MrukHome(props: {
             <div className="mu-flash-head" data-reveal>
               <div>
                 <p className="mu-kicker light">
-                  <span className="mu-bolt" aria-hidden="true">⚡</span> {t('flashDeals')}
+                  <span className="mu-bolt" aria-hidden="true">
+                    ⚡
+                  </span>{' '}
+                  {t('flashDeals')}
                 </p>
                 <h2>{t('flashDealsSub')}</h2>
               </div>
@@ -168,7 +179,16 @@ export function MrukHome(props: {
         {/* Bundles */}
         {bundles.length > 0 && (
           <section className="mu-sec">
-            <Head kicker={t('dealsAndBundles')} title={t('bundlesTitle')} sub={t('bundlesSub')} action={<Link href={`${b}/deals`} className="mu-link d-only">{t('seeAll')} →</Link>} />
+            <Head
+              kicker={t('dealsAndBundles')}
+              title={t('bundlesTitle')}
+              sub={t('bundlesSub')}
+              action={
+                <Link href={`${b}/deals`} className="mu-link d-only">
+                  {t('seeAll')} →
+                </Link>
+              }
+            />
             <div className="mu-bundles">
               {bundles.slice(0, 3).map((d, i) => (
                 <article key={d.title} className="mu-bundle" data-reveal style={{ ['--i' as string]: i }}>

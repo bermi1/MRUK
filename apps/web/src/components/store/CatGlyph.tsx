@@ -7,15 +7,15 @@ type Kind = 'fridge' | 'tv' | 'speaker' | 'kitchen' | 'generator' | 'pump' | 'wa
 
 export function glyphKind(id: string, name = ''): Kind {
   const s = `${id} ${name}`.toLowerCase();
-  if (/fridge|freez|refrig/.test(s)) return 'fridge';
+  if (/fridge|freez|refrig|combi|multi-door|single door|top mount|french/.test(s)) return 'fridge';
   if (/music-tv|televis|\btv\b/.test(s)) return 'tv';
   if (/music|speaker|sound|subwoof|boombox/.test(s)) return 'speaker';
   if (/kitchen|cook|oven|microwave|hob|kettle|blend|dispens|hood/.test(s)) return 'kitchen';
   if (/generat|engine/.test(s)) return 'generator';
   if (/agri|pump|sprayer|water/.test(s)) return 'pump';
-  if (/wash|laundry/.test(s)) return 'washer';
+  if (/wash|laundry|top load/.test(s)) return 'washer';
   if (/fan|cooler|purif/.test(s)) return 'fan';
-  if (/\bac\b|air cond|btu|inverter/.test(s)) return 'ac';
+  if (/\bac\b|air cond|btu|inverter|on\/off/.test(s)) return 'ac';
   return 'box';
 }
 

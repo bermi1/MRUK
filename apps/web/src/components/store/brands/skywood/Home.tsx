@@ -64,7 +64,15 @@ export function SkywoodHome(props: {
 
       {/* Collections */}
       <section className="wrap sw-sec">
-        <Head eyebrow={t('collections')} title={t('collectionsTitle')} action={<Link href={`${b}/c/all`} className="sw-link d-only">{t('viewAll')}</Link>} />
+        <Head
+          eyebrow={t('collections')}
+          title={t('collectionsTitle')}
+          action={
+            <Link href={`${b}/c/all`} className="sw-link d-only">
+              {t('viewAll')}
+            </Link>
+          }
+        />
         <div className="sw-cols">
           {cats.map((c, i) => (
             <Link key={c.id} href={`${b}/c/${c.id}`} className={`sw-col c${i}`} data-reveal style={{ ['--i' as string]: i % 3 }}>
@@ -121,7 +129,15 @@ export function SkywoodHome(props: {
 
       {/* The edit */}
       <section className="wrap sw-sec">
-        <Head eyebrow={t('theEdit')} title={t('theEditSub')} action={<Link href={`${b}/c/all`} className="sw-link d-only">{t('seeAll')}</Link>} />
+        <Head
+          eyebrow={t('theEdit')}
+          title={t('theEditSub')}
+          action={
+            <Link href={`${b}/c/all`} className="sw-link d-only">
+              {t('seeAll')}
+            </Link>
+          }
+        />
         <div className="sw-edit">
           {edit.map((p, i) => (
             <div key={p.id} data-reveal style={{ ['--i' as string]: i % 4 }}>
@@ -178,7 +194,15 @@ export function SkywoodHome(props: {
       {/* Curated sets */}
       {bundles.length > 0 && (
         <section className="wrap sw-sec">
-          <Head eyebrow={t('dealsAndBundles')} title={t('curatedSets')} action={<Link href={`${b}/deals`} className="sw-link d-only">{t('seeAll')}</Link>} />
+          <Head
+            eyebrow={t('dealsAndBundles')}
+            title={t('curatedSets')}
+            action={
+              <Link href={`${b}/deals`} className="sw-link d-only">
+                {t('seeAll')}
+              </Link>
+            }
+          />
           <div className="sw-sets">
             {bundles.slice(0, 3).map((d) => (
               <article key={d.title} className="sw-set" data-reveal>

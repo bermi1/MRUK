@@ -49,7 +49,15 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
                     <Link href={`${b}/c/${c.id}`} className={path.startsWith(`${b}/c/${c.id}`) ? 'on' : ''}>
                       {c.short}
                     </Link>
-                    <button type="button" ref={m.ref(c.id)} className="sw-disc" aria-expanded={m.open === c.id} aria-controls="sw-panel" aria-label={`${c.name}: ${labels.featured}`} onClick={() => m.toggle(c.id)}>
+                    <button
+                      type="button"
+                      ref={m.ref(c.id)}
+                      className="sw-disc"
+                      aria-expanded={m.open === c.id}
+                      aria-controls="sw-panel"
+                      aria-label={`${c.name}: ${labels.featured}`}
+                      onClick={() => m.toggle(c.id)}
+                    >
                       <svg width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
                         <path d="M1.5 3l2.5 2.5L6.5 3" fill="none" stroke="currentColor" strokeWidth="1.2" />
                       </svg>
@@ -174,7 +182,15 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
 }
 
 /** Full-height collection index (desktop "Menu"). */
-function SkywoodIndex({ brand, cats, labels, cms, onClose }: Pick<HeaderProps, 'brand' | 'cats' | 'labels' | 'cms'> & { onClose: () => void }) {
+function SkywoodIndex({
+  brand,
+  cats,
+  labels,
+  cms,
+  onClose,
+}: Pick<HeaderProps, 'brand' | 'cats' | 'labels' | 'cms'> & {
+  onClose: () => void;
+}) {
   const panel = useRef<HTMLDivElement>(null);
   const [hot, setHot] = useState(cats[0]?.id ?? '');
   const close = useCallback(() => onClose(), [onClose]);

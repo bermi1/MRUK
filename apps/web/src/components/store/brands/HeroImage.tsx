@@ -8,7 +8,25 @@ import { CatGlyph, glyphKind } from '../CatGlyph';
  * never animated from opacity 0. If the photo can't load (offline, removed), a line-art
  * glyph of the category takes its place so the stage still looks designed.
  */
-export function HeroImage({ src, alt, kind, first, sizes, w1, w2, className }: { src: string; alt: string; kind: string; first: boolean; sizes: string; w1: ImgWidth; w2: ImgWidth; className?: string }) {
+export function HeroImage({
+  src,
+  alt,
+  kind,
+  first,
+  sizes,
+  w1,
+  w2,
+  className,
+}: {
+  src: string;
+  alt: string;
+  kind: string;
+  first: boolean;
+  sizes: string;
+  w1: ImgWidth;
+  w2: ImgWidth;
+  className?: string;
+}) {
   const [broken, setBroken] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
   useEffect(() => {

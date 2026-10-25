@@ -113,15 +113,12 @@ export function useAuthModal(brand: BrandView, user: SessionUser | null) {
 /** Lock page scroll while a full-screen menu is open; Esc closes; focus moves into the panel. */
 export function useOverlay(open: boolean, onClose: () => void, panel: React.RefObject<HTMLElement | null>) {
   const path = usePathname();
-  const first = useRef(true);
+  const lastPath = useRef(path);
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    if (lastPath.current === path) return;
+    lastPath.current = path;
     onClose();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path]);
+  }, [path, onClose]);
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
@@ -212,9 +209,32 @@ export function headlineLines(title: string): string[] {
 export interface MobileMenuProps {
   brand: 'mruk' | 'skywood';
   brandName: string;
-  cats: { id: string; name: string; short: string; img: string; count: number; subs: string[] }[];
+  cats: {
+    id: string;
+    name: string;
+    short: string;
+    img: string;
+    count: number;
+    subs: string[];
+  }[];
   announcement: string;
-  labels: { menu: string; close: string; openMenu: string; search: string; searchShort: string; productsN: string; helpAndServices: string; deals: string; track: string; suppliers: string; support: string; allBrands: string; compare: string; salaryAdvance: string; salaryAdvanceSub: string };
+  labels: {
+    menu: string;
+    close: string;
+    openMenu: string;
+    search: string;
+    searchShort: string;
+    productsN: string;
+    helpAndServices: string;
+    deals: string;
+    track: string;
+    suppliers: string;
+    support: string;
+    allBrands: string;
+    compare: string;
+    salaryAdvance: string;
+    salaryAdvanceSub: string;
+  };
 }
 
 /** Open/close state + overlay behaviour for the phone menus. */

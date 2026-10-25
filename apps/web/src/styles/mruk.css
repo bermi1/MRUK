@@ -400,7 +400,7 @@
   .mu-hero-chip { font-size: 12.5px; padding: 7px 12px; }
   .mu-hero-cta .mu-btn { flex: 1; min-height: 48px; padding: 0 16px; }
   .mu-hero-cta .mu-btn-ghost { display: none; }
-  .mu-hero-img { max-height: 250px; max-width: 70%; }
+  .mu-hero-img { max-height: 236px; max-width: 70%; margin-top: 20px; }
   .mu-ring.r1 { width: 280px; height: 280px; }
   .mu-ring.r2 { width: 200px; height: 200px; }
   .mu-hero-word { font-size: 96px; }
@@ -420,7 +420,10 @@
   .mu-sec { margin-top: 44px; }
   .mu-head { margin-bottom: 16px; }
   .mu-head h2 { font-size: 26px; }
-  .mu-cats { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px; gap: 10px; scroll-snap-type: x mandatory; }
+  .mu-cats { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px; gap: 10px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; }
+  .pc-mruk .pc-price { font-size: 15.5px; }
+  .pc-mruk .pc-body { padding: 12px 12px 14px; }
+  .pc-mruk .pc-add { width: 40px; height: 40px; }
   .mu-cat { flex: 0 0 116px; scroll-snap-align: start; }
   .mu-cat-art { border-radius: 20px; }
   .mu-cat-name { font-size: 13.5px; }
@@ -436,7 +439,7 @@
   .mu-need-subs { display: none; }
   .mu-need-go { font-size: 12.5px; padding: 7px 11px; }
   .rail2-track { grid-auto-columns: 62%; margin: 0 -16px; padding-left: 16px; padding-right: 16px; scroll-padding: 0 16px; }
-  .mu-bundles { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px 6px; gap: 10px; scroll-snap-type: x mandatory; }
+  .mu-bundles { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px 6px; gap: 10px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; }
   .mu-bundle { flex: 0 0 84%; scroll-snap-align: start; padding: 18px; }
   .mu-advance { margin-top: 44px; }
   .mu-advance-in { grid-template-columns: 1fr; gap: 24px; padding: 36px 0; }
@@ -444,8 +447,8 @@
   .mu-steps li { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 16px; column-gap: 12px; }
   .mu-steps li span:last-child { flex-basis: 100%; }
   .mu-step-n { margin: 0; width: 34px; height: 34px; font-size: 15px; }
-  .mu-social { grid-template-columns: 1fr; }
-  .mu-review-list { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px; gap: 10px; scroll-snap-type: x mandatory; }
+  .mu-social { grid-template-columns: minmax(0, 1fr); }
+  .mu-review-list { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px; gap: 10px; scroll-snap-type: x mandatory; scroll-padding: 0 16px; }
   .mu-review { flex: 0 0 82%; scroll-snap-align: start; }
   [data-brand='mruk'] .grid-5 .ptile { aspect-ratio: auto; height: auto; border-radius: 16px; }
   [data-brand='mruk'] .grid-5 .ptile .pimg { margin: 6px 6px 0; border-radius: 12px; }

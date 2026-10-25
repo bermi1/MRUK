@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
 import { HeroImage } from '../HeroImage';
@@ -48,10 +48,12 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
           </p>
           <h1>
             {words.map((w, k) => (
-              <span key={k} className="mu-w" style={{ ['--k' as string]: k }}>
-                {w}
+              <Fragment key={k}>
+                <span className="mu-w" style={{ ['--k' as string]: k }}>
+                  {w}
+                </span>
                 {k < words.length - 1 ? ' ' : ''}
-              </span>
+              </Fragment>
             ))}
           </h1>
           <p className="mu-hero-sub">{s.sub}</p>
@@ -93,9 +95,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
             {slides.map((x, k) => (
               <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={fill(labels.slideN, { n: k + 1 })} className={k === i ? 'on' : ''} onClick={() => go(k)}>
                 <span className="mu-tab-label">{x.eyebrow}</span>
-                <span className="mu-tab-bar">
-                  {k === i && <span className="mu-tab-fill" key={`f${i}`} onAnimationEnd={() => go(i + 1)} />}
-                </span>
+                <span className="mu-tab-bar">{k === i && <span className="mu-tab-fill" key={`f${i}`} onAnimationEnd={() => go(i + 1)} />}</span>
               </button>
             ))}
           </div>

@@ -31,17 +31,17 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
   const on = (seg: string) => path.startsWith(`${b}/${seg}`);
   const firstName = user?.name?.split(' ')[0];
   const promo = (
-      <Link href={`${b}/c/${cms.megaPromo.cat}`} className="mu-promo">
-        <span className="mu-promo-art" aria-hidden="true">
-          <CatGlyph kind={glyphKind(promoCat?.id ?? '', promoCat?.name)} className="mu-promo-glyph" strokeWidth={1.1} />
-          {promoCat?.img && <SafeImg src={promoCat.img} alt="" />}
-        </span>
-        <span className="mu-promo-eyebrow">{cms.megaPromo.eyebrow}</span>
-        <span className="mu-promo-title">{cms.megaPromo.title}</span>
-        <span className="mu-promo-cta">
-          {cms.megaPromo.cta} <span aria-hidden="true">→</span>
-        </span>
-      </Link>
+    <Link href={`${b}/c/${cms.megaPromo.cat}`} className="mu-promo">
+      <span className="mu-promo-art" aria-hidden="true">
+        <CatGlyph kind={glyphKind(promoCat?.id ?? '', promoCat?.name)} className="mu-promo-glyph" strokeWidth={1.1} />
+        {promoCat?.img && <SafeImg src={promoCat.img} alt="" />}
+      </span>
+      <span className="mu-promo-eyebrow">{cms.megaPromo.eyebrow}</span>
+      <span className="mu-promo-title">{cms.megaPromo.title}</span>
+      <span className="mu-promo-cta">
+        {cms.megaPromo.cta} <span aria-hidden="true">→</span>
+      </span>
+    </Link>
   );
 
   return (
@@ -104,7 +104,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             <Link href={`${b}/compare`} className="mu-act">
               <CompareIcon size={20} />
               <span>
-                <small>{compareCount > 0 ? compareCount : '—'}</small>
+                {compareCount > 0 && <small>{compareCount}</small>}
                 {labels.compare}
               </span>
             </Link>
@@ -188,7 +188,11 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                           <span className="mu-feat-model">{p.model}</span>
                           <span className="mu-feat-name">{p.name}</span>
                           <span className="mu-feat-price">{fmt(p.price)}</span>
-                          <span className="mu-feat-mo">{fill(labels.perMonth, { amount: fmt(p.price / 12) })}</span>
+                          <span className="mu-feat-mo">
+                            {fill(labels.perMonth, {
+                              amount: fmt(p.price / 12),
+                            })}
+                          </span>
                         </Link>
                       ))}
                     </div>

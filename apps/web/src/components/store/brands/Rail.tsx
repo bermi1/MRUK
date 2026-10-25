@@ -8,7 +8,10 @@ export function Rail({ children, className = '', labels }: { children: React.Rea
     const el = ref.current;
     if (!el) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: reduce ? 'auto' : 'smooth' });
+    el.scrollBy({
+      left: dir * el.clientWidth * 0.8,
+      behavior: reduce ? 'auto' : 'smooth',
+    });
   };
   return (
     <div className={`rail2 ${className}`}>
