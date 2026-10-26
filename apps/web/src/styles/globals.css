@@ -243,7 +243,7 @@ textarea.input { resize: vertical; }
 .m-only { display: none !important; }
 
 /* App chrome (phones, <768px) ------------------------------------------------------- */
-.appbar { position: sticky; top: 0; z-index: 40; height: 60px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 8px; display: grid !important; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; }
+.appbar { position: sticky; top: 0; z-index: 40; height: 60px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 8px; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; }
 .appbar-logo { justify-self: center; display: flex; align-items: center; min-height: 44px; }
 .appbar-logo img { height: 28px; width: auto; display: block; }
 .appbar-search { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--text); }
@@ -730,16 +730,6 @@ textarea.input { resize: vertical; }
   .pl-steps { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* Phone category chips (home, under the app bar). */
-.chips-row { gap: 8px; overflow-x: auto; padding: 10px 16px; scroll-snap-type: x proximity; }
-.chip2 { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; font-size: 14px; font-weight: 600; white-space: nowrap; scroll-snap-align: start; }
-.chip2-ico { width: 18px; height: 18px; }
-.chips-mruk .chip2 { border-radius: 999px; background: #f3f5fa; color: #0b0f33; }
-.chips-mruk .chip2-ico { color: #0071a8; }
-.chips-mruk .chip2-pl { background: #0098da; color: #0b0f33; }
-.chips-skywood { gap: 4px; border-bottom: 1px solid var(--border); }
-.chips-skywood .chip2 { padding: 0 12px; font-weight: 500; color: var(--sw-ink); }
-.chips-skywood .chip2-pl { color: var(--sw-bronze); font-style: italic; font-family: var(--font-fraunces), Georgia, serif; font-size: 16px; }
 
 /* Promo code (cart + checkout) */
 .promo { display: flex; flex-direction: column; gap: 6px; }

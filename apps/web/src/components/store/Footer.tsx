@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { MessageKey } from '@/lib/i18n';
 import { waLink } from '@/lib/format';
 import type { BrandView, CategoryView } from '@/lib/types';
-import { PinIcon, RouteIcon, WhatsAppIcon } from '../icons';
+import { CardIcon, PinIcon, RouteIcon, WhatsAppIcon } from '../icons';
 import { Subscribe, type SubscribeLabels } from './Subscribe';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -115,20 +115,54 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
 
 function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]; t: T }) {
   const [first, ...rest] = brand.tagline.split(/(?<=\.)\s+/);
+  const b = `/${brand.key}`;
   return (
     <footer className="sw-foot">
       <div className="wrap">
-        <p className="sw-foot-line">
-          {first} {rest.length > 0 && <em>{rest.join(' ')}</em>}
-        </p>
+        <div className="sw-foot-top">
+          <p className="sw-foot-line">
+            {first} {rest.length > 0 && <em>{rest.join(' ')}</em>}
+          </p>
+          <div className="sw-foot-services">
+            <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="sw-foot-svc">
+              <WhatsAppIcon size={20} color="currentColor" />
+              <span>
+                <b>{t('concierge')}</b>
+                {t('chatWhatsApp')}
+              </span>
+            </a>
+            <Link href={`${b}/track`} className="sw-foot-svc">
+              <RouteIcon size={20} strokeWidth={1.4} />
+              <span>
+                <b>{t('trackOrder')}</b>
+                {t('trustDeliverySub')}
+              </span>
+            </Link>
+            <Link href={`${b}/suppliers`} className="sw-foot-svc">
+              <PinIcon size={20} strokeWidth={1.4} />
+              <span>
+                <b>{t('suppliersNearYou')}</b>
+                {t('trustShowroomsSub')}
+              </span>
+            </Link>
+            <Link href={`${b}/pay-later`} className="sw-foot-svc">
+              <CardIcon size={20} strokeWidth={1.4} />
+              <span>
+                <b>{t('payLater')}</b>
+                {t('trustAdvanceSub')}
+              </span>
+            </Link>
+          </div>
+        </div>
         <Subscribe brand="skywood" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
         <div className="sw-foot-grid">
           <div className="sw-foot-brand">
             <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} loading="lazy" />
-            <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="sw-foot-concierge">
-              <span className="sw-eyebrow light">{t('concierge')}</span>
-              {t('chatWhatsApp')} →
-            </a>
+            <p className="sw-foot-about">{t('swIntro')}</p>
+            <div className="sw-foot-partner">
+              <span>{t('advancePartner')}</span>
+              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
+            </div>
           </div>
           <Columns brand={brand} cats={cats} t={t} headClass="sw-foot-h" />
         </div>
@@ -136,8 +170,10 @@ function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryVie
           <span>
             © {new Date().getFullYear()} {brand.legal}
           </span>
-          <span className="sw-foot-pay">
-            {t('weAccept')}: Azania Bank · {t('payLater')} · Visa · Mastercard
+          <span className="sw-foot-pay" aria-label={t('weAccept')}>
+            {['Azania Bank', t('payLater'), 'Visa', 'Mastercard'].map((x) => (
+              <span key={x}>{x}</span>
+            ))}
           </span>
           <span>
             <Link href="/privacy">{t('privacy')}</Link> · {t('builtBy')}

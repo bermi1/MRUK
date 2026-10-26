@@ -60,7 +60,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   if (key === 'skywood') {
     const heroIds = new Set(cms.hero.map((h) => h.pid));
     const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
-    return <SkywoodHome {...common} focus={focus} />;
+    return <SkywoodHome {...common} flash={flash} focus={focus} />;
   }
   return <MrukHome {...common} flash={flash} />;
 }

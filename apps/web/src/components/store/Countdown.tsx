@@ -13,7 +13,8 @@ function remaining() {
   return [h, m, s - m * 60];
 }
 
-export function Countdown({ compact = false }: { compact?: boolean }) {
+/** `className` switches to an unstyled, class-driven layout (.cd-u > b + small) for brands that style it themselves. */
+export function Countdown({ compact = false, className }: { compact?: boolean; className?: string }) {
   const [t, setT] = useState<number[] | null>(null);
   useEffect(() => {
     setT(remaining());
@@ -21,6 +22,17 @@ export function Countdown({ compact = false }: { compact?: boolean }) {
     return () => window.clearInterval(i);
   }, []);
   const labels = ['hours', 'mins', 'secs'];
+  if (className)
+    return (
+      <div className={className} role="timer" aria-label="Time left for flash deals">
+        {labels.map((l, i) => (
+          <span key={l} className="cd-u">
+            <b>{t ? String(t[i]).padStart(2, '0') : '--'}</b>
+            <small>{l}</small>
+          </span>
+        ))}
+      </div>
+    );
   return (
     <div style={{ display: 'flex', gap: compact ? 6 : 8 }} role="timer" aria-label="Time left for flash deals">
       {labels.map((l, i) => (
