@@ -17,7 +17,7 @@ import { waLink } from '@/lib/format';
 import { themeVars } from '@/lib/theme';
 import { getCartCount, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getCms, getProducts, isBrandKey, photoFirst } from '@/server/catalog';
-import { getT } from '@/server/locale';
+import { getLocale, getT } from '@/server/locale';
 import { currentCustomer } from '@/server/session';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
@@ -50,6 +50,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const { brand: key } = await params;
   if (!isBrandKey(key)) notFound();
   const [brand, cms, cats, products, cartCount, cmp, customer, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT()]);
+  const locale = await getLocale();
   // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
   const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
   const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
@@ -98,7 +99,15 @@ export default async function BrandLayout({ children, params }: { children: Reac
     brandName: brand.name,
     cats,
     announcement: cms.announcement,
+    locale,
+    whatsapp: waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`),
+    compareCount: cmp.length,
     labels: {
+      categories: t('categories'),
+      shopAll: t('shopTitle'),
+      payLaterHow: t('payLaterHow'),
+      chatWhatsApp: t('chatWhatsApp'),
+      language: t('language'),
       menu: t('menu'),
       close: t('close'),
       openMenu: t('openMenu'),
@@ -125,14 +134,14 @@ export default async function BrandLayout({ children, params }: { children: Reac
         <a href="#main" className="skip">
           {t('skipToContent')}
         </a>
-        <AppBar brand={key} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
+        <AppBar brand={key} brandName={brand.name} searchLabel={t('searchShort')} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
         <Footer brand={brand} cats={cats} t={t} />
         <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
           <WhatsAppIcon />
         </a>
-        <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), deals: t('deals'), account: t('account') }} />
+        <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), account: t('account') }} />
         <RevealObserver />
       </ToastProvider>
     </div>

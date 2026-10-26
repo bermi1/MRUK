@@ -11,7 +11,6 @@ import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
-import { CategoryChips } from '../CategoryChips';
 import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
@@ -67,7 +66,6 @@ export function MrukHome(props: {
 
   return (
     <div className="mu-home">
-      <CategoryChips brand="mruk" cats={cats} payLater={t('payLater')} deals={t('deals')} />
       <MrukHero slides={slides} dealsHref={`${b}/deals`} labels={heroLabels} />
 
       {/* Trust bar */}

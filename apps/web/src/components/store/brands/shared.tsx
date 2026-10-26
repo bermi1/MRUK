@@ -238,7 +238,16 @@ export interface MobileMenuProps {
     subs: string[];
   }[];
   announcement: string;
+  locale: 'en' | 'sw';
+  /** wa.me link for the brand's WhatsApp line. */
+  whatsapp: string;
+  compareCount: number;
   labels: {
+    categories: string;
+    shopAll: string;
+    payLaterHow: string;
+    chatWhatsApp: string;
+    language: string;
     menu: string;
     close: string;
     openMenu: string;

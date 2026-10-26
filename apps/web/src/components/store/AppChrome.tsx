@@ -1,59 +1,54 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BagIcon, GridIcon, HomeIcon, SearchIcon, TagIcon, UserIcon } from '../icons';
+import { BagIcon, GridIcon, HomeIcon, SearchIcon, UserIcon } from '../icons';
 
-/** Phone chrome (<768px): brand switch on top, bottom bar with a raised centre cart. */
-export function AppBar({ brand, menu }: { brand: string; menu?: React.ReactNode }) {
-  const path = usePathname();
-  const rest = path.replace(/^\/(mruk|skywood)/, '');
-  // Keep the user on the same kind of page when switching brand (product/cart pages are brand-specific).
-  const keep = /^\/(deals|suppliers|support|track|compare|account)?$/.test(rest) ? rest : '';
+/** Phone header (<768px): menu drawer, logo, search. Everything else lives in the drawer. */
+export function AppBar({ brand, brandName, menu, searchLabel }: { brand: 'mruk' | 'skywood'; brandName: string; menu?: React.ReactNode; searchLabel: string }) {
+  const sky = brand === 'skywood';
   return (
-    <header className="appbar m-flex m-only">
+    <header className={`appbar appbar-${brand} m-only`}>
       {menu}
-      <nav className="brand-switch" aria-label="Brand">
-        <Link href={`/mruk${keep}`} className={brand === 'mruk' ? 'on' : ''}>
-          Mr UK
-        </Link>
-        <Link href={`/skywood${keep}`} className={brand === 'skywood' ? 'on' : ''}>
-          Skywood
-        </Link>
-      </nav>
-      <Link href={`/${brand}/search`} className="icon-btn" style={{ background: 'var(--surface)' }} aria-label="Search">
-        <SearchIcon size={18} color="#12152B" />
+      <Link href={`/${brand}`} className="appbar-logo" aria-label={`${brandName} home`}>
+        <img src={sky ? '/brand/skywood.png' : '/brand/mruk.png'} alt={brandName} width={sky ? 98 : 41} height={28} />
+      </Link>
+      <Link href={`/${brand}/search`} className="appbar-search" aria-label={searchLabel}>
+        <SearchIcon size={20} color="currentColor" />
       </Link>
     </header>
   );
 }
 
-export function TabBar({ brand, cartCount, labels }: { brand: string; cartCount: number; labels: { home: string; shop: string; cart: string; deals: string; account: string } }) {
+/** Phone bottom bar: exactly four destinations (Home, Shop, Cart, Account). */
+export function TabBar({ brand, cartCount, labels }: { brand: string; cartCount: number; labels: { home: string; shop: string; cart: string; account: string } }) {
   const path = usePathname();
   const b = `/${brand}`;
-  const on = (p: string) => (p === b ? path === b : path.startsWith(p));
+  const on = (...ps: string[]) => ps.some((p) => (p === b ? path === b : path.startsWith(p)));
+  const tab = (active: boolean) => (active ? { className: 'on', 'aria-current': 'page' as const } : {});
   return (
-    <nav className="tabbar m-only" style={{ display: undefined }} aria-label="App">
-      <Link href={b} className={on(b) ? 'on' : ''}>
+    <nav className="tabbar m-only" aria-label="App">
+      <Link href={b} {...tab(on(b))}>
         <HomeIcon />
-        {labels.home}
+        <span>{labels.home}</span>
       </Link>
-      <Link href={`${b}/shop`} className={on(`${b}/c`) || on(`${b}/p`) ? 'on' : ''}>
+      <Link href={`${b}/shop`} {...tab(on(`${b}/shop`, `${b}/c/`, `${b}/p/`, `${b}/search`))}>
         <GridIcon />
-        {labels.shop}
+        <span>{labels.shop}</span>
       </Link>
-      <Link href={`${b}/cart`} aria-label={`${labels.cart} (${cartCount})`}>
-        <span className="cart-fab">
-          <BagIcon size={24} color="#fff" />
-          <span className="count" key={cartCount}>{cartCount}</span>
+      <Link href={`${b}/cart`} {...tab(on(`${b}/cart`, `${b}/checkout`))} aria-label={`${labels.cart} (${cartCount})`}>
+        <span className="tab-ico">
+          <BagIcon size={22} />
+          {cartCount > 0 && (
+            <span className="tab-badge" key={cartCount}>
+              {cartCount > 99 ? '99+' : cartCount}
+            </span>
+          )}
         </span>
+        <span>{labels.cart}</span>
       </Link>
-      <Link href={`${b}/deals`} className={on(`${b}/deals`) ? 'on' : ''}>
-        <TagIcon />
-        {labels.deals}
-      </Link>
-      <Link href={`${b}/account`} className={on(`${b}/account`) ? 'on' : ''}>
+      <Link href={`${b}/account`} {...tab(on(`${b}/account`, `${b}/signup`))}>
         <UserIcon size={22} />
-        {labels.account}
+        <span>{labels.account}</span>
       </Link>
     </nav>
   );
