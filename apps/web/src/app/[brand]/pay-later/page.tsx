@@ -4,6 +4,7 @@ import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCms, getProducts } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import { ArrowRightIcon } from '@/components/icons';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT();
@@ -42,7 +43,7 @@ export default async function PayLaterPage({ params }: { params: Promise<{ brand
             <p className="pl-intro">{t('payLaterIntro')}</p>
             <div className="pl-cta">
               <Link href={`${b}/shop`} className="pl-btn">
-                {t('plShop')} <span aria-hidden="true">→</span>
+                {t('plShop')} <ArrowRightIcon size={16} className="i-arrow" />
               </Link>
               <a href="#how" className="pl-link">
                 {t('payLaterHow')}

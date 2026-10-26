@@ -14,7 +14,7 @@ import { SafeImg } from '../../SafeImg';
 import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
-import { BoltIcon, Stars } from '../../../icons';
+import { ArrowRightIcon, BoltIcon, Stars } from '../../../icons';
 import { MrukHero } from './Hero';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -98,7 +98,7 @@ export function MrukHome(props: {
             title={`${brand.tagline}.`}
             action={
               <Link href={`${b}/shop`} className="mu-link d-only">
-                {t('viewAll')} →
+                {t('viewAll')} <ArrowRightIcon size={16} className="i-arrow" />
               </Link>
             }
           />
@@ -161,7 +161,7 @@ export function MrukHome(props: {
                     <span className="mu-need-title">{t(NEED[c.id]!)}</span>
                     <span className="mu-need-subs">{c.subs.join(' · ')}</span>
                     <span className="mu-need-go">
-                      {c.name} <span aria-hidden="true">→</span>
+                      {c.name} <ArrowRightIcon size={16} className="i-arrow" />
                     </span>
                   </span>
                 </Link>
@@ -189,7 +189,7 @@ export function MrukHome(props: {
               sub={t('bundlesSub')}
               action={
                 <Link href={`${b}/deals`} className="mu-link d-only">
-                  {t('seeAll')} →
+                  {t('seeAll')} <ArrowRightIcon size={16} className="i-arrow" />
                 </Link>
               }
             />
@@ -237,7 +237,7 @@ export function MrukHome(props: {
               <h2>{t('advanceTitle')}</h2>
               <p>{t('fromPerMonth', { amount: fmt(exampleMonthly) })}</p>
               <Link href={`${b}/shop`} className="mu-btn mu-btn-sky">
-                {t('buyWithAdvance')} <span aria-hidden="true">→</span>
+                {t('buyWithAdvance')} <ArrowRightIcon size={16} className="i-arrow" />
               </Link>
             </div>
             <ol className="mu-steps">
@@ -294,7 +294,7 @@ export function MrukHome(props: {
                 <span key={c}>{c}</span>
               ))}
             </span>
-            <span className="mu-link light">{t('findNearest')} →</span>
+            <span className="mu-link light">{t('findNearest')} <ArrowRightIcon size={16} className="i-arrow" /></span>
           </Link>
         </section>
       </div>

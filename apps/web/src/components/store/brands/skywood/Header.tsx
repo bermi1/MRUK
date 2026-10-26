@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { fmt } from '@/lib/format';
-import { CloseIcon } from '../../../icons';
+import { ArrowRightIcon, CloseIcon } from '../../../icons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -123,7 +123,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
               </label>
               <input id="sw-q" name="q" placeholder={labels.search} autoComplete="off" autoFocus onKeyDown={(e) => e.key === 'Escape' && setSearch(false)} />
               <button type="submit" className="sw-search-go">
-                {labels.searchShort} <span aria-hidden="true">→</span>
+                {labels.searchShort} <ArrowRightIcon size={16} className="i-arrow" />
               </button>
             </form>
           </div>

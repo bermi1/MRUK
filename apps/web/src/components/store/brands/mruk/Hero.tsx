@@ -6,6 +6,7 @@ import { AddButton } from '../../CartButtons';
 import { HeroImage } from '../HeroImage';
 import { HeroSound, HeroVideo } from '../HeroMedia';
 import { fill, type HeroLabels, type HeroSlideView } from '../shared';
+import { ArrowRightIcon } from '@/components/icons';
 
 /**
  * Mr UK kinetic hero: full-bleed navy stage, product on a lit plinth with depth layers,
@@ -77,7 +78,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
           )}
           <div className="mu-hero-cta">
             <Link href={s.href} className="mu-btn mu-btn-sky">
-              {s.cta || labels.shopNow} <span aria-hidden="true">→</span>
+              {s.cta || labels.shopNow} <ArrowRightIcon size={16} className="i-arrow" />
             </Link>
             {s.pid ? (
               <AddButton brand="mruk" id={s.pid} name={s.name} className="mu-btn mu-btn-ghost" label={labels.addToCart} />

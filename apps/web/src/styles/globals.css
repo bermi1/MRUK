@@ -1026,3 +1026,5 @@ textarea.input { resize: vertical; }
   .plb-text span { font-size: 13px; }
   .plb-cta { grid-column: 1 / -1; width: 100%; }
 }
+
+.i-arrow { display: inline-block; vertical-align: -0.18em; flex: none; }

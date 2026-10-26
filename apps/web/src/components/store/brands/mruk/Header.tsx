@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { fmt } from '@/lib/format';
-import { BagIcon, CompareIcon, SearchIcon, UserIcon } from '../../../icons';
+import { ArrowRightIcon, BagIcon, CompareIcon, SearchIcon, UserIcon } from '../../../icons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -40,7 +40,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
       <span className="mu-promo-eyebrow">{cms.megaPromo.eyebrow}</span>
       <span className="mu-promo-title">{cms.megaPromo.title}</span>
       <span className="mu-promo-cta">
-        {cms.megaPromo.cta} <span aria-hidden="true">→</span>
+        {cms.megaPromo.cta} <ArrowRightIcon size={16} className="i-arrow" />
       </span>
     </Link>
   );
@@ -185,7 +185,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                       ))}
                     </ul>
                     <Link href={`${b}/c/${mc.id}`} className="mu-viewall">
-                      {fill(labels.viewAllN, { n: mc.count })} <span aria-hidden="true">→</span>
+                      {fill(labels.viewAllN, { n: mc.count })} <ArrowRightIcon size={16} className="i-arrow" />
                     </Link>
                   </div>
                   <div>

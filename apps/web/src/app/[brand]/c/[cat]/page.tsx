@@ -76,8 +76,8 @@ export default async function CategoryPage({ params, searchParams }: { params: P
           {(
             [
               ['popular', 'Popular'],
-              ['low', 'Price ↑'],
-              ['high', 'Price ↓'],
+              ['low', 'Price: low to high'],
+              ['high', 'Price: high to low'],
             ] as const
           ).map(([k, l]) => (
             <Link key={k} href={q({ sort: k })} className={`sortlink ${sort === k ? 'on' : ''}`}>

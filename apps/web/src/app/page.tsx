@@ -4,6 +4,7 @@ import { fmt } from '@/lib/format';
 import type { ProductView } from '@/lib/types';
 import { getAllProducts, getBrand, getBundles, getCategories, getCms, getSuppliers } from '@/server/catalog';
 import '@/styles/landing.css';
+import { ArrowRightIcon } from '@/components/icons';
 
 const BRAND_COLOR = { mruk: '#1D2366', skywood: '#8A6A2F' } as const;
 
@@ -192,7 +193,7 @@ export default async function Landing() {
                     </div>
                   </div>
                   <span className="icon-btn" style={{ background: BRAND_COLOR[p.brand] === '#8A6A2F' ? '#111216' : '#1D2366', color: '#fff' }}>
-                    →
+                    <ArrowRightIcon size={16} className="i-arrow" />
                   </span>
                 </div>
               </Link>
