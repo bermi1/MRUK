@@ -8,6 +8,7 @@ import { AddBundleButton } from '../../CartButtons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
+import { CategoryChips } from '../CategoryChips';
 import { ProductCard } from '../ProductCard';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { SkywoodHero } from './Hero';
@@ -53,6 +54,7 @@ export function SkywoodHome(props: {
 
   return (
     <div className="sw-home">
+      <CategoryChips brand="skywood" cats={cats} payLater={t('payLater')} deals={t('deals')} />
       <SkywoodHero slides={slides} labels={heroLabels} />
 
       {/* Statement */}

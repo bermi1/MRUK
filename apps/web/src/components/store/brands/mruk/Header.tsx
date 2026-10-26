@@ -6,6 +6,7 @@ import { BagIcon, CompareIcon, SearchIcon, UserIcon } from '../../../icons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
+import { PayLaterMenu } from '../PayLaterMenu';
 import { fill, useAuthModal, useMegaMenu, useScrolled, type HeaderProps } from '../shared';
 
 const Caret = () => (
@@ -131,12 +132,18 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
               </li>
             ))}
           </ul>
-          <div className="mu-nav-end" onMouseEnter={m.leave}>
-            <Link href={`${b}/deals`} className={`mu-deals ${on('deals') ? 'on' : ''}`}>
+          <div className="mu-nav-end">
+            <span className={`mu-pl ${m.open === 'paylater' ? 'open' : ''} ${on('pay-later') ? 'on' : ''}`} onMouseEnter={() => m.hover('paylater')}>
+              <Link href={`${b}/pay-later`}>{labels.payLater}</Link>
+              <button type="button" ref={m.ref('paylater')} aria-expanded={m.open === 'paylater'} aria-controls="mu-mega" aria-label={labels.payLaterHow} onClick={() => m.toggle('paylater')}>
+                <Caret />
+              </button>
+            </span>
+            <Link href={`${b}/deals`} onMouseEnter={m.leave} className={`mu-deals ${on('deals') ? 'on' : ''}`}>
               <span aria-hidden="true">%</span>
               {labels.deals}
             </Link>
-            <Link href={`${b}/suppliers`} className={on('suppliers') ? 'on' : ''}>
+            <Link href={`${b}/suppliers`} className={on('suppliers') ? 'on' : ''} onMouseEnter={m.leave}>
               {labels.suppliers}
             </Link>
           </div>
@@ -146,9 +153,11 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
       {m.open && (
         <>
           <div className="mu-scrim" onClick={() => m.close()} aria-hidden="true" />
-          <div id="mu-mega" className="mu-mega" role="region" aria-label={mc ? mc.name : labels.allCategories} onMouseEnter={m.keep}>
+          <div id="mu-mega" className="mu-mega" role="region" aria-label={m.open === 'paylater' ? labels.payLater : mc ? mc.name : labels.allCategories} onMouseEnter={m.keep}>
             <div className="wrap">
-              {m.open === 'all' || !mc ? (
+              {m.open === 'paylater' ? (
+                <PayLaterMenu brand={brand.key} labels={labels} className="mu-plm" />
+              ) : m.open === 'all' || !mc ? (
                 <div className="mu-mega-all">
                   <div className="mu-tiles">
                     {cats.map((c, i) => (
@@ -182,7 +191,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                   <div>
                     <p className="mu-kicker">{labels.featured}</p>
                     <div className="mu-feat">
-                      {(mega[mc.id] ?? []).map((p, i) => (
+                      {(mega[mc.id] ?? []).slice(0, 3).map((p, i) => (
                         <Link key={p.id} href={`${b}/p/${p.id}`} className="mu-feat-item" style={{ ['--i' as string]: i }}>
                           <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="sm" />
                           <span className="mu-feat-model">{p.model}</span>

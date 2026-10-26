@@ -108,7 +108,7 @@
 .mu-mega-subs li a { display: flex; align-items: center; min-height: 40px; font-size: 15.5px; font-weight: 600; color: var(--mu-ink); border-radius: 10px; padding: 0 10px; margin: 0 -10px; transition: background 0.15s, color 0.15s, padding 0.2s var(--ease); }
 .mu-mega-subs li a:hover { background: var(--mu-cloud); color: var(--mu-sky-d); padding-left: 16px; }
 .mu-viewall { display: inline-flex; margin-top: 16px; font-size: 14px; font-weight: 700; color: var(--mu-sky-d); }
-.mu-feat { margin-top: 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.mu-feat { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .mu-feat-item { display: flex; flex-direction: column; gap: 3px; padding: 8px 8px 12px; border-radius: 18px; transition: background 0.2s; animation: muRise 0.4s var(--ease) both; animation-delay: calc(80ms + var(--i, 0) * 50ms); }
 .mu-feat-item:hover { background: var(--mu-cloud); }
 .mu-feat-item .pimg { aspect-ratio: 1; height: auto; margin-bottom: 8px; border-radius: 14px; }
@@ -381,7 +381,7 @@
 
 @media (max-width: 1240px) {
   .mu-act span { display: none; }
-  .mu-nav-end a:not(.mu-deals) { display: none; }
+  .mu-nav-end > a:not(.mu-deals) { display: none; }
   .mu-mega-cat { grid-template-columns: 200px minmax(0, 1fr); }
   .mu-mega-cat .mu-promo { display: none; }
   .mu-mega-all { grid-template-columns: 1fr; }
@@ -511,3 +511,19 @@
 [data-brand='mruk'] .pl-sec h2 { font-weight: 780; color: var(--mu-ink); }
 [data-brand='mruk'] .pl-steps li { border-radius: 22px; background: var(--mu-cloud); }
 [data-brand='mruk'] .pl-n { border-radius: 12px; background: var(--mu-sky); color: var(--mu-ink); font-family: var(--mu-display); }
+
+/* Pay Later nav item + dropdown */
+.mu-pl { position: relative; display: inline-flex; align-items: center; height: 100%; }
+.mu-pl > a { font-size: 14px; font-weight: 700; padding: 8px 2px 8px 12px; color: var(--mu-sky-d) !important; }
+.mu-pl > button { width: 28px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--mu-sky-d); transition: transform 0.2s var(--ease); }
+.mu-pl.open > button { transform: rotate(180deg); }
+.mu-plm { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 36px; align-items: start; }
+.mu-plm .plm-by { margin: 0; font-family: var(--mu-display); font-size: 24px; font-weight: 780; letter-spacing: -0.03em; color: var(--mu-ink); }
+.mu-plm .plm-links { list-style: none; margin: 14px 0 0; padding: 0; }
+.mu-plm .plm-links a { display: flex; align-items: center; min-height: 44px; font-size: 15.5px; font-weight: 600; color: var(--mu-ink); }
+.mu-plm .plm-links a::after { content: '→'; margin-left: 8px; color: var(--mu-sky-d); transition: transform 0.2s var(--ease); }
+.mu-plm .plm-links a:hover { color: var(--mu-sky-d); }
+.mu-plm .plm-links a:hover::after { transform: translateX(4px); }
+.mu-plm .plm-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: none; }
+.mu-plm .plm-steps li { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 18px; background: var(--mu-cloud); font-size: 14px; font-weight: 650; color: var(--mu-ink); animation: muRise 0.4s var(--ease) both; animation-delay: calc(var(--i, 0) * 50ms); }
+.mu-plm .plm-n { width: 34px; height: 34px; border-radius: 10px; background: var(--mu-sky); color: var(--mu-ink); display: flex; align-items: center; justify-content: center; font-family: var(--mu-display); font-weight: 800; }
