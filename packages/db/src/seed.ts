@@ -70,6 +70,13 @@ const LOCAL_IMAGES: Record<string, string> = {
   'skywood-sk6031ges': '/img/products/skywood-sk6031ges-cooker.webp',
 };
 
+/** Replace the customer-facing product name in seeded CMS copy. */
+function payLaterCopy<T>(v: T): T {
+  if (typeof v === 'string') return v.replace(/Azania Bank Salary Advance/g, 'Pay Later by Azania Bank').replace(/Salary Advance/g, 'Pay Later') as T;
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, payLaterCopy(x)])) as T;
+  return v;
+}
+
 const BRAND_LOGO = { mruk: '/brand/mruk.png', skywood: '/brand/skywood.png' } as const;
 
 // Deterministic pseudo-random numbers so the demo data is stable between runs.
@@ -187,6 +194,11 @@ async function main() {
     }
     // CMS blocks
     const cms = BT.cms(key);
+    // Storefront copy calls the Azania product "Pay Later" (internal names stay "Salary Advance").
+    cms.announcement = payLaterCopy(cms.announcement);
+    cms.seo = payLaterCopy(cms.seo);
+    // Optional hero fields used by the brand redesign, with safe defaults (admin may edit them).
+    cms.hero = (cms.hero as Record<string, unknown>[]).map((h) => ({ cta: '', href: '', price: null, imgMobile: '', layout: 'product', theme: 'dark', align: 'left', focal: '50% 50%', ...h }));
     for (const k of ['announcement', 'hero', 'megaPromo', 'deals', 'seo'] as const) {
       await prisma.cmsBlock.create({ data: { brandKey: key, key: k, json: cms[k] as object } });
     }

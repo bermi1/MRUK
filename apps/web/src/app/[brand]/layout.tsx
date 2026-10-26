@@ -110,6 +110,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
       compare: t('compare'),
       salaryAdvance: t('salaryAdvance'),
       salaryAdvanceSub: t('salaryAdvanceSub'),
+      payLater: t('payLater'),
     },
   };
   const sky = key === 'skywood';

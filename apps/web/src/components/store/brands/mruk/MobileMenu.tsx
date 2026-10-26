@@ -58,7 +58,7 @@ export function MrukMobileMenu({ brand, cats, labels, announcement }: MobileMenu
                 </Link>
               ))}
             </div>
-            <Link href="/#salary-advance" className="mu-mm-sa">
+            <Link href={`${b}/pay-later`} className="mu-mm-sa">
               <b>{labels.salaryAdvance}</b>
               <span>{announcement}</span>
             </Link>

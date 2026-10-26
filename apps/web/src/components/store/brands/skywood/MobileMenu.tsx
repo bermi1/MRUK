@@ -44,7 +44,8 @@ export function SkywoodMobileMenu({ brand, brandName, cats, labels, announcement
               ))}
             </ol>
             <nav className="sw-mm-links" aria-label={labels.helpAndServices}>
-              <Link href={`${b}/deals`}>{labels.deals}</Link>
+              <Link href={`${b}/pay-later`}>{labels.payLater}</Link>
+            <Link href={`${b}/deals`}>{labels.deals}</Link>
               <Link href={`${b}/track`}>{labels.track}</Link>
               <Link href={`${b}/suppliers`}>{labels.suppliers}</Link>
               <Link href={`${b}/support`}>{labels.support}</Link>

@@ -252,6 +252,7 @@ export interface MobileMenuProps {
     compare: string;
     salaryAdvance: string;
     salaryAdvanceSub: string;
+    payLater: string;
   };
 }
 
