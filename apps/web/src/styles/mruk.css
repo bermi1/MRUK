@@ -499,3 +499,15 @@
 @keyframes muStageScroll { to { transform: translateY(60px) scale(0.92); } }
 @keyframes muCopyScroll { to { transform: translateY(-30px); opacity: 0.5; } }
 .pc-mruk .cmp-tag { background: #fff; box-shadow: 0 4px 12px rgba(18, 22, 74, 0.15); }
+
+/* Pay Later page, Mr UK */
+[data-brand='mruk'] .pl-hero { background: radial-gradient(50% 120% at 100% 0%, rgba(0, 152, 218, 0.4), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, var(--mu-ink), var(--mu-navy)); color: #fff; }
+[data-brand='mruk'] .pl-kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mu-sky-l); }
+[data-brand='mruk'] .pl-hero h1 { font-weight: 800; }
+[data-brand='mruk'] .pl-intro { color: rgba(255, 255, 255, 0.78); }
+[data-brand='mruk'] .pl-btn { border-radius: 999px; background: var(--mu-sky); color: var(--mu-ink); }
+[data-brand='mruk'] .pl-calc { border-radius: 24px; background: #fff; color: var(--mu-ink); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25); }
+[data-brand='mruk'] .pl-calc b { color: var(--mu-sky-d); }
+[data-brand='mruk'] .pl-sec h2 { font-weight: 780; color: var(--mu-ink); }
+[data-brand='mruk'] .pl-steps li { border-radius: 22px; background: var(--mu-cloud); }
+[data-brand='mruk'] .pl-n { border-radius: 12px; background: var(--mu-sky); color: var(--mu-ink); font-family: var(--mu-display); }

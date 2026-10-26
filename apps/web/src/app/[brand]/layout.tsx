@@ -81,6 +81,12 @@ export default async function BrandLayout({ children, params }: { children: Reac
       helpAndServices: t('helpAndServices'),
       account: t('account'),
       perMonth: t('perMonthShort'),
+      payLater: t('payLater'),
+      payLaterBy: t('salaryAdvance'),
+      payLaterHow: t('payLaterHow'),
+      payLaterEligibility: t('payLaterEligibility'),
+      payLaterFaq: t('payLaterFaq'),
+      payLaterSteps: [t('plStep1'), t('plStep2'), t('plStep3'), t('plStep4'), t('plStep5')],
     },
   };
   const menu: MobileMenuProps = {

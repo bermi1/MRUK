@@ -34,6 +34,12 @@ export interface HeaderLabels {
   helpAndServices: string;
   account: string;
   perMonth: string;
+  payLater: string;
+  payLaterBy: string;
+  payLaterHow: string;
+  payLaterEligibility: string;
+  payLaterFaq: string;
+  payLaterSteps: string[];
 }
 
 /** Props every brand header receives from [brand]/layout.tsx (one data contract, two designs). */

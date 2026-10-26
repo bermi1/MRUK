@@ -693,3 +693,40 @@ textarea.input { resize: vertical; }
   /* Long button labels ("Buy with Salary Advance", Kiswahili) wrap instead of pushing past the screen edge. */
   .pdp .btn, .card .btn { white-space: normal; text-align: center; line-height: 1.2; padding-left: 14px; padding-right: 14px; }
 }
+
+/* Pay Later explainer (/[brand]/pay-later): shared layout, brand skins in mruk.css / skywood.css. */
+.pl-hero-in { display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; padding-top: 64px; padding-bottom: 64px; }
+.pl-hero h1 { margin: 12px 0 0; font-size: clamp(32px, 4.4vw, 60px); line-height: 1.02; letter-spacing: -0.035em; max-width: 16ch; }
+.pl-intro { margin: 18px 0 0; font-size: 17px; line-height: 1.6; max-width: 540px; }
+.pl-cta { display: flex; align-items: center; gap: 22px; margin-top: 26px; flex-wrap: wrap; }
+.pl-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 26px; font-weight: 700; font-size: 15px; }
+.pl-link { font-weight: 600; border-bottom: 1.5px solid currentColor; min-height: 24px; }
+.pl-calc { padding: 26px; display: flex; flex-direction: column; gap: 8px; }
+.pl-calc-t { margin: 0; font-size: 13px; opacity: 0.8; }
+.pl-calc-p { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.pl-calc ul { list-style: none; margin: 8px 0 6px; padding: 0; }
+.pl-calc li { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid currentColor; border-color: rgba(127, 127, 127, 0.25); font-size: 15px; }
+.pl-calc img { height: 32px; width: auto; align-self: flex-start; }
+.pl-sec { margin-top: 80px; scroll-margin-top: 140px; }
+.pl-sec h2 { margin: 0 0 24px; font-size: clamp(26px, 3vw, 42px); letter-spacing: -0.03em; line-height: 1.05; }
+.pl-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.pl-steps li { display: flex; flex-direction: column; gap: 8px; padding: 22px; font-size: 14px; line-height: 1.5; }
+.pl-steps b { font-size: 16px; }
+.pl-n { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 800; margin-bottom: 8px; }
+.pl-two { display: grid; grid-template-columns: 1fr 1.4fr; gap: 48px; align-items: start; }
+.pl-note { margin: 0; font-size: 14px; color: var(--muted2); }
+.pl-elig { list-style: none; margin: 0; padding: 0; }
+.pl-elig li { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 16px; }
+.pl-elig li::before { content: '✓'; font-weight: 700; color: var(--monthly); }
+.pl-faq details { border-bottom: 1px solid var(--line); }
+.pl-faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 56px; font-size: 16.5px; font-weight: 600; }
+.pl-faq summary::-webkit-details-marker { display: none; }
+.pl-faq summary::after { content: '+'; font-size: 22px; font-weight: 400; transition: transform 0.25s var(--ease); }
+.pl-faq details[open] summary::after { transform: rotate(45deg); }
+.pl-faq p { margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: var(--muted2); max-width: 620px; }
+@media (max-width: 1000px) { .pl-steps { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 767px) {
+  .pl-hero-in, .pl-two { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-top: 28px; padding-bottom: 32px; }
+  .pl-sec { margin-top: 44px; }
+  .pl-steps { grid-template-columns: minmax(0, 1fr); }
+}
