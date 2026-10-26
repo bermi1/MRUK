@@ -31,7 +31,7 @@ async function signIn(page: Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 }
 
-test('staff send an SMS campaign with a promo code to subscribers and see delivery stats; a subscriber unsubscribes', async ({ page }) => {
+test('staff send an SMS campaign with a promo code to subscribers, see delivery stats, a subscriber unsubscribes, and loyalty points are adjusted', async ({ page }) => {
   const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
   // A fresh, opted-in Mr UK subscriber (the storefront sign-up form is built by the storefront team).
   const phone = `+2557${String(Date.now()).slice(-8)}`;
@@ -100,13 +100,9 @@ test('staff send an SMS campaign with a promo code to subscribers and see delive
   // The subscriber list shows them as unsubscribed.
   await page.goto('/admin/marketing/subscribers?status=unsubscribed&q=Test+Subscriber');
   await expect(page.locator(`tr[data-subscriber="${sub.id}"]`)).toContainText('Unsubscribed');
-  await db.$disconnect();
-});
 
-test('loyalty points show per brand on the customer page and staff can adjust them', async ({ page }) => {
-  const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
+  // Loyalty: points per brand on the customer page; staff adjust them (same session: staff sign-ins are rate limited per IP).
   const c = await db.customer.findUniqueOrThrow({ where: { phone: '+255754000214' } });
-  await signIn(page, 'amani@mruk.co.tz');
   await page.goto(`/admin/customers/${c.id}`);
   const card = page.getByTestId('loyalty-mruk');
   await expect(card).toContainText('points');
