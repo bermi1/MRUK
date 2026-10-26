@@ -1,7 +1,7 @@
 import 'server-only';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { AnthropicAi, LocalStorage, SupabaseStorage, MockAi, MockAzaniaBank, MockSms, MockWhatsApp, UnconfiguredS3Storage, type Ai, type AzaniaBank, type Sms, type Storage, type WhatsApp } from '@bt/integrations';
+import { AnthropicAi, LocalStorage, SupabaseStorage, MockAi, MockAzaniaBank, MockEmail, MockSms, MockWhatsApp, UnconfiguredS3Storage, type Ai, type AzaniaBank, type Email, type Sms, type Storage, type WhatsApp } from '@bt/integrations';
 import { env } from './env';
 
 /**
@@ -12,7 +12,7 @@ function notConfigured(name: string): never {
   throw new Error(`${name} live adapter is not configured yet; set the adapter back to "mock" or add credentials and the live implementation.`);
 }
 
-const g = globalThis as unknown as { __btIntegrations?: { bank: AzaniaBank; sms: Sms; whatsapp: WhatsApp; storage: Storage; ai: Ai } };
+const g = globalThis as unknown as { __btIntegrations?: { bank: AzaniaBank; sms: Sms; whatsapp: WhatsApp; email: Email; storage: Storage; ai: Ai } };
 
 function build() {
   // Serverless hosts (Vercel) have a read-only filesystem: local storage falls back to the
@@ -25,6 +25,7 @@ function build() {
     bank: env.AZANIA_ADAPTER === 'mock' ? new MockAzaniaBank(env.AZANIA_SSO_SECRET) : notConfigured('Azania Bank'),
     sms: env.SMS_ADAPTER === 'mock' ? new MockSms() : notConfigured('SMS'),
     whatsapp: env.WHATSAPP_ADAPTER === 'mock' ? new MockWhatsApp() : notConfigured('WhatsApp'),
+    email: env.EMAIL_ADAPTER === 'mock' ? new MockEmail() : notConfigured('Email'),
     storage:
       env.STORAGE_ADAPTER === 'supabase'
         ? new SupabaseStorage(env.SUPABASE_URL.replace(/\/$/, ''), env.SUPABASE_SECRET_KEY, env.STORAGE_BUCKET)

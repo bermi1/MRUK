@@ -66,6 +66,14 @@ export default async function Dashboard() {
   };
   const perfCards: { key: string | null; data: ReturnType<typeof perf> }[] = [...f.brands.map((b) => ({ key: b as string | null, data: perf(b) })), ...(f.brands.length > 1 ? [{ key: null, data: perf(null) }] : [])];
 
+  // Marketing tile: new (still active) subscribers this month, per brand.
+  const subsMonth = ctx.can('marketing')
+    ? await Promise.all([
+        prisma.subscriber.groupBy({ by: ['brandKey'], where: { brandKey: { in: f.brands }, consentAt: { gte: month }, unsubscribedAt: null }, _count: { _all: true } }),
+        prisma.subscriber.groupBy({ by: ['brandKey'], where: { brandKey: { in: f.brands }, consentAt: { gte: lastMonth, lt: month } }, _count: { _all: true } }),
+      ])
+    : null;
+
   const dToday = delta(ordersToday, ordersYesterday, 'yesterday');
   const revNow = revMonth._sum.total ?? 0;
   const dRev = delta(revNow, revLast._sum.total ?? 0, monthName(lastMonth));
@@ -133,6 +141,35 @@ export default async function Dashboard() {
           </section>
         ))}
       </div>
+
+      {subsMonth && (
+        <section className="ad-card" data-testid="subscribers-tile">
+          <div className="ad-between" style={{ flexWrap: 'wrap', gap: 10 }}>
+            <div>
+              <h2 className="ad-h">New subscribers, {monthName(now)}</h2>
+              <p className="ad-sub">Sign-ups from each store (consent recorded)</p>
+            </div>
+            <Link href="/admin/marketing/subscribers" style={{ fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
+              Subscribers
+            </Link>
+          </div>
+          <div className="ad-row" style={{ gap: 28, marginTop: 10, flexWrap: 'wrap' }}>
+            {f.brands.map((b) => {
+              const n = subsMonth[0].find((r) => r.brandKey === b)?._count._all ?? 0;
+              const before = subsMonth[1].find((r) => r.brandKey === b)?._count._all ?? 0;
+              return (
+                <div key={b} data-testid={`subs-${b}`}>
+                  <BrandChip brand={b} />
+                  <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{n.toLocaleString('en-US')}</div>
+                  <div className="ad-muted2" style={{ fontSize: 12 }}>
+                    {before} in {monthName(lastMonth)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <div className="ad-split">
         <section className="ad-card">

@@ -101,6 +101,8 @@ model Customer {
   orders    Order[]
   sessions  Session[]
   carts     Cart[]
+  subscribers Subscriber[]
+  loyalty     LoyaltyLedger[]
 }
 
 model Address {
@@ -444,4 +446,94 @@ model RateLimit {
   reset DateTime
 
   @@index([reset])
+}
+
+// Marketing and retention ------------------------------------------------------------------
+// See docs/marketing.md. Subscriber also acts as the per-brand suppression list: a customer who
+// unsubscribes gets a row with unsubscribedAt set, which every audience resolution honours.
+
+/// Newsletter / offers sign-up, per brand. Phone is E.164 (+255…). Unique per brand+phone and brand+email.
+model Subscriber {
+  id             String    @id @default(cuid())
+  brandKey       String
+  name           String    @default("")
+  phone          String?
+  email          String?
+  smsOptIn       Boolean   @default(false)
+  emailOptIn     Boolean   @default(false)
+  whatsappOptIn  Boolean   @default(false)
+  /// PDPA 2022 consent to marketing messages (null = never consented, e.g. a suppression-only row).
+  consentAt      DateTime?
+  source         String    @default("footer") // footer | home | signup | checkout | admin | unsubscribe
+  unsubscribedAt DateTime?
+  customerId     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([brandKey, phone])
+  @@unique([brandKey, email])
+  @@index([brandKey, createdAt])
+}
+
+/// A bulk SMS / WhatsApp / email campaign for one brand.
+model Campaign {
+  id          String         @id @default(cuid())
+  brandKey    String
+  name        String
+  channel     String // sms | whatsapp | email
+  /// { type: 'subscribers' | 'customers' | 'all', filters: { boughtCategory?, lastOrderBeforeDays?, minOrders?, tier? } }
+  audience    Json
+  /// Body with {name} and {code} placeholders. Brand name and opt-out text are added when sending.
+  message     String
+  subject     String         @default("") // email only
+  promoCode   String? // DiscountCode.code
+  status      String         @default("draft") // draft | scheduled | sending | sent | cancelled
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  /// { targeted, sent, failed, optedOut }
+  stats       Json           @default("{}")
+  createdBy   String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  sends       CampaignSend[]
+
+  @@index([status, scheduledAt])
+  @@index([brandKey, createdAt])
+}
+
+/// One message of a campaign. Holds a masked address and a hash (idempotency), never the raw number or email.
+model CampaignSend {
+  id           String   @id @default(cuid())
+  campaignId   String
+  /// Masked recipient, e.g. "+255 754 ••• 214" or "n•••@gmail.com".
+  to           String
+  /// sha256 of the channel address: one message per recipient per campaign, safe to re-run.
+  toHash       String
+  subscriberId String?
+  customerId   String?
+  status       String // pending | sent | failed
+  error        String?
+  at           DateTime @default(now())
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, toHash])
+  @@index([campaignId, status])
+}
+
+/// Loyalty points, per customer and brand (+ earn, − spend/reverse/expire). Rules: packages/core/src/marketing.ts LOYALTY_DEFAULTS.
+model LoyaltyLedger {
+  id         String   @id @default(cuid())
+  customerId String
+  brandKey   String
+  points     Int
+  reason     String // order | redeem | adjust | expire
+  orderId    String?
+  /// Idempotency key, e.g. "order:<id>:earn", "order:<id>:reverse".
+  key        String?  @unique
+  note       String   @default("")
+  at         DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, brandKey])
 }

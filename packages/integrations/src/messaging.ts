@@ -1,6 +1,7 @@
-/** SMS and WhatsApp. Mocks keep an in-memory outbox (visible in dev and e2e) and never log message bodies with PII in production. */
+/** SMS, WhatsApp and email. Mocks keep an in-memory outbox (visible in dev and e2e) and never log message bodies with PII in production. */
 export interface OutboundMessage {
-  channel: 'sms' | 'whatsapp';
+  channel: 'sms' | 'whatsapp' | 'email';
+  subject?: string;
   to: string;
   text: string;
   at: Date;
@@ -12,6 +13,11 @@ export interface Sms {
 
 export interface WhatsApp {
   send(to: string, text: string): Promise<{ id: string }>;
+}
+
+/** Marketing and transactional email (mock until an email provider is configured). */
+export interface Email {
+  send(to: string, subject: string, text: string): Promise<{ id: string }>;
 }
 
 const g = globalThis as unknown as { __btOutbox?: OutboundMessage[] };
@@ -34,6 +40,13 @@ export class MockWhatsApp implements WhatsApp {
   async send(to: string, text: string) {
     push({ channel: 'whatsapp', to, text, at: new Date() });
     return { id: `wa_${Date.now().toString(36)}` };
+  }
+}
+
+export class MockEmail implements Email {
+  async send(to: string, subject: string, text: string) {
+    push({ channel: 'email', to, subject, text, at: new Date() });
+    return { id: `em_${Date.now().toString(36)}` };
   }
 }
 

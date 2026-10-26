@@ -17,4 +17,11 @@
 | Bot protection | Rate limits on OTP, login, checkout, tickets, AI | ⚠️ partial — add Turnstile/hCaptcha before launch | |
 | Pentest | Internal attack test (OWASP Top 10, payment tampering, IDOR) | ⏳ Phase 5 | docs/security/PENTEST.md |
 
+## Marketing module
+- Every marketing mutation (campaign create/schedule/send/cancel, test send, unsubscribe, loyalty adjust, CSV export, inline promo code) runs `requireStaff('marketing.write')` (export: Super admin / Store manager only), checks the brand scope, validates with Zod and writes `AuditLog` without PII (counts, ids, brand, channel only).
+- Sign-up: Zod, +255 normalisation, consent required, DB rate limit per phone/email and IP, honeypot. Unsubscribe links are HMAC-signed per recipient and need a POST.
+- `CampaignSend` stores masked recipients and a SHA-256 hash; message bodies and numbers are never logged. Sending is idempotent per recipient.
+- `/api/cron/campaigns` requires `Authorization: Bearer CRON_SECRET` (constant-time compare; disabled when unset).
+- Subscriber CSV export neutralises spreadsheet formulas (CSV injection).
+
 Payment tampering: totals are always recomputed on the server from DB prices; the client never sends prices.
