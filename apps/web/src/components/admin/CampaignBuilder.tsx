@@ -200,7 +200,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
           </p>
         </fieldset>
 
-        <div className="ad-alert" role="status" aria-live="polite" data-testid="audience-count" style={{ fontSize: 13.5 }}>
+        <div role="status" aria-live="polite" data-testid="audience-count" style={{ fontSize: 13.5, borderRadius: 12, padding: '10px 12px', background: '#EEF1FA', color: '#12164A' }}>
           {counting && !count ? (
             'Counting recipients…'
           ) : count ? (

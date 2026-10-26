@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { prisma } from '@bt/db';
-import { describeAudience, fmtDateTime, type Audience } from '@bt/core';
+import { composeMessage, describeAudience, fmtDateTime, renderMessage, type Audience, type CampaignChannel } from '@bt/core';
 import { cancelCampaignAction, sendCampaignAction } from '@/app/actions/marketing-admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { CAMPAIGN_PILL, CHANNEL_LABEL, MarketingTabs } from '@/components/admin/MarketingTabs';
 import { BrandChip, Forbidden, Kpi, Meter, Pill } from '@/components/admin/ui';
 import { requireStaff } from '@/server/auth';
-import { BRAND_NAMES, campaignStats, messageFor, type Brand, type CampaignStats } from '@/server/marketing';
+import { BRAND_NAMES, campaignStats, type Brand, type CampaignStats } from '@/server/marketing';
 
 export const metadata = { title: 'Campaign' };
 
@@ -25,13 +25,13 @@ export default async function CampaignPage({ params, searchParams }: { params: P
   const [live, sends] = await Promise.all([campaignStats(c.id, saved.targeted ?? 0, saved.optedOut ?? 0), prisma.campaignSend.findMany({ where: { campaignId: c.id }, orderBy: { at: 'desc' }, take: 100 })]);
   const write = ctx.can('marketing.write');
   const brand = c.brandKey as Brand;
-  const sample = messageFor(brand, c.channel as 'sms', c.message, { name: 'Neema', subscriberId: null, customerId: null }, c.promoCode);
+  const sample = composeMessage(c.channel as CampaignChannel, BRAND_NAMES[brand], renderMessage(c.message, { name: 'Neema', code: c.promoCode }), '<personal unsubscribe link>');
   const pct = live.targeted ? Math.round((live.sent / live.targeted) * 100) : 0;
   return (
     <div className="ad-stack">
       <MarketingTabs current="campaigns" canWrite={write} />
       {done && (
-        <div className="ad-alert" role="status">
+        <div role="status" style={{ borderRadius: 12, padding: '10px 12px', background: '#E7F5EE', color: '#0F5E42', fontSize: 13.5 }}>
           {done}
         </div>
       )}

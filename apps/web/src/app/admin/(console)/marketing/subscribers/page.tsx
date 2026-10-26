@@ -43,13 +43,13 @@ export default async function SubscribersPage({ searchParams }: { searchParams: 
         </div>
         <form action="/admin/marketing/subscribers" role="search" className="ad-row" style={{ flexWrap: 'wrap', marginTop: 12 }}>
           <input className="ad-input" name="q" defaultValue={sp.q ?? ''} placeholder="Name, phone or email" aria-label="Search subscribers" style={{ width: 220 }} maxLength={60} />
-          <select className="ad-input" name="channel" defaultValue={sp.channel ?? ''} aria-label="Channel">
+          <select className="ad-input" name="channel" defaultValue={sp.channel ?? ''} aria-label="Channel" style={{ width: 'auto' }}>
             <option value="">Any channel</option>
             <option value="sms">SMS opt-in</option>
             <option value="whatsapp">WhatsApp opt-in</option>
             <option value="email">Email opt-in</option>
           </select>
-          <select className="ad-input" name="status" defaultValue={sp.status ?? 'active'} aria-label="Status">
+          <select className="ad-input" name="status" defaultValue={sp.status ?? 'active'} aria-label="Status" style={{ width: 'auto' }}>
             <option value="active">Active</option>
             <option value="unsubscribed">Unsubscribed</option>
             <option value="all">All</option>
