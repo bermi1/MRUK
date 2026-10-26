@@ -22,6 +22,7 @@ import {
 import { placeAdvanceOrderAction, placeOrderAction, updateCartAction } from '@/app/actions/store';
 import { fmt } from '@/lib/format';
 import type { CartView } from '@/lib/types';
+import { DiscountField } from './CartView';
 
 type Step = 'checkout' | 'apply' | 'contract';
 
@@ -186,6 +187,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
           <span>−{fmt(cart.discount)}</span>
         </div>
       )}
+      <DiscountField brand={brand} code={cart.discountCode} error={cart.discountError} saving={Math.max(0, cart.discount - cart.bundles.reduce((a, x) => a + x.saving, 0))} />
       <div className="row" style={{ fontSize: 14, color: 'var(--muted2)' }}>
         <span>Delivery · {cart.region}</span>
         <span>{cart.delivery ? fmt(cart.delivery) : 'Free'}</span>
