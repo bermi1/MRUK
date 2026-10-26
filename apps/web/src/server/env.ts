@@ -16,6 +16,9 @@ const schema = z.object({
   AZANIA_SSO_SECRET: z.string().default('dev-mini-app-sso-secret'),
   SMS_ADAPTER: z.enum(['mock', 'live']).default('mock'),
   WHATSAPP_ADAPTER: z.enum(['mock', 'live']).default('mock'),
+  EMAIL_ADAPTER: z.enum(['mock', 'live']).default('mock'),
+  /** Bearer secret for /api/cron/* (Vercel Cron sends it automatically when set). Empty = cron routes disabled. */
+  CRON_SECRET: z.string().default(''),
   STORAGE_ADAPTER: z.enum(['local', 'supabase', 's3']).default('local'),
   STORAGE_BUCKET: z.string().default('bt-files'),
   SUPABASE_URL: z.string().default(''),

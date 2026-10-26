@@ -33,6 +33,7 @@ import type { BrandKey } from '@/lib/types';
 import { getCart, clearCart } from './cart';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
+import { awardOrderPoints, reverseOrderPoints } from './loyalty';
 import { sign } from './session';
 
 export class CheckoutError extends Error {
@@ -423,6 +424,13 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       await tx.salaryAdvanceApplication.update({ where: { id: o.advance.id }, data: { status: 'rejected', decisionNote: 'Order cancelled' } });
     }
   });
+  // Loyalty (DEFAULT rules, server/loyalty.ts): earn on delivery, reverse on cancel/reject. Never blocks the order change.
+  try {
+    if (to === 'delivered') await awardOrderPoints(o.id);
+    else if (releasesStock(to)) await reverseOrderPoints(o.id, `Order ${o.number} ${to}`);
+  } catch (e) {
+    console.error('[loyalty]', e instanceof Error ? e.message : 'unknown error');
+  }
   const msg: Partial<Record<OrderStatus, string>> = {
     packed: 'is packed at our warehouse',
     out_for_delivery: 'is out for delivery. Our team will call before arrival',
