@@ -187,7 +187,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
           <span>−{fmt(cart.discount)}</span>
         </div>
       )}
-      <DiscountField brand={brand} code={cart.discountCode} error={cart.discountError} saving={Math.max(0, cart.discount - cart.bundles.reduce((a, x) => a + x.saving, 0))} />
+      <DiscountField brand={brand.key} code={cart.discountCode} error={cart.discountError} saving={Math.max(0, cart.discount - cart.bundles.reduce((a, x) => a + x.saving, 0))} />
       <div className="row" style={{ fontSize: 14, color: 'var(--muted2)' }}>
         <span>Delivery · {cart.region}</span>
         <span>{cart.delivery ? fmt(cart.delivery) : 'Free'}</span>
