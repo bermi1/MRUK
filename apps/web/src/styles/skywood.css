@@ -461,3 +461,15 @@
 .sub-skywood.foot-sub .sub-consent input { accent-color: var(--sw-gold); }
 .sub-skywood.foot-sub .sub-err { color: #f0b8a8; }
 .sub-skywood.foot-sub .sub-done { color: #f6f2eb; }
+.auth-skywood .auth-side { background: #ebe3d6; color: var(--sw-ink); justify-content: center; }
+.auth-skywood .auth-arch { position: absolute; left: 50%; bottom: 0; width: 56%; height: 74%; translate: -50% 0; border-radius: 999px 999px 0 0; background: linear-gradient(180deg, #f7f2ea, #e9e0d1); box-shadow: -30px 40px 90px rgba(110, 85, 50, 0.16); }
+.auth-skywood .auth-side ul { margin-bottom: 18%; }
+.auth-skywood .auth-side li { font-family: var(--sw-display); font-weight: 340; font-size: 22px; }
+.auth-skywood .auth-side li::before { content: '—'; width: auto; height: auto; color: var(--sw-gold); }
+.auth-skywood .auth-logo { height: 28px; }
+.auth-skywood .auth-title { font-family: var(--sw-display); font-weight: 300; }
+.auth-skywood .auth-field input { border: 0; border-bottom: 1px solid var(--sw-ink); background: transparent; padding: 0 2px; border-radius: 0; }
+.auth-skywood .auth-field input:focus { box-shadow: none; border-bottom-width: 2px; }
+.auth-skywood .auth-field span { font-size: 11.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; }
+.auth-skywood .auth-btn { border-radius: 2px; background: var(--sw-ink); font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; }
+.auth-skywood .auth-check input { accent-color: var(--sw-ink); }

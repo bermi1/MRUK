@@ -547,3 +547,10 @@
 .sub-mruk.foot-sub .sub-err { color: #ffb4b4; }
 .sub-mruk.foot-sub .sub-done { color: #fff; }
 @media (max-width: 767px) { .sub-mruk.home-sub { padding: 22px; border-radius: 22px; } }
+.auth-mruk .auth-side { background: radial-gradient(60% 80% at 80% 20%, rgba(0, 152, 218, 0.45), rgba(0, 152, 218, 0) 70%), linear-gradient(140deg, var(--mu-ink), var(--mu-navy)); color: #fff; }
+.auth-mruk .auth-arch { position: absolute; left: -120px; bottom: -260px; width: 700px; height: 360px; border-top: 26px solid var(--mu-silver); border-radius: 50% 50% 0 0; opacity: 0.15; }
+.auth-mruk .auth-side li::before { background: var(--mu-sky); color: var(--mu-ink); }
+.auth-mruk .auth-title { font-family: var(--mu-display); font-weight: 800; color: var(--mu-ink); }
+.auth-mruk .auth-field input { border-radius: 14px; }
+.auth-mruk .auth-btn { border-radius: 999px; background: var(--mu-navy); }
+.auth-mruk .auth-btn:hover { background: var(--mu-sky); color: var(--mu-ink); }
