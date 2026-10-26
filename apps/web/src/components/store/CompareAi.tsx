@@ -1,6 +1,7 @@
 'use client';
 import { useState, useTransition } from 'react';
 import { aiAskAction, aiVerdictAction } from '@/app/actions/store';
+import { SparkleIcon } from '../icons';
 
 /** Customer-facing name of the Azania product (catalogue AI in @bt/core still says "Salary Advance"). */
 const shown = (s: string) => s.replaceAll('Salary Advance', 'Pay Later');
@@ -30,7 +31,9 @@ export function CompareAi({ brand, ids, names, months }: { brand: string; ids: s
       <div style={{ borderRadius: 24, background: 'var(--p)', color: '#fff', padding: 26 }}>
         <div className="row">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✦</span>
+            <span style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SparkleIcon size={18} />
+            </span>
             <span style={{ fontSize: 17, fontWeight: 600 }}>AI verdict</span>
           </div>
           <button type="button" className="btn btn-white btn-sm" onClick={run} disabled={vPending} data-testid="run-verdict">

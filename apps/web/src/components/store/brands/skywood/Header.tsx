@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { fmt } from '@/lib/format';
+import { CloseIcon } from '../../../icons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -217,7 +218,7 @@ function SkywoodIndex({
     <div className="sw-index" id="sw-index" role="dialog" aria-modal="true" aria-label={labels.menu} ref={panel}>
       <div className="sw-index-top wrap">
         <button type="button" className="sw-index-close" onClick={close} data-autofocus>
-          {labels.close} <span aria-hidden="true">×</span>
+          {labels.close} <CloseIcon size={20} strokeWidth={1.4} />
         </button>
         <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} />
         <Link href={labels.allBrandsHref} className="sw-index-brands">

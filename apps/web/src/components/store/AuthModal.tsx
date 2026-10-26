@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { logoutAction, requestOtpAction, verifyOtpAction } from '@/app/actions/store';
 import { initials } from '@/lib/format';
+import { CloseIcon } from '../icons';
 
 export interface SessionUser {
   name: string;
@@ -49,8 +50,8 @@ export function AuthModal({ brand, user, onClose }: { brand: string; user: Sessi
           <span id="auth-title" style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-.02em' }}>
             {user ? 'Your account' : tab === 'up' ? 'Create your account' : 'Welcome back'}
           </span>
-          <button type="button" onClick={onClose} aria-label="Close" style={{ fontSize: 24, color: 'var(--muted)', width: 44, height: 44 }}>
-            ×
+          <button type="button" onClick={onClose} aria-label="Close" style={{ color: 'var(--muted)', width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CloseIcon size={22} />
           </button>
         </div>
         {user ? (

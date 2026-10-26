@@ -5,6 +5,7 @@ import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
 import { Forbidden, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { adapterStatus } from '@/server/admin/files';
+import { TickIcon } from '@/components/icons';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Settings and users' };
@@ -272,7 +273,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                     const on = r.permissions.includes('*') || r.permissions.includes(p);
                     return (
                       <td key={r.id} className="c" aria-label={on ? 'Allowed' : 'Not allowed'} style={{ color: on ? '#16825D' : '#C8CBD8', fontWeight: 700 }}>
-                        {on ? '✓' : '–'}
+                        {on ? <TickIcon size={16} strokeWidth={2.4} /> : '–'}
                       </td>
                     );
                   })}

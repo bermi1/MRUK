@@ -3,7 +3,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { addToCartAction, updateCartAction } from '@/app/actions/store';
 import { fmt } from '@/lib/format';
-import { ShareIcon } from '../icons';
+import { CloseIcon, CopyIcon, ShareIcon } from '../icons';
 import { CompareToggle } from './CartButtons';
 import { useToast } from './Toast';
 import { img } from '@/lib/img';
@@ -99,8 +99,8 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
         <div className="share-sheet" role="dialog" aria-label="Share this product">
           <div className="row">
             <span style={{ fontSize: 16, fontWeight: 600 }}>Share this product</span>
-            <button type="button" onClick={() => setShareOpen(false)} aria-label="Close" style={{ fontSize: 22, color: 'var(--muted)', width: 36, height: 36 }}>
-              ×
+            <button type="button" onClick={() => setShareOpen(false)} aria-label="Close" style={{ color: 'var(--muted)', width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CloseIcon size={20} />
             </button>
           </div>
           <div style={{ marginTop: 14, border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden' }}>
@@ -156,7 +156,9 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
                 setCopied(true);
               }}
             >
-              <span style={{ background: 'var(--surface)' }}>⧉</span>
+              <span style={{ background: 'var(--surface)' }}>
+                <CopyIcon size={18} />
+              </span>
               {copied ? 'Copied' : 'Copy link'}
             </button>
           </div>

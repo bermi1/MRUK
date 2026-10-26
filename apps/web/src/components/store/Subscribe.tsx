@@ -2,6 +2,7 @@
 import { useId, useState, useTransition } from 'react';
 import { usePathname } from 'next/navigation';
 import { subscribeAction } from '@/app/actions/marketing';
+import { TickIcon } from '../icons';
 
 export interface SubscribeLabels {
   title: string;
@@ -28,7 +29,7 @@ export function Subscribe({ brand, source, labels, className = '' }: { brand: 'm
     return (
       <div className={`sub sub-${brand} ${className} is-done`} role="status">
         <span className="sub-tick" aria-hidden="true">
-          ✓
+          <TickIcon size={20} strokeWidth={2.4} />
         </span>
         <p className="sub-done">{done}</p>
       </div>

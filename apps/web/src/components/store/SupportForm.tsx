@@ -2,6 +2,7 @@
 import { useRef, useState, useTransition } from 'react';
 import { aiTipsAction, createTicketAction } from '@/app/actions/store';
 import { FAQS } from '@/lib/content';
+import { MinusIcon, PlusIcon, SparkleIcon } from '../icons';
 
 const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Other'];
 
@@ -110,7 +111,7 @@ export function SupportForm({ brand, brandName, whatsapp, products, prefill }: {
             {preview && <img src={preview} alt="Selected photo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover' }} />}
             <button
               type="button"
-              style={{ marginLeft: 'auto', fontSize: 13.5, fontWeight: 600, color: 'var(--monthly)', minHeight: 44 }}
+              style={{ marginLeft: 'auto', fontSize: 13.5, fontWeight: 600, color: 'var(--monthly)', minHeight: 44, display: 'inline-flex', alignItems: 'center', gap: 6 }}
               onClick={() =>
                 startTips(async () => {
                   const r = await aiTipsAction(brand, tk.issue, tk.productId, tk.description);
@@ -118,7 +119,7 @@ export function SupportForm({ brand, brandName, whatsapp, products, prefill }: {
                 })
               }
             >
-              ✦ {tipsPending ? 'Thinking…' : 'Get AI quick fixes'}
+              <SparkleIcon size={16} /> {tipsPending ? 'Thinking…' : 'Get AI quick fixes'}
             </button>
           </div>
           {tips && (
@@ -145,7 +146,7 @@ export function SupportForm({ brand, brandName, whatsapp, products, prefill }: {
           <div key={q} style={{ border: '1px solid var(--border)', borderRadius: 18 }}>
             <button type="button" aria-expanded={faq === i} onClick={() => setFaq(faq === i ? -1 : i)} style={{ width: '100%', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', fontSize: 14.5, fontWeight: 600, textAlign: 'left', gap: 10 }}>
               <span>{q}</span>
-              <span aria-hidden="true">{faq === i ? '−' : '+'}</span>
+              {faq === i ? <MinusIcon size={18} /> : <PlusIcon size={18} />}
             </button>
             {faq === i && <div style={{ fontSize: 13.5, color: 'var(--muted2)', lineHeight: 1.55, padding: '0 16px 14px' }}>{a}</div>}
           </div>

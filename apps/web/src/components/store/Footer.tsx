@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { MessageKey } from '@/lib/i18n';
 import { waLink } from '@/lib/format';
 import type { BrandView, CategoryView } from '@/lib/types';
-import { WhatsAppIcon } from '../icons';
+import { PinIcon, RouteIcon, WhatsAppIcon } from '../icons';
 import { Subscribe, type SubscribeLabels } from './Subscribe';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -61,7 +61,7 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
         </a>
         <Link href={`${b}/track`} className="mu-foot-card">
           <span className="mu-foot-ico" aria-hidden="true">
-            ⟶
+            <RouteIcon size={22} />
           </span>
           <span>
             <b>{t('trackOrder')}</b>
@@ -70,7 +70,7 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
         </Link>
         <Link href={`${b}/suppliers`} className="mu-foot-card">
           <span className="mu-foot-ico" aria-hidden="true">
-            ◎
+            <PinIcon size={22} />
           </span>
           <span>
             <b>{t('suppliersNearYou')}</b>

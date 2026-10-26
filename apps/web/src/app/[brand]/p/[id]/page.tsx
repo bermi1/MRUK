@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
 import { PImg } from '@/components/store/PImg';
+import { SparkleIcon, Stars } from '@/components/icons';
 import { fmt, stockLabel } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
@@ -62,7 +63,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           </div>
           <h1 style={{ margin: '10px 0 0', fontSize: 'clamp(26px, 3vw, 40px)', lineHeight: 1.06, fontWeight: 600, letterSpacing: '-.025em' }}>{p.name}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#B7791F', fontWeight: 600, marginTop: 10 }}>
-            ★★★★★ <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{p.rating.toFixed(1)} · {p.reviews} reviews</span>
+            <Stars value={p.rating} size={15} /> <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{p.rating.toFixed(1)} · {p.reviews} reviews</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
             {p.features.map((f) => (
@@ -85,7 +86,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t('vatNote')}</div>
           {p.price >= 1000 && (
             <div className="earn-pts">
-              <span aria-hidden="true">★</span> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
+              <SparkleIcon size={16} /> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
             </div>
           )}
           <BuyBox

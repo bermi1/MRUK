@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { setQtyAction, updateCartAction } from '@/app/actions/store';
 import { fmt } from '@/lib/format';
 import type { CartView as Cart } from '@/lib/types';
+import { MinusIcon, PlusIcon, TickIcon } from '../icons';
 import { PImg } from './PImg';
 
 export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
@@ -38,14 +39,14 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
             <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{l.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: 999 }}>
-                <button type="button" style={{ width: 40, height: 36 }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} aria-label={`Decrease ${l.name}`}>
-                  −
+                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} aria-label={`Decrease ${l.name}`}>
+                  <MinusIcon size={16} />
                 </button>
                 <span style={{ width: 22, textAlign: 'center', fontWeight: 600, fontSize: 14 }} aria-live="polite">
                   {l.qty}
                 </span>
-                <button type="button" style={{ width: 40, height: 36 }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={`Increase ${l.name}`}>
-                  +
+                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={`Increase ${l.name}`}>
+                  <PlusIcon size={16} />
                 </button>
               </div>
               <button type="button" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 36 }} onClick={() => qty(l.productId, 0)}>
@@ -85,7 +86,7 @@ export function DiscountField({ brand, code, error, saving = 0, labels = DISCOUN
     return (
       <div className="promo promo-on" role="status">
         <span className="promo-tick" aria-hidden="true">
-          ✓
+          <TickIcon size={16} strokeWidth={2.6} />
         </span>
         <span className="promo-txt">
           <b>{labels.applied.replace('{code}', code!)}</b>

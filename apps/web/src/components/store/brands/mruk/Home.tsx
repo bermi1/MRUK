@@ -15,6 +15,7 @@ import { CategoryChips } from '../CategoryChips';
 import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
+import { BoltIcon, Stars } from '../../../icons';
 import { MrukHero } from './Hero';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -60,6 +61,8 @@ export function MrukHome(props: {
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || y.price - x.price).slice(0, 10);
   const needs = cats.filter((c) => NEED[c.id]).slice(0, 4);
   const reviews = REVIEWS.mruk;
+  const avgRating = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 5;
+  const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
   const exampleMonthly = Math.min(...products.map((p) => p.price)) / 12;
 
   return (
@@ -123,9 +126,7 @@ export function MrukHome(props: {
             <div className="mu-flash-head" data-reveal>
               <div>
                 <p className="mu-kicker light">
-                  <span className="mu-bolt" aria-hidden="true">
-                    ⚡
-                  </span>{' '}
+                  <BoltIcon size={14} className="mu-bolt" strokeWidth={2} />{' '}
                   {t('flashDeals')}
                 </p>
                 <h2>{t('flashDealsSub')}</h2>
@@ -268,13 +269,11 @@ export function MrukHome(props: {
         {/* Reviews + showrooms */}
         <section className="mu-sec mu-social">
           <div className="mu-reviews">
-            <Head kicker="4.8 ★ · 1,200+" title={t('reviewsTitle')} />
+            <Head kicker={`${avgRating.toFixed(1)} / 5 · ${reviewCount.toLocaleString('en-US')}+`} title={t('reviewsTitle')} />
             <div className="mu-review-list nsb">
               {reviews.map((r, i) => (
                 <figure key={r.name} className="mu-review" data-reveal style={{ ['--i' as string]: i }}>
-                  <div className="mu-stars" aria-label="5 out of 5">
-                    ★★★★★
-                  </div>
+                  <Stars value={5} size={15} className="mu-stars" />
                   <blockquote>{r.q}</blockquote>
                   <figcaption>
                     <span className="mu-avatar" aria-hidden="true">

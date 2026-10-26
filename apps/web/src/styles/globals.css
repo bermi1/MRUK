@@ -198,7 +198,7 @@ textarea.input { resize: vertical; }
 .ptile .tags { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; z-index: 2; }
 .ptile .glass { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; color: #fff; background: rgba(255, 255, 255, 0.16); backdrop-filter: blur(8px); border-radius: 999px; padding: 4px 9px; }
 .ptile .meta { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 2; }
-.cmp-tag { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 6px 10px; min-height: 28px; background: rgba(255, 255, 255, 0.9); color: var(--text); }
+.cmp-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 6px 10px; min-height: 28px; background: rgba(255, 255, 255, 0.9); color: var(--text); }
 .cmp-tag.on { background: var(--az); color: #fff; }
 .plus { width: 34px; height: 34px; border-radius: 50%; background: #fff; color: var(--text); display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
 .plus.p { background: var(--p); color: #fff; width: 42px; height: 42px; font-size: 20px; }
@@ -417,7 +417,8 @@ textarea.input { resize: vertical; }
 @media (max-width: 767px) { .track-body { grid-template-columns: 1fr; padding: 18px; } }
 .cmp-ai { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-top: 18px; }
 .cmp-x { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.92); font-size: 0; position: relative; }
-.cmp-x::before { content: '×'; font-size: 16px; }
+.cmp-x::before { content: ''; position: absolute; inset: 9px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat; }
+.cmp-x svg { display: none; }
 @media (max-width: 900px) { .cmp-ai { grid-template-columns: 1fr; } }
 .deals-hero { border-radius: 30px; background: var(--p); color: #fff; padding: 48px 52px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; position: relative; overflow: hidden; }
 .deals-timer { justify-self: end; text-align: right; position: relative; }
@@ -716,7 +717,7 @@ textarea.input { resize: vertical; }
 .pl-note { margin: 0; font-size: 14px; color: var(--muted2); }
 .pl-elig { list-style: none; margin: 0; padding: 0; }
 .pl-elig li { display: flex; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 16px; }
-.pl-elig li::before { content: '✓'; font-weight: 700; color: var(--monthly); }
+.pl-elig li::before { content: ''; width: 16px; height: 16px; flex: none; margin-top: 3px; background: var(--monthly); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat; }
 .pl-faq details { border-bottom: 1px solid var(--line); }
 .pl-faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 56px; font-size: 16.5px; font-weight: 600; }
 .pl-faq summary::-webkit-details-marker { display: none; }
@@ -781,7 +782,7 @@ textarea.input { resize: vertical; }
 .auth-side { position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 48px; }
 .auth-side ul { position: relative; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .auth-side li { display: flex; gap: 12px; align-items: center; font-size: 17px; font-weight: 600; animation: badgePop 0.5s var(--ease) both; animation-delay: calc(0.1s + var(--i, 0) * 0.08s); }
-.auth-side li::before { content: '✓'; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+.auth-side li::before { content: ''; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2311163b' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); background-position: center; background-size: 15px; background-repeat: no-repeat; }
 .auth-card { width: 100%; max-width: 440px; margin: auto; padding: 48px 24px; display: flex; flex-direction: column; gap: 14px; }
 .auth-logo { height: 44px; width: auto; align-self: flex-start; }
 .auth-title { margin: 8px 0 0; font-size: clamp(30px, 3.4vw, 44px); line-height: 1.05; letter-spacing: -0.03em; }
@@ -811,3 +812,11 @@ textarea.input { resize: vertical; }
 .loyal-mruk { border-radius: 24px; color: #fff; background: radial-gradient(70% 120% at 100% 0%, rgba(0, 152, 218, 0.55), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, #0b0f33, #1d2366); }
 .loyal-skywood { border-radius: 4px; color: #f6f2eb; background: radial-gradient(70% 120% at 100% 0%, #4a3e31, #1c1915 70%); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4); }
 .loyal-skywood .loyal-tier { font-family: var(--font-fraunces), Georgia, serif; font-weight: 300; color: #e2c891; }
+
+/* SVG star rating (icons.tsx Stars): outline stars with a clipped solid overlay for partial fill. */
+.stars { display: inline-flex; align-items: center; gap: 2px; color: #b7791f; vertical-align: middle; }
+.star { position: relative; display: inline-block; flex: none; }
+.star > svg { display: block; }
+.star-fill { position: absolute; left: 0; top: 0; height: 100%; overflow: hidden; }
+.star-fill > svg { display: block; }
+[data-brand='skywood'] .stars { color: var(--sw-bronze); }

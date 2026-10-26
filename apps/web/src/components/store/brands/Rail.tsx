@@ -1,5 +1,6 @@
 'use client';
 import { useRef } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../icons';
 
 /** Horizontal scroll-snap rail with previous/next buttons (native scrolling on touch). */
 export function Rail({ children, className = '', labels }: { children: React.ReactNode; className?: string; labels: { prev: string; next: string } }) {
@@ -17,10 +18,10 @@ export function Rail({ children, className = '', labels }: { children: React.Rea
     <div className={`rail2 ${className}`}>
       <div className="rail2-btns d-only">
         <button type="button" onClick={() => by(-1)} aria-label={labels.prev}>
-          <span aria-hidden="true">←</span>
+          <ChevronLeftIcon size={18} />
         </button>
         <button type="button" onClick={() => by(1)} aria-label={labels.next}>
-          <span aria-hidden="true">→</span>
+          <ChevronRightIcon size={18} />
         </button>
       </div>
       <div className="rail2-track nsb" ref={ref}>

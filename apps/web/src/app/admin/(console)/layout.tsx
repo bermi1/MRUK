@@ -5,6 +5,7 @@ import { SideToggle } from '@/components/admin/SideToggle';
 import { TopControls } from '@/components/admin/TopControls';
 import { ICON } from '@/components/admin/ui';
 import { initials } from '@/lib/format';
+import { DotIcon } from '@/components/icons';
 import { adminFilters, branchOptions, navCounts } from '@/server/admin/context';
 import { bankMode } from '@/server/admin/files';
 import { requireStaff } from '@/server/auth';
@@ -94,7 +95,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           </span>
           <span>
             <b>Azania Bank link</b>
-            <small>● Connected · {mode === 'mock' ? 'mock' : 'live'}</small>
+            <small><DotIcon size={7} /> Connected · {mode === 'mock' ? 'mock' : 'live'}</small>
           </span>
         </div>
         <div className="ad-user">

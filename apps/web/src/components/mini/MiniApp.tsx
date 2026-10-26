@@ -16,6 +16,7 @@ import {
   REGIONS,
 } from '@bt/core';
 import { placeMiniOrderAction, type MiniOrderResult } from '@/app/actions/mini';
+import { BackspaceIcon, CloseIcon } from '@/components/icons';
 import { PImg } from '@/components/store/PImg';
 import type { BrandKey } from '@/lib/types';
 
@@ -150,7 +151,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
         <header className="mn-top">
           <div className="mn-head">
             <button type="button" className="mn-iconbtn" aria-label="Close shop and return to Azania Bank" onClick={closeMiniApp}>
-              ✕
+              <CloseIcon size={20} />
             </button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="mn-eyebrow">MINI APP IN AZANIA</div>
@@ -522,7 +523,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
                 <span key={`blank-${i}`} className="blank" />
               ) : (
                 <button key={k} type="button" disabled={!consentsOk || pending} aria-label={k === 'del' ? 'Delete digit' : `Digit ${k}`} onClick={() => press(k)}>
-                  {k === 'del' ? '⌫' : k}
+                  {k === 'del' ? <BackspaceIcon size={22} /> : k}
                 </button>
               ),
             )}

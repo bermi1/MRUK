@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { CompareToggle } from '@/components/store/CartButtons';
 import { CompareAi } from '@/components/store/CompareAi';
 import { PImg } from '@/components/store/PImg';
+import { TickIcon } from '@/components/icons';
 import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
@@ -21,12 +22,12 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
   if (items.length < 2 && seed) items = [...items, ...products.filter((p) => p.cat === seed.cat && !items.includes(p))].slice(0, 3);
   const feats = [...new Set(items.flatMap((p) => p.features))].slice(0, 8);
   const minP = Math.min(...items.map((p) => p.price));
-  const rows: { label: string; cells: { t: string; c: string; w: number }[] }[] = [
+  const rows: { label: string; cells: { t: React.ReactNode; c: string; w: number }[] }[] = [
     { label: 'Price', cells: items.map((p) => ({ t: fmt(p.price), w: 600, c: p.price === minP ? 'var(--ok)' : 'var(--text)' })) },
     { label: 'Pay Later', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) },
     { label: 'Type', cells: items.map((p) => ({ t: p.sub, w: 400, c: 'var(--text)' })) },
     { label: 'Stock', cells: items.map((p) => ({ t: p.stock <= 5 ? `Only ${p.stock} left` : 'In stock', w: 400, c: p.stock <= 5 ? 'var(--warn)' : 'var(--ok)' })) },
-    ...feats.map((f) => ({ label: f, cells: items.map((p) => ({ t: p.features.includes(f) ? '✓' : '—', w: 600, c: p.features.includes(f) ? 'var(--ok)' : '#C8CBD8' })) })),
+    ...feats.map((f) => ({ label: f, cells: items.map((p) => ({ t: p.features.includes(f) ? <span role="img" aria-label="Yes" style={{ display: 'inline-flex' }}><TickIcon size={18} strokeWidth={2.4} /></span> : <span aria-label="No">—</span>, w: 600, c: p.features.includes(f) ? 'var(--ok)' : '#C8CBD8' })) })),
   ];
   const cols = `200px repeat(${items.length}, minmax(180px, 1fr))`;
   return (
@@ -35,7 +36,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
         <div>
           <div className="eyebrow">AI compare</div>
           <h1 className="h1">Compare products</h1>
-          <div style={{ fontSize: 14.5, color: 'var(--muted2)', marginTop: 6 }}>The AI answers only from the product data in our catalogue, so it never invents specs.{chosen.length < 2 ? ' Showing suggestions — add products with “+ Compare”.' : ''}</div>
+          <div style={{ fontSize: 14.5, color: 'var(--muted2)', marginTop: 6 }}>The AI answers only from the product data in our catalogue, so it never invents specs.{chosen.length < 2 ? ' Showing suggestions — add products with “Compare”.' : ''}</div>
         </div>
         <Link href={`/${key}/c/all`} className="link-u">
           Add products

@@ -2,6 +2,7 @@
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { addBundleAction, addToCartAction, toggleCompareAction } from '@/app/actions/store';
+import { PlusIcon, TickIcon } from '../icons';
 import { useToast } from './Toast';
 
 function stop(e: React.MouseEvent) {
@@ -37,7 +38,7 @@ export function AddButton({ brand, id, name, className = 'plus', label = '+', ar
 export function CompareToggle({ brand, id, on, long = false, className }: { brand: string; id: string; on: boolean; long?: boolean; className?: string }) {
   const [pending, start] = useTransition();
   const router = useRouter();
-  const label = long ? (on ? '✓ Added to compare' : '+ Add to compare') : on ? '✓ Compare' : '+ Compare';
+  const label = long ? (on ? 'Added to compare' : 'Add to compare') : 'Compare';
   return (
     <button
       type="button"
@@ -52,7 +53,8 @@ export function CompareToggle({ brand, id, on, long = false, className }: { bran
         });
       }}
     >
-      {label}
+      {on ? <TickIcon size={14} strokeWidth={2.4} /> : <PlusIcon size={14} strokeWidth={2.2} />}
+      <span className="cmp-l">{label}</span>
     </button>
   );
 }
