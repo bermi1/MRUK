@@ -756,3 +756,24 @@ textarea.input { resize: vertical; }
 .promo-txt { flex: 1; display: flex; flex-direction: column; font-size: 13px; color: #0d5c40; }
 .promo-txt b { font-size: 14px; }
 .promo-remove { min-height: 44px; padding: 0 6px; font-size: 13px; font-weight: 600; text-decoration: underline; color: #0d5c40; }
+
+/* Subscribe (layout; colours per brand) */
+.sub { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px 32px; align-items: center; }
+.sub-copy { grid-row: span 2; }
+.sub-title { margin: 0; }
+.sub-sub { margin: 6px 0 0; font-size: 14px; }
+.sub-fields { display: flex; gap: 8px; flex-wrap: wrap; }
+.sub-input { flex: 1 1 180px; min-width: 0; min-height: 48px; padding: 0 14px; font-size: 15px; outline: none; }
+.sub-btn { min-height: 48px; padding: 0 22px; font-weight: 700; font-size: 14.5px; }
+.sub-consent { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; line-height: 1.45; cursor: pointer; }
+.sub-consent input { width: 20px; height: 20px; margin: 0; flex: none; }
+.sub-err { grid-column: 2; margin: 0; min-height: 18px; font-size: 13px; color: var(--warn); }
+.sub.is-done { display: flex; gap: 12px; align-items: center; }
+.sub-tick { width: 36px; height: 36px; border-radius: 50%; background: var(--ok); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: badgePop 0.45s var(--ease); }
+.sub-done { margin: 0; font-size: 16px; font-weight: 600; }
+main:has(.home-sub) ~ footer .foot-sub { display: none; }
+@media (max-width: 767px) {
+  .sub { grid-template-columns: minmax(0, 1fr); }
+  .sub-copy { grid-row: auto; }
+  .sub-err { grid-column: 1; }
+}

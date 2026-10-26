@@ -5,6 +5,8 @@ import { REVIEWS } from '@/lib/content';
 import { fmt, initials } from '@/lib/format';
 import type { BundleView, FlashDeal } from '@/server/catalog';
 import { AddBundleButton } from '../../CartButtons';
+import { subscribeLabels } from '../../Footer';
+import { Subscribe } from '../../Subscribe';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
@@ -259,6 +261,10 @@ export function MrukHome(props: {
       </section>
 
       <div className="wrap">
+        <section className="mu-sec" data-reveal>
+          <Subscribe brand="mruk" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
+        </section>
+
         {/* Reviews + showrooms */}
         <section className="mu-sec mu-social">
           <div className="mu-reviews">

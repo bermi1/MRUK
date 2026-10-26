@@ -5,6 +5,8 @@ import { REVIEWS } from '@/lib/content';
 import { fmt } from '@/lib/format';
 import type { BundleView } from '@/server/catalog';
 import { AddBundleButton } from '../../CartButtons';
+import { subscribeLabels } from '../../Footer';
+import { Subscribe } from '../../Subscribe';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -229,6 +231,10 @@ export function SkywoodHome(props: {
           </div>
         </section>
       )}
+
+      <section className="wrap sw-sec" data-reveal>
+        <Subscribe brand="skywood" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
+      </section>
 
       {/* Visit */}
       <section className="wrap sw-visit" data-reveal>

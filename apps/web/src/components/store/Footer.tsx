@@ -3,8 +3,13 @@ import type { MessageKey } from '@/lib/i18n';
 import { waLink } from '@/lib/format';
 import type { BrandView, CategoryView } from '@/lib/types';
 import { WhatsAppIcon } from '../icons';
+import { Subscribe, type SubscribeLabels } from './Subscribe';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
+
+export function subscribeLabels(t: T, brandName: string): SubscribeLabels {
+  return { title: t('subscribeTitle'), sub: t('subscribeSub'), phone: t('phone'), email: t('email'), consent: t('subscribeConsent', { brand: brandName }), subscribe: t('subscribe'), need: t('subscribeNeed'), consentNeeded: t('consentNeeded') };
+}
 
 /** Same links and data for both brands; each brand gets its own footer design. */
 export function Footer({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]; t: T }) {
@@ -73,6 +78,9 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
           </span>
         </Link>
       </div>
+      <div className="wrap">
+        <Subscribe brand="mruk" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
+      </div>
       <div className="wrap mu-foot-grid">
         <div className="mu-foot-brand">
           <img src="/brand/mruk-white.png" alt={brand.name} width={58} height={40} loading="lazy" />
@@ -113,6 +121,7 @@ function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryVie
         <p className="sw-foot-line">
           {first} {rest.length > 0 && <em>{rest.join(' ')}</em>}
         </p>
+        <Subscribe brand="skywood" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
         <div className="sw-foot-grid">
           <div className="sw-foot-brand">
             <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} loading="lazy" />
