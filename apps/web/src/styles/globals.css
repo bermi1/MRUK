@@ -662,10 +662,9 @@ textarea.input { resize: vertical; }
 .pc-cmp { position: absolute; right: 12px; top: 12px; z-index: 3; }
 @media (hover: hover) {
   .pc:hover .pc-alt { opacity: 1; }
-  .pc:hover .pc-media:has(.pc-alt) .pimg > img { opacity: 0; }
-  .pc:hover .pc-alt ~ * { z-index: 2; }
-  .pc .pc-cmp { opacity: 0; transform: translateY(-4px); transition: opacity 0.25s, transform 0.25s var(--ease); }
-  .pc:hover .pc-cmp, .pc:focus-within .pc-cmp, .pc .pc-cmp:has([aria-pressed='true']) { opacity: 1; transform: none; }
+  .pc:hover .pc-alt ~ .pimg > img { opacity: 0; }
+  .pc .pc-cmp .cmp-tag:not(.on) { opacity: 0; transform: translateY(-4px); transition: opacity 0.25s, transform 0.25s var(--ease); }
+  .pc:hover .pc-cmp .cmp-tag, .pc:focus-within .pc-cmp .cmp-tag { opacity: 1; transform: none; }
 }
 /* Cart badge pops when the count changes (keyed element remounts). */
 @media (prefers-reduced-motion: no-preference) {
@@ -771,7 +770,6 @@ textarea.input { resize: vertical; }
 .sub.is-done { display: flex; gap: 12px; align-items: center; }
 .sub-tick { width: 36px; height: 36px; border-radius: 50%; background: var(--ok); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; animation: badgePop 0.45s var(--ease); }
 .sub-done { margin: 0; font-size: 16px; font-weight: 600; }
-main:has(.home-sub) ~ footer .foot-sub { display: none; }
 @media (max-width: 767px) {
   .sub { grid-template-columns: minmax(0, 1fr); }
   .sub-copy { grid-row: auto; }
@@ -813,3 +811,6 @@ main:has(.home-sub) ~ footer .foot-sub { display: none; }
 .loyal-mruk { border-radius: 24px; color: #fff; background: radial-gradient(70% 120% at 100% 0%, rgba(0, 152, 218, 0.55), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, #0b0f33, #1d2366); }
 .loyal-skywood { border-radius: 4px; color: #f6f2eb; background: radial-gradient(70% 120% at 100% 0%, #4a3e31, #1c1915 70%); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4); }
 .loyal-skywood .loyal-tier { font-family: var(--font-fraunces), Georgia, serif; font-weight: 300; color: #e2c891; }
+
+/* Skip rendering work for home sections until they approach the viewport (big win on mid-range Android). */
+.mu-home > .wrap > .mu-sec, .mu-flash, .mu-advance, .mu-foot, .sw-home > .sw-sec, .sw-story, .sw-quote, .sw-visit, .sw-foot { content-visibility: auto; contain-intrinsic-size: auto 640px; }

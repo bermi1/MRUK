@@ -1,5 +1,6 @@
 'use client';
 import { useId, useState, useTransition } from 'react';
+import { usePathname } from 'next/navigation';
 import { subscribeAction } from '@/app/actions/marketing';
 
 export interface SubscribeLabels {
@@ -16,10 +17,13 @@ export interface SubscribeLabels {
 /** SMS / email subscribe with explicit, unticked consent (Tanzania PDPA). Each brand styles it. */
 export function Subscribe({ brand, source, labels, className = '' }: { brand: 'mruk' | 'skywood'; source: 'footer' | 'home'; labels: SubscribeLabels; className?: string }) {
   const id = useId();
+  const path = usePathname();
   const [f, setF] = useState({ phone: '', email: '', consent: false });
   const [err, setErr] = useState('');
   const [done, setDone] = useState('');
   const [pending, start] = useTransition();
+  // The home page has its own subscribe section; skip the footer copy there.
+  if (source === 'footer' && path === `/${brand}`) return null;
   if (done)
     return (
       <div className={`sub sub-${brand} ${className} is-done`} role="status">

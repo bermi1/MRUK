@@ -15,8 +15,8 @@ export function ProductCard({ p, brand, badge, was, price, perMonth, inCompare }
     <article className={`pc pc-${brand}`}>
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(now)}`} />
       <div className="pc-media">
-        <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="md" />
         {p.images[1] && <img className="pc-alt" src={img(p.images[1], 384)} alt="" loading="lazy" decoding="async" />}
+        <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="md" />
         {badge && <span className="pc-badge">{badge}</span>}
         {inCompare !== undefined && (
           <span className="pc-cmp">
