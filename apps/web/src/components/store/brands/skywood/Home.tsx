@@ -70,8 +70,6 @@ export function SkywoodHome(props: {
   const perMonth = t('perMonthShort');
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
   const reviews = REVIEWS.skywood;
-  const example = slides[0]?.showPrice ? slides[0].price : (products[0]?.price ?? 0);
-  const exampleName = slides[0]?.showPrice ? slides[0].name : (products[0]?.name ?? '');
   // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
   const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
@@ -305,18 +303,23 @@ export function SkywoodHome(props: {
                 <img src="/brand/azania-bank.png" alt="Azania Bank" width={44} height={34} loading="lazy" className="sw-az" />
               </div>
             </div>
-            <div className="sw-pl-terms">
-              <ul>
-                {[3, 6, 12].map((m, k) => (
-                  <li key={m} style={{ ['--i' as string]: k }}>
-                    <span className="sw-pl-n">{m}</span>
-                    <span className="sw-pl-l">{t('monthsWord')}</span>
-                    <span className="sw-pl-amt">{t('perMonthShort', { amount: fmt(example / m) })}</span>
-                  </li>
-                ))}
-              </ul>
-              {exampleName && <p className="sw-pl-note">{t('plExample', { name: `${exampleName} · ${fmt(example)}` })}</p>}
-            </div>
+            <ol className="sw-pl-how">
+              {(
+                [
+                  ['advanceStep1', 'advanceStep1Sub'],
+                  ['advanceStep2', 'advanceStep2Sub'],
+                  ['advanceStep3', 'advanceStep3Sub'],
+                ] as const
+              ).map(([a, d], n) => (
+                <li key={a} style={{ ['--i' as string]: n }}>
+                  <span className="sw-pl-how-n">{String(n + 1).padStart(2, '0')}</span>
+                  <span>
+                    <b>{t(a)}</b>
+                    <small>{t(d)}</small>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </section>

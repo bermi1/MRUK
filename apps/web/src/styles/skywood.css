@@ -729,3 +729,12 @@
 .sw-statement .sw-statement-t em { color: var(--sw-gold-hi); }
 .sw-statement .sw-statement-s { color: rgba(255, 255, 255, 0.78); }
 @media (max-width: 760px) { .sw-statement { margin-top: 48px; padding: 64px 0; } }
+
+/* Pay Later on the home page: how it works, no amounts. */
+.sw-pl-how { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--line); box-shadow: 0 30px 60px rgba(70, 50, 25, 0.1); }
+.sw-pl-how li { display: flex; align-items: center; gap: 22px; padding: 24px 28px; background: #faf7f2; transition: background 0.4s; }
+.sw-pl-how li:hover { background: #fff; }
+.sw-pl-how-n { flex: none; width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center; background: var(--sw-ink); color: var(--sw-gold-hi); font-family: var(--sw-display); font-size: 15px; font-weight: 500; letter-spacing: 0.04em; }
+.sw-pl-how b { display: block; font-family: var(--sw-display); font-size: 19px; font-weight: 500; color: var(--sw-ink); }
+.sw-pl-how small { display: block; margin-top: 3px; font-size: 14px; color: var(--muted2); }
+@media (max-width: 760px) { .sw-pl-how li { padding: 18px; gap: 16px; } .sw-pl-how b { font-size: 16.5px; } }
