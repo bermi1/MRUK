@@ -635,7 +635,7 @@
   .sw-thumb-bar { flex: 1; margin: 0; }
   .sw-pause { background: transparent; box-shadow: none; }
 
-  .sw-promise-in { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0 -16px; padding: 0 16px;  scroll-padding: 0 16px; }
+  .sw-promise-in { display: grid; grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 78%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 0; padding: 0 16px;  scroll-padding: 0 16px; }
   .sw-promise-in::-webkit-scrollbar { display: none; }
   .sw-promise-item, .sw-promise-item:first-child, .sw-promise-item:nth-child(3) { scroll-snap-align: start; padding: 18px 16px; border-left: 1px solid rgba(201, 169, 110, 0.18); border-top: 0 !important; }
   .sw-promise-item:first-child { border-left: 0; padding-left: 0; }
