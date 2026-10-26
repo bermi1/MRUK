@@ -801,3 +801,15 @@ main:has(.home-sub) ~ footer .foot-sub { display: none; }
 .auth-switch { margin: 6px 0 0; font-size: 14px; color: var(--muted2); }
 .auth-switch a { font-weight: 700; color: var(--text); text-decoration: underline; }
 @media (max-width: 900px) { .auth { grid-template-columns: minmax(0, 1fr); min-height: 0; } .auth-side { display: none; } .auth-card { padding: 28px 16px 40px; } }
+
+/* Rewards: product-page points line and account loyalty card */
+.earn-pts { margin-top: 8px; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--monthly); }
+.loyal { margin-top: 18px; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; padding: 24px 26px; max-width: 560px; position: relative; overflow: hidden; }
+.loyal p { margin: 0; }
+.loyal-k { font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.8; }
+.loyal-tier { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px !important; }
+.loyal-pts { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; opacity: 0.9; text-align: right; }
+.loyal-pts b { font-size: 18px; }
+.loyal-mruk { border-radius: 24px; color: #fff; background: radial-gradient(70% 120% at 100% 0%, rgba(0, 152, 218, 0.55), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, #0b0f33, #1d2366); }
+.loyal-skywood { border-radius: 4px; color: #f6f2eb; background: radial-gradient(70% 120% at 100% 0%, #4a3e31, #1c1915 70%); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4); }
+.loyal-skywood .loyal-tier { font-family: var(--font-fraunces), Georgia, serif; font-weight: 300; color: #e2c891; }

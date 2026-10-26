@@ -83,6 +83,11 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             )}
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t('vatNote')}</div>
+          {p.price >= 1000 && (
+            <div className="earn-pts">
+              <span aria-hidden="true">★</span> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
+            </div>
+          )}
           <BuyBox
             brand={key}
             product={{ id: p.id, name: p.name, model: p.model, price: p.price, stock: p.stock, img: p.img, features: p.features }}
