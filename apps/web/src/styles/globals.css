@@ -800,7 +800,7 @@ textarea.input { resize: vertical; }
 .loyal-pts b { font-size: 18px; }
 .loyal-mruk { border-radius: 24px; color: #fff; background: radial-gradient(70% 120% at 100% 0%, rgba(0, 152, 218, 0.55), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, #0b0f33, #1d2366); }
 .loyal-skywood { border-radius: 4px; color: #f6f2eb; background: radial-gradient(70% 120% at 100% 0%, #4a3e31, #1c1915 70%); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4); }
-.loyal-skywood .loyal-tier { font-family: var(--font-fraunces), Georgia, serif; font-weight: 300; color: #e2c891; }
+.loyal-skywood .loyal-tier { font-family: var(--font-fraunces), system-ui, sans-serif; font-weight: 400; color: #e2c891; }
 
 /* SVG star rating (icons.tsx Stars): outline stars with a clipped solid overlay for partial fill. */
 .stars { display: inline-flex; align-items: center; gap: 2px; color: #b7791f; vertical-align: middle; }
@@ -897,7 +897,7 @@ textarea.input { resize: vertical; }
 [data-brand='skywood'] .shop-clear { box-shadow: inset 0 0 0 1px var(--sw-ink); }
 [data-brand='skywood'] .shop-apply { background: var(--sw-ink); color: #fbf8f3; }
 [data-brand='skywood'] .shop-check input { accent-color: var(--sw-ink); }
-[data-brand='skywood'] .shop-cat-art { border-radius: 999px 999px 0 0; background: #ede6da; }
+[data-brand='skywood'] .shop-cat-art { border-radius: 4px; background: #ede6da; }
 [data-brand='skywood'] .shop-cat-glyph { color: var(--sw-bronze); opacity: 0.6; }
 [data-brand='skywood'] .shop-cat-name { font-family: var(--sw-display); font-weight: 400; font-size: 13.5px; }
 [data-brand='skywood'] .shop-tag { border-radius: 0; background: #ede6da; }
@@ -980,7 +980,7 @@ textarea.input { resize: vertical; }
 .dr-skywood .dr-search input::placeholder { color: rgba(246, 242, 235, 0.55); }
 .dr-skywood .dr-h { color: #e2c891; font-weight: 600; letter-spacing: 0.22em; }
 .dr-skywood .dr-cats li { border-bottom: 1px solid rgba(201, 169, 110, 0.16); }
-.dr-skywood .dr-art { border-radius: 999px 999px 0 0; background: radial-gradient(70% 70% at 50% 40%, #4a3e31, #2a231c); }
+.dr-skywood .dr-art { border-radius: 4px; background: radial-gradient(70% 70% at 50% 40%, #4a3e31, #2a231c); }
 .dr-skywood .dr-glyph { color: #c9a96e; opacity: 0.7; }
 .dr-skywood .dr-name { font-family: var(--sw-display); font-size: 19px; font-weight: 300; letter-spacing: -0.01em; }
 .dr-skywood .dr-count { color: rgba(246, 242, 235, 0.55); font-size: 11.5px; }
@@ -1012,7 +1012,7 @@ textarea.input { resize: vertical; }
 .plb-mruk .plb-cta { border-radius: 999px; background: #12164a; color: #fff; }
 .plb-mruk .plb-cta:hover { background: #0071a8; }
 .plb-skywood { background: #1c1915; color: #f6f2eb; box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.3); }
-.plb-skywood .plb-logo { border-radius: 999px 999px 0 0; box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.5); }
+.plb-skywood .plb-logo { border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.5); }
 .plb-skywood .plb-text b { font-family: var(--sw-display); font-size: 22px; font-weight: 340; letter-spacing: -0.01em; }
 .plb-skywood .plb-text span { color: rgba(246, 242, 235, 0.72); }
 .plb-skywood .plb-cta { border-radius: 2px; color: var(--sw-gold-hi); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.6); font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; }
