@@ -811,6 +811,3 @@ textarea.input { resize: vertical; }
 .loyal-mruk { border-radius: 24px; color: #fff; background: radial-gradient(70% 120% at 100% 0%, rgba(0, 152, 218, 0.55), rgba(0, 152, 218, 0) 70%), linear-gradient(120deg, #0b0f33, #1d2366); }
 .loyal-skywood { border-radius: 4px; color: #f6f2eb; background: radial-gradient(70% 120% at 100% 0%, #4a3e31, #1c1915 70%); box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.4); }
 .loyal-skywood .loyal-tier { font-family: var(--font-fraunces), Georgia, serif; font-weight: 300; color: #e2c891; }
-
-/* Skip rendering work for home sections until they approach the viewport (big win on mid-range Android). */
-.mu-home > .wrap > .mu-sec, .mu-flash, .mu-advance, .mu-foot, .sw-home > .sw-sec, .sw-story, .sw-quote, .sw-visit, .sw-foot { content-visibility: auto; contain-intrinsic-size: auto 640px; }
