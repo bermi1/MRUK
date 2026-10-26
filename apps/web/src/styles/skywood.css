@@ -113,7 +113,7 @@
 .sw-hero-room { position: absolute; inset: 0; z-index: -2; }
 .sw-wall { position: absolute; inset: 0; background: radial-gradient(60% 80% at 74% 30%, #f6f0e6 0%, rgba(246, 240, 230, 0) 70%), linear-gradient(180deg, #ede5d8 0%, #e2d7c5 82%); }
 .sw-beam { position: absolute; top: -30%; right: -6%; width: 70%; height: 150%; background: radial-gradient(38% 50% at 64% 26%, rgba(226, 200, 145, 0.55) 0%, rgba(226, 200, 145, 0) 70%), linear-gradient(112deg, rgba(255, 250, 238, 0) 38%, rgba(255, 248, 232, 0.5) 50%, rgba(255, 250, 238, 0) 62%); mix-blend-mode: soft-light; pointer-events: none; }
-.sw-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 17%; background: linear-gradient(180deg, #dacdb6 0%, #cfc0a6 100%); box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.55); }
+.sw-floor { position: absolute; left: 0; right: 0; bottom: 0; height: calc(70px + (100% - 180px) * 0.17); background: linear-gradient(180deg, #dacdb6 0%, #cfc0a6 100%); box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.55); }
 .sw-stage { position: absolute; z-index: -1; top: 110px; bottom: 70px; right: max(3vw, calc((100vw - 1440px) / 2)); width: min(50vw, 720px); }
 .sw-ghost { position: absolute; right: 0; top: 4%; font-family: var(--sw-display); font-style: italic; font-weight: 300; font-size: clamp(110px, 13vw, 210px); line-height: 1; letter-spacing: -0.05em; white-space: nowrap; color: rgba(122, 90, 34, 0.07); pointer-events: none; }
 .sw-arch { position: absolute; border-radius: 999px 999px 0 0; }
