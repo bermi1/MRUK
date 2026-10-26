@@ -210,7 +210,7 @@ export async function resolveAudience(brand: Brand, channel: CampaignChannel, au
       const address = addressOf(channel, s);
       if (!address) continue;
       if (s.unsubscribedAt || !s.consentAt || !s[optIn] || suppressed.has(address)) {
-        if (s.consentAt) optedOut++;
+        if (s.unsubscribedAt || suppressed.has(address)) optedOut++; // not opted in to this channel is not an opt-out
         continue;
       }
       if (hasFilters(f) && !matchesFilters(statsOf(s.phone ?? s.customer?.phone), f, now)) continue;
