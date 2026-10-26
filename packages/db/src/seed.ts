@@ -20,6 +20,7 @@ import {
   type AdvanceStatus,
   type OrderStatus,
   type PaymentMethod,
+  pointsForOrder,
 } from '@bt/core';
 import { encrypt, hashPassword, prisma, sha256 } from './index';
 
@@ -96,11 +97,27 @@ const CUSTOMERS = [
 
 const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
 
-/** `seed.ts --tokens`: refresh only the brand design tokens (safe on a live database). */
+/** Permissions added after launch: granted to existing roles on every deploy (only ever adds; never removes what an owner set). */
+const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write'] };
+
+async function syncRolePermissions() {
+  for (const [id, add] of Object.entries(ADDED_PERMISSIONS)) {
+    const r = await prisma.role.findUnique({ where: { id } });
+    if (!r || r.permissions.includes('*')) continue;
+    const missing = add.filter((p) => !r.permissions.includes(p));
+    if (missing.length) {
+      await prisma.role.update({ where: { id }, data: { permissions: [...r.permissions, ...missing] } });
+      console.log(`Role ${id}: added ${missing.join(', ')}.`);
+    }
+  }
+}
+
+/** `seed.ts --tokens`: refresh only the brand design tokens and role permissions (safe on a live database). */
 async function syncTokens() {
   const BT = loadHandoff();
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
+  await syncRolePermissions();
 }
 
 async function main() {
@@ -108,6 +125,10 @@ async function main() {
   const BT = loadHandoff();
   console.log('Clearing existing data…');
   await prisma.$transaction([
+    prisma.campaignSend.deleteMany(),
+    prisma.campaign.deleteMany(),
+    prisma.subscriber.deleteMany(),
+    prisma.loyaltyLedger.deleteMany(),
     prisma.auditLog.deleteMany(),
     prisma.ticketMessage.deleteMany(),
     prisma.ticket.deleteMany(),
@@ -224,7 +245,7 @@ async function main() {
   // Staff, roles ------------------------------------------------------------
   const PERMS = {
     owner: ['*'],
-    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'tickets', 'tickets.write', 'reports'],
+    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports'],
     finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
     catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
     warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
@@ -408,6 +429,35 @@ async function main() {
   for (const [brandKey, issue, name, phone, productId, description, status] of tickets) {
     await prisma.ticket.create({ data: { number: `TK-${counters.ticket++}`, brandKey, issue, name, phone, productId, description, status, messages: { create: { author: name, body: description } } } });
   }
+
+  // Marketing: demo subscribers and loyalty points for delivered orders --------------
+  const subs = [
+    ['mruk', 'Neema Mushi', '+255754000214', '', 'footer', 3, true],
+    ['mruk', 'Fatma Ali', '+255765902331', 'fatma.ali@example.co.tz', 'checkout', 8, true],
+    ['mruk', 'Baraka Temba', '+255622781004', '', 'home', 15, true],
+    ['mruk', 'Zuhura Omari', '+255718300412', 'zuhura@example.co.tz', 'signup', 22, true],
+    ['mruk', 'Khamis Abdallah', '+255677120998', '', 'footer', 38, true],
+    ['mruk', 'Lucy Shirima', '', 'lucy.shirima@example.co.tz', 'home', 45, true],
+    ['mruk', 'Omari Said', '+255759004127', '', 'footer', 50, false],
+    ['skywood', 'John Kimaro', '+255713441902', '', 'footer', 2, true],
+    ['skywood', 'Mariam Kessy', '+255658113402', 'mariam.kessy@example.co.tz', 'checkout', 9, true],
+    ['skywood', 'Salome Mrema', '+255746551203', '', 'home', 19, true],
+    ['skywood', 'Abdul Rashid', '', 'abdul.rashid@example.co.tz', 'signup', 41, true],
+  ] as const;
+  const custByPhone = new Map(customers.map((c) => [c.phone, c.id]));
+  for (const [brandKey, name, phone, email, source, daysAgo, active] of subs) {
+    const at = new Date(Date.now() - daysAgo * 86_400_000);
+    await prisma.subscriber.create({
+      data: { brandKey, name, phone: phone || null, email: email || null, smsOptIn: !!phone && active, emailOptIn: !!email && active, consentAt: at, source, createdAt: at, unsubscribedAt: active ? null : new Date(at.getTime() + 5 * 86_400_000), customerId: (phone && custByPhone.get(phone)) || null },
+    });
+  }
+  const delivered = await prisma.order.findMany({ where: { status: 'delivered', customerId: { not: null } }, select: { id: true, number: true, brandKey: true, total: true, customerId: true, createdAt: true } });
+  await prisma.loyaltyLedger.createMany({
+    data: delivered
+      .filter((o) => pointsForOrder(o.total) > 0)
+      .map((o) => ({ customerId: o.customerId!, brandKey: o.brandKey, points: pointsForOrder(o.total), reason: 'order', orderId: o.id, key: `order:${o.id}:earn`, note: `Order ${o.number} delivered`, at: new Date(o.createdAt.getTime() + 2 * 86_400_000) })),
+  });
+  console.log(`  ${subs.length} subscribers, loyalty points on ${delivered.length} delivered orders`);
 
   // Counters and settings ------------------------------------------------------
   await prisma.counter.createMany({

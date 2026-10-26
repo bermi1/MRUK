@@ -11,6 +11,11 @@ export async function GET() {
     include: { items: true, events: true, payments: { select: { method: true, amount: true, status: true, createdAt: true } }, advance: { select: { termMonths: true, monthly: true, total: true, status: true, employer: true, nidaLast4: true, accountLast4: true, createdAt: true } } },
   });
   const tickets = await prisma.ticket.findMany({ where: { phone: c.phone }, include: { messages: { where: { internal: false } } } });
-  const body = { exportedAt: new Date().toISOString(), customer: { phone: c.phone, name: c.name, email: c.email, locale: c.locale, consentAt: c.consentAt, createdAt: c.createdAt }, orders, tickets };
+  const subscriptions = await prisma.subscriber.findMany({
+    where: { OR: [{ customerId: c.id }, { phone: c.phone }, ...(c.email ? [{ email: c.email.toLowerCase() }] : [])] },
+    select: { brandKey: true, name: true, phone: true, email: true, smsOptIn: true, whatsappOptIn: true, emailOptIn: true, consentAt: true, source: true, unsubscribedAt: true, createdAt: true },
+  });
+  const loyalty = await prisma.loyaltyLedger.findMany({ where: { customerId: c.id }, select: { brandKey: true, points: true, reason: true, note: true, at: true }, orderBy: { at: 'asc' } });
+  const body = { exportedAt: new Date().toISOString(), customer: { phone: c.phone, name: c.name, email: c.email, locale: c.locale, consentAt: c.consentAt, createdAt: c.createdAt }, orders, tickets, subscriptions, loyalty };
   return new NextResponse(JSON.stringify(body, null, 2), { headers: { 'Content-Type': 'application/json', 'Content-Disposition': 'attachment; filename="my-data.json"', 'Cache-Control': 'no-store' } });
 }

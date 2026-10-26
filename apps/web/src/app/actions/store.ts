@@ -194,6 +194,9 @@ export async function deleteAccountAction(): Promise<void> {
   await prisma.$transaction([
     prisma.order.updateMany({ where: { customerId: c.id }, data: { customerId: null } }),
     prisma.address.deleteMany({ where: { customerId: c.id } }),
+    // Marketing sign-ups (all brands) and loyalty points go with the account.
+    prisma.subscriber.deleteMany({ where: { OR: [{ customerId: c.id }, { phone: c.phone }, ...(c.email ? [{ email: c.email.toLowerCase() }] : [])] } }),
+    prisma.loyaltyLedger.deleteMany({ where: { customerId: c.id } }),
     prisma.session.deleteMany({ where: { customerId: c.id } }),
     prisma.customer.update({ where: { id: c.id }, data: { name: '', email: '', phone: `deleted-${c.id}`, deletedAt: new Date() } }),
   ]);
