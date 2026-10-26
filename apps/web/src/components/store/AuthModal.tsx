@@ -138,6 +138,11 @@ export function AuthModal({ brand, user, onClose }: { brand: string; user: Sessi
             <div style={{ fontSize: 11.5, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Your data is encrypted and never shared. By continuing you agree to the Terms and Privacy Policy.
             </div>
+            <div className="note">
+              <Link href={`/${brand}/${tab === 'up' ? 'signup' : 'login'}`} onClick={onClose} style={{ textDecoration: 'underline' }}>
+                Open the full {tab === 'up' ? 'sign-up' : 'sign-in'} page
+              </Link>
+            </div>
           </>
         )}
       </div>

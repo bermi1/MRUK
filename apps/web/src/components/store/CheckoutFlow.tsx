@@ -22,6 +22,7 @@ import {
 import { placeAdvanceOrderAction, placeOrderAction, updateCartAction } from '@/app/actions/store';
 import { fmt } from '@/lib/format';
 import type { CartView } from '@/lib/types';
+import { DiscountField } from './CartView';
 
 type Step = 'checkout' | 'apply' | 'contract';
 
@@ -160,7 +161,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
 
   const crumbs = (cur: number) => (
     <div className="crumbs" aria-label="Progress">
-      {['Cart', method === 'salary_advance' ? 'Salary Advance details' : 'Checkout', 'Digital contract', 'Confirmation'].map((l, i) => (
+      {['Cart', method === 'salary_advance' ? 'Pay Later details' : 'Checkout', 'Digital contract', 'Confirmation'].map((l, i) => (
         <span key={l} style={i <= cur ? { color: 'var(--text)', fontWeight: 600 } : undefined}>
           {i > 0 && <span style={{ margin: '0 8px', color: 'var(--muted)' }}>›</span>}
           {i + 1} {l}
@@ -186,6 +187,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
           <span>−{fmt(cart.discount)}</span>
         </div>
       )}
+      <DiscountField brand={brand.key} code={cart.discountCode} error={cart.discountError} saving={Math.max(0, cart.discount - cart.bundles.reduce((a, x) => a + x.saving, 0))} />
       <div className="row" style={{ fontSize: 14, color: 'var(--muted2)' }}>
         <span>Delivery · {cart.region}</span>
         <span>{cart.delivery ? fmt(cart.delivery) : 'Free'}</span>
@@ -204,7 +206,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
             ))}
           </div>
           <div className="row monthly" style={{ fontSize: 14, fontWeight: 600 }}>
-            <span>Salary Advance · {months} months</span>
+            <span>Pay Later · {months} months</span>
             <span>{fmt(monthly)}/mo</span>
           </div>
         </>
@@ -281,7 +283,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
                       </span>
                     )}
                     <span style={{ textAlign: 'left' }}>
-                      <span style={{ display: 'block', fontSize: 14, fontWeight: 600 }}>{info.title}</span>
+                      <span style={{ display: 'block', fontSize: 14, fontWeight: 600 }}>{m === 'salary_advance' ? 'Pay Later' : info.title}</span>
                       <span style={{ display: 'block', fontSize: 12, color: 'var(--muted2)' }}>{allowed ? info.sub : 'Only in Dar es Salaam'}</span>
                     </span>
                   </button>
@@ -314,7 +316,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <img src="/brand/azania-mark.png" alt="Azania Bank" style={{ width: 52, height: 40, objectFit: 'contain' }} />
               <div>
-                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-.02em' }}>Salary Advance application</h1>
+                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-.02em' }}>Pay Later application</h1>
                 <div style={{ fontSize: 13.5, color: 'var(--muted2)' }}>Shared securely with Azania Bank for approval</div>
               </div>
             </div>
@@ -408,7 +410,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
                     : `Instalment is ${aff.percent}% of net salary. Choose a longer term or a smaller basket. Maximum instalment: ${fmt(aff.maxInstalment)}.`}
               </div>
             </div>
-            <div className="note">Your details are encrypted in transit and at rest, and used only to assess this Salary Advance. Final approval and terms are set by Azania Bank.</div>
+            <div className="note">Your details are encrypted in transit and at rest, and used only to assess this Pay Later application. Final approval and terms are set by Azania Bank.</div>
           </div>
         </div>
       </>

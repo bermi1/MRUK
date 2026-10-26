@@ -14,7 +14,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
   const t = confirmationToken(o.number);
   const adv = advanceSummary(o);
   const method = o.paymentMethod as PaymentMethod;
-  const steps = [method === 'salary_advance' ? 'Azania Bank reviews your Salary Advance' : method === 'pay_on_delivery' ? 'Have the cash or card ready on delivery' : 'Payment confirmed', 'We pack your order at the warehouse', 'Delivery team calls before arrival', 'Register your warranty after delivery'];
+  const steps = [method === 'salary_advance' ? 'Azania Bank reviews your Pay Later application' : method === 'pay_on_delivery' ? 'Have the cash or card ready on delivery' : 'Payment confirmed', 'We pack your order at the warehouse', 'Delivery team calls before arrival', 'Register your warranty after delivery'];
   const advStatus = adv ? ADVANCE_STATUS_LABEL[adv.status as AdvanceStatus] : '';
   return (
     <div className="wrap confirm" style={{ maxWidth: 1100, paddingTop: 48 }}>

@@ -65,33 +65,57 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
   );
 }
 
-export function DiscountField({ brand, code, error }: { brand: string; code: string | null; error: string | null }) {
-  const [v, setV] = useState(code ?? '');
+const DISCOUNT_EN = { promoCode: 'Promo code', apply: 'Apply', remove: 'Remove', applied: 'Code {code} applied', save: 'You save {amount}' };
+
+/** Promo code: apply / remove with clear success and error states (reuses updateCartAction). */
+export function DiscountField({ brand, code, error, saving = 0, labels = DISCOUNT_EN }: { brand: string; code: string | null; error: string | null; saving?: number; labels?: typeof DISCOUNT_EN }) {
+  const [v, setV] = useState('');
   const [err, setErr] = useState(error ?? '');
   const [pending, start] = useTransition();
   const router = useRouter();
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        start(async () => {
-          const r = await updateCartAction(brand, { discountCode: v.trim() || null });
-          setErr(r.ok ? '' : r.error);
-          router.refresh();
-        });
-      }}
-      style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-    >
-      <label htmlFor="dc" className="field">
-        Discount code
-      </label>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input id="dc" className="input" value={v} onChange={(e) => setV(e.target.value.toUpperCase())} placeholder="e.g. KARIBU10" style={{ textTransform: 'uppercase' }} />
-        <button className="btn btn-outline btn-sm" disabled={pending} style={{ borderRadius: 12, borderWidth: 1 }}>
-          {code && !v ? 'Remove' : 'Apply'}
+  const applied = !!code && !error;
+  const submit = (next: string | null) =>
+    start(async () => {
+      const r = await updateCartAction(brand, { discountCode: next });
+      setErr(r.ok ? '' : r.error);
+      if (r.ok) setV('');
+      router.refresh();
+    });
+  if (applied)
+    return (
+      <div className="promo promo-on" role="status">
+        <span className="promo-tick" aria-hidden="true">
+          ✓
+        </span>
+        <span className="promo-txt">
+          <b>{labels.applied.replace('{code}', code!)}</b>
+          {saving > 0 && <span>{labels.save.replace('{amount}', fmt(saving))}</span>}
+        </span>
+        <button type="button" className="promo-remove" disabled={pending} onClick={() => submit(null)}>
+          {labels.remove}
         </button>
       </div>
-      <div className="err" role="alert">{err}</div>
+    );
+  return (
+    <form
+      className="promo"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (v.trim()) submit(v.trim());
+      }}
+    >
+      <label htmlFor="dc" className="promo-label">
+        {labels.promoCode}
+      </label>
+      <div className={`promo-row ${err ? 'is-err' : ''}`}>
+        <input id="dc" className="promo-input" value={v} onChange={(e) => (setV(e.target.value.toUpperCase()), setErr(''))} placeholder="KARIBU10" autoComplete="off" aria-invalid={!!err} aria-describedby="dc-err" />
+        <button className="promo-apply" disabled={pending || !v.trim()}>
+          {pending ? '…' : labels.apply}
+        </button>
+      </div>
+      <div id="dc-err" className="err" role="alert">
+        {err}
+      </div>
     </form>
   );
 }

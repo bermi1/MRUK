@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
   const [brand, p] = await Promise.all([getBrand(key), getProduct(key, id)]);
   const title = `${p.name} (${p.model}) — ${fmt(p.price)}`;
-  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Azania Bank Salary Advance. ${p.features.join(' · ')}.`;
+  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Pay Later by Azania Bank. ${p.features.join(' · ')}.`;
   const images = p.img ? [{ url: abs(p.img), alt: p.name }] : undefined;
   return {
     title: p.name,
@@ -83,6 +83,11 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             )}
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t('vatNote')}</div>
+          {p.price >= 1000 && (
+            <div className="earn-pts">
+              <span aria-hidden="true">★</span> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
+            </div>
+          )}
           <BuyBox
             brand={key}
             product={{ id: p.id, name: p.name, model: p.model, price: p.price, stock: p.stock, img: p.img, features: p.features }}
@@ -116,7 +121,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           <div className="rail nsb">
             {related.map((r) => (
               <Link key={r.id} href={`/${key}/p/${r.id}`} className="related">
-                <PImg src={r.img} alt="" model={r.model} size="xs" style={{ height: 100 }} />
+                <PImg src={r.img} alt="" model={r.model} sub={r.sub} size="xs" style={{ height: 100 }} />
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{r.name}</div>
                   <div style={{ fontSize: 14, marginTop: 4 }}>{fmt(r.price)}</div>

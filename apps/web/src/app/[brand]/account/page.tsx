@@ -7,6 +7,8 @@ import { fmt, fmtDate, formatTzPhone } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getLocale } from '@/server/locale';
 import { confirmationPath } from '@/server/orders';
+import { getLoyalty } from '@/server/loyalty';
+import { getT } from '@/server/locale';
 import { currentCustomer } from '@/server/session';
 
 export const metadata: Metadata = { title: 'Account', robots: { index: false } };
@@ -29,6 +31,7 @@ export default async function AccountPage({ params }: { params: Promise<{ brand:
       <div className="eyebrow">Account</div>
       <h1 className="h1">Habari, {c.name.split(' ')[0] || 'there'}</h1>
       <div style={{ color: 'var(--muted2)' }}>{formatTzPhone(c.phone)}</div>
+      <LoyaltyCard customerId={c.id} brand={key} />
       <div className="two-col">
         <section>
           <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 12px' }}>My orders</h2>
@@ -57,5 +60,23 @@ export default async function AccountPage({ params }: { params: Promise<{ brand:
         </section>
       </div>
     </div>
+  );
+}
+
+/** Rewards card (data from server/loyalty.ts; display only). */
+async function LoyaltyCard({ customerId, brand }: { customerId: string; brand: BrandKey }) {
+  const [l, t] = await Promise.all([getLoyalty(customerId, brand), getT()]);
+  return (
+    <section className={`loyal loyal-${brand}`} aria-label={t('rewards')}>
+      <div>
+        <p className="loyal-k">{t('rewards')}</p>
+        <p className="loyal-tier">{l.tier}</p>
+      </div>
+      <div className="loyal-pts">
+        <b>{t('pointsN', { n: l.points.toLocaleString('en-US') })}</b>
+        <span>{t('worthN', { amount: fmt(l.valueTzs) })}</span>
+        {l.nextTier && <span>{t('toNextTier', { n: l.pointsToNext.toLocaleString('en-US'), tier: l.nextTier })}</span>}
+      </div>
+    </section>
   );
 }

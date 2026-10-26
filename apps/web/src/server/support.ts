@@ -8,11 +8,11 @@ import { toFacts } from './catalog';
 
 /** Policy facts the support assistant may quote (from the storefront FAQ). */
 export const POLICIES: PolicyFact[] = [
-  { id: 'salary-advance', topic: 'salary advance azania bank monthly pay instalment', text: 'Choose Salary Advance at checkout, verify with Azania Bank, and repay monthly from your salary over 3, 6 or 12 months. The instalment can be at most one third of your net salary. Approval is by Azania Bank.' },
+  { id: 'salary-advance', topic: 'pay later salary advance azania bank monthly pay instalment', text: 'Choose Pay Later at checkout, verify with Azania Bank, and repay monthly from your salary over 3, 6 or 12 months. The instalment can be at most one third of your net salary. Approval is by Azania Bank.' },
   { id: 'delivery', topic: 'delivery shipping time arrive region', text: 'Dar es Salaam: next day. Other regions: 2–4 days. Delivery is free in Dar es Salaam on orders of TZS 500,000 or more. Showroom pickup is ready in 24 hours.' },
   { id: 'warranty', topic: 'warranty guarantee repair claim broken fault', text: 'Products carry a 2-year manufacturer warranty. Send a support request with your order number and a photo; a technician from the nearest service centre will contact you.' },
   { id: 'returns', topic: 'return refund exchange', text: 'Unused products in original packaging can be returned within 7 days. Contact support to arrange collection.' },
-  { id: 'payment', topic: 'payment pay card visa mastercard cash mobile money', text: 'We accept Azania Bank Salary Advance, Azania Bank account, Visa and Mastercard cards, and pay on delivery in Dar es Salaam. Mobile money is not available yet.' },
+  { id: 'payment', topic: 'payment pay card visa mastercard cash mobile money', text: 'We accept Pay Later by Azania Bank, Azania Bank account, Visa and Mastercard cards, and pay on delivery in Dar es Salaam. Mobile money is not available yet.' },
 ];
 
 export async function aiVerdict(items: ProductView[], months: number) {

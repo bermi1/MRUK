@@ -9,7 +9,7 @@ export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductVi
   return (
     <div className="ptile shade-tb" data-testid="product-tile">
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.price)}`} />
-      <PImg src={p.img} alt={p.name} model={p.model} size="lg" />
+      <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="lg" />
       <div className="tags">
         <span className="glass">{p.sub.toUpperCase()}</span>
         <CompareToggle brand={brand} id={p.id} on={inCompare} />
@@ -37,7 +37,7 @@ export function ProductRow({ p, brand, inCompare, months = 12 }: { p: ProductVie
   return (
     <div className="lrow" style={{ gridTemplateColumns: '120px 1fr auto', borderRadius: 20, padding: '10px 16px 10px 10px', gap: 16 }}>
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.price)}`} />
-      <PImg src={p.img} alt="" model={p.model} size="sm" style={{ height: 120 }} />
+      <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="sm" style={{ height: 120 }} />
       <div style={{ minWidth: 0 }}>
         <div className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>
           {p.model}

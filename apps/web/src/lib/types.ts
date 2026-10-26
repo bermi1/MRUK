@@ -57,6 +57,23 @@ export interface HeroSlide {
   title: string;
   sub: string;
   img: string;
+  /* Optional (added for the brand redesign; getCms() fills safe defaults, admin may omit them). */
+  /** Button label; empty = "Shop now" in the shopper's language. */
+  cta?: string;
+  /** Button link: a store path ("/mruk/deals") or https URL; empty = the linked product (pid). */
+  href?: string;
+  /** Price shown on the slide; null/absent = the linked product's live price, 0 = hide the price. */
+  price?: number | null;
+  /** Separate phone image (portrait works best); empty = img. */
+  imgMobile?: string;
+  /** "product" = cut-out product photo on the brand's set; "photo" = full-bleed photograph (lifestyle/banner). */
+  layout?: 'product' | 'photo';
+  /** Text colour over a photo: "dark" = light text on a darkened image, "light" = dark text on a light image. */
+  theme?: 'dark' | 'light';
+  /** Copy alignment on wide screens. */
+  align?: 'left' | 'center' | 'right';
+  /** Focal point of a photo as CSS object-position, e.g. "50% 40%". */
+  focal?: string;
 }
 
 export interface CmsView {

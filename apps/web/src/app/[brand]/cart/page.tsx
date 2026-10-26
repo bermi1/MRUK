@@ -31,7 +31,9 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
           ))}
           {cart.discount > cart.bundles.reduce((a, b) => a + b.saving, 0) && (
             <div className="sumrow" style={{ color: 'var(--ok)' }}>
-              <span>Code {cart.discountCode}</span>
+              <span>
+                {t('discountLine')} · {cart.discountCode}
+              </span>
               <b style={{ color: 'var(--ok)' }}>−{fmt(cart.discount - cart.bundles.reduce((a, b) => a + b.saving, 0))}</b>
             </div>
           )}
@@ -46,10 +48,16 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
             <span data-testid="cart-total">{fmt(cart.total)}</span>
           </div>
           <div className="sumrow monthly" style={{ fontWeight: 600 }}>
-            <span>Salary Advance · {cart.months} months</span>
+            <span>Pay Later · {cart.months} months</span>
             <span>{fmt(cart.total / cart.months)}/mo</span>
           </div>
-          <DiscountField brand={key} code={cart.discountCode} error={cart.discountError} />
+          <DiscountField
+            brand={key}
+            code={cart.discountCode}
+            error={cart.discountError}
+            saving={Math.max(0, cart.discount - cart.bundles.reduce((a, b) => a + b.saving, 0))}
+            labels={{ promoCode: t('promoCode'), apply: t('apply'), remove: t('remove'), applied: t('codeApplied'), save: t('youSave') }}
+          />
           {cart.lines.length ? (
             <Link href={`/${key}/checkout`} className="btn btn-primary btn-block" data-testid="go-checkout">
               {t('checkout')}

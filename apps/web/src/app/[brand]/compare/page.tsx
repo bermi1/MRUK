@@ -23,7 +23,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
   const minP = Math.min(...items.map((p) => p.price));
   const rows: { label: string; cells: { t: string; c: string; w: number }[] }[] = [
     { label: 'Price', cells: items.map((p) => ({ t: fmt(p.price), w: 600, c: p.price === minP ? 'var(--ok)' : 'var(--text)' })) },
-    { label: 'Salary Advance', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) },
+    { label: 'Pay Later', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) },
     { label: 'Type', cells: items.map((p) => ({ t: p.sub, w: 400, c: 'var(--text)' })) },
     { label: 'Stock', cells: items.map((p) => ({ t: p.stock <= 5 ? `Only ${p.stock} left` : 'In stock', w: 400, c: p.stock <= 5 ? 'var(--warn)' : 'var(--ok)' })) },
     ...feats.map((f) => ({ label: f, cells: items.map((p) => ({ t: p.features.includes(f) ? '✓' : '—', w: 600, c: p.features.includes(f) ? 'var(--ok)' : '#C8CBD8' })) })),
