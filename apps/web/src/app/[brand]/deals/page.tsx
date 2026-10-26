@@ -2,16 +2,18 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AddBundleButton } from '@/components/store/CartButtons';
 import { Countdown } from '@/components/store/Countdown';
+import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { PImg } from '@/components/store/PImg';
 import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBundles, getFlashDeals } from '@/server/catalog';
+import { getT } from '@/server/locale';
 
 export const metadata: Metadata = { title: 'Deals and bundles' };
 
 export default async function DealsPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [bundles, flash] = await Promise.all([getBundles(key), getFlashDeals(key)]);
+  const [bundles, flash, t] = await Promise.all([getBundles(key), getFlashDeals(key), getT()]);
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
       <section className="deals-hero">
@@ -84,14 +86,8 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
           </div>
         </>
       )}
-      <div className="grid-3" style={{ marginTop: 48 }}>
-        <div style={{ borderRadius: 22, background: '#EAF6FC', padding: 24, display: 'flex', gap: 14, alignItems: 'center' }}>
-          <img src="/brand/azania-mark.png" alt="" style={{ width: 56, height: 44, objectFit: 'contain' }} />
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 600 }}>Pay Later on every deal</div>
-            <div style={{ fontSize: 13, color: '#3D5566', marginTop: 3 }}>Bundles can be paid monthly too</div>
-          </div>
-        </div>
+      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
+      <div className="grid-2" style={{ marginTop: 16 }}>
         <div style={{ borderRadius: 22, background: 'var(--surface)', padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Free delivery in Dar</div>
           <div style={{ fontSize: 13, color: 'var(--muted2)', marginTop: 3 }}>On orders over TZS 500,000</div>

@@ -4,6 +4,8 @@ import { notFound, permanentRedirect } from 'next/navigation';
 import { ProductRow, ProductTile } from '@/components/store/ProductTile';
 import { CatGlyph, glyphKind } from '@/components/store/CatGlyph';
 import { SafeImg } from '@/components/store/SafeImg';
+import { PayLaterBanner } from '@/components/store/PayLaterBanner';
+import { getT } from '@/server/locale';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catalog';
@@ -21,7 +23,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   const { brand: key, cat: catId } = (await params) as { brand: BrandKey; cat: string };
   if (catId === 'all') permanentRedirect(`/${key}/shop`);
   const sp = await searchParams;
-  const [brand, cats, products, cmp, cart] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key)]);
+  const [brand, cats, products, cmp, cart, t] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key), getT()]);
   const cat = catId === 'all' ? null : cats.find((c) => c.id === catId);
   if (catId !== 'all' && !cat) notFound();
   const sub = sp.sub && (cat?.subs.includes(sp.sub) ?? false) ? sp.sub : 'All';
@@ -106,6 +108,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
           ))}
         </div>
       )}
+      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
     </div>
   );
 }

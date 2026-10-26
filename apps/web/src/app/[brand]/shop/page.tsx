@@ -5,6 +5,7 @@ import { SlidersIcon } from '@/components/icons';
 import { CatGlyph, glyphKind } from '@/components/store/CatGlyph';
 import { SafeImg } from '@/components/store/SafeImg';
 import { ProductCard } from '@/components/store/brands/ProductCard';
+import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
@@ -186,6 +187,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
           </Link>
         )}
       </div>
+      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`${b}/pay-later`} />
     </div>
   );
 }
