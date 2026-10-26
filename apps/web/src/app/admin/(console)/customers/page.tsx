@@ -85,7 +85,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 <td>
                   <div className="ad-row">
                     <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#E8EAF4', color: '#12164A', fontSize: 11.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>{initials(c.name || '?')}</span>
-                    <Link href={`/admin/orders?q=${encodeURIComponent(c.phone.slice(4))}`} style={{ fontWeight: 500, color: '#12152B', textDecoration: 'none' }}>
+                    <Link href={`/admin/customers/${c.id}`} style={{ fontWeight: 500, color: '#12152B', textDecoration: 'none' }}>
                       {c.name || 'Unnamed'}
                     </Link>
                     {brands.map((b) => (
