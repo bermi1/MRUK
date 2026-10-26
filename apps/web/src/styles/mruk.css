@@ -554,3 +554,28 @@
 .auth-mruk .auth-field input { border-radius: 14px; }
 .auth-mruk .auth-btn { border-radius: 999px; background: var(--mu-navy); }
 .auth-mruk .auth-btn:hover { background: var(--mu-sky); color: var(--mu-ink); }
+
+/* Hero: CMS "photo" layout (full-bleed photograph) + alignment/theme */
+.mu-hero-photo { position: absolute; inset: 0; z-index: -1; }
+.mu-hero-photo-img, .mu-hero-photo picture, .mu-hero-photo .hero-glyph { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mu-hero-photo picture img { width: 100%; height: 100%; object-fit: cover; }
+.mu-hero-photo .hero-glyph { inset: 15% 10% 15% 55%; width: auto; height: 70%; color: rgba(127, 211, 247, 0.5); }
+.mu-hero.is-photo .mu-hero-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11, 15, 51, 0.88) 0%, rgba(11, 15, 51, 0.55) 45%, rgba(11, 15, 51, 0.05) 75%); }
+.mu-hero.is-photo.theme-light { color: var(--mu-ink); }
+.mu-hero.is-photo.theme-light .mu-hero-photo::after { background: linear-gradient(90deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.6) 45%, rgba(255, 255, 255, 0) 75%); }
+.mu-hero.is-photo.theme-light .mu-hero-sub { color: #3c4160; }
+.mu-hero.is-photo.theme-light .mu-hero-eyebrow { color: var(--mu-sky-d); }
+.mu-hero.is-photo.theme-light .mu-btn-ghost { color: var(--mu-ink); box-shadow: inset 0 0 0 1.5px rgba(11, 15, 51, 0.4); }
+.mu-hero.is-photo.theme-light .mu-hero-chip { color: var(--mu-ink); }
+.mu-hero.is-photo .mu-hero-in { grid-template-columns: minmax(0, 1fr); }
+.mu-hero.is-photo .mu-hero-copy { max-width: 620px; }
+.mu-hero.is-photo .mu-hero-grid, .mu-hero.is-photo .mu-hero-arc { display: none; }
+.mu-hero.align-center .mu-hero-copy { margin: 0 auto; align-items: center; text-align: center; }
+.mu-hero.align-right .mu-hero-copy { margin-left: auto; align-items: flex-end; text-align: right; }
+.mu-hero button.mu-btn-ghost { background: transparent; }
+@media (max-width: 767px) {
+  .mu-hero.is-photo .mu-hero-in { min-height: 560px; align-items: end; }
+  .mu-hero.is-photo .mu-hero-photo::after { background: linear-gradient(0deg, rgba(11, 15, 51, 0.92) 0%, rgba(11, 15, 51, 0.5) 50%, rgba(11, 15, 51, 0) 80%); }
+  .mu-hero.is-photo.theme-light .mu-hero-photo::after { background: linear-gradient(0deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 80%); }
+  .mu-hero-cta button.mu-btn-ghost { display: none; }
+}
