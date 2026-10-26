@@ -37,7 +37,7 @@ export function TabBar({ brand, cartCount, labels }: { brand: string; cartCount:
         <HomeIcon />
         {labels.home}
       </Link>
-      <Link href={`${b}/c/all`} className={on(`${b}/c`) || on(`${b}/p`) ? 'on' : ''}>
+      <Link href={`${b}/shop`} className={on(`${b}/c`) || on(`${b}/p`) ? 'on' : ''}>
         <GridIcon />
         {labels.shop}
       </Link>

@@ -73,7 +73,7 @@ export function SkywoodHome(props: {
           eyebrow={t('collections')}
           title={t('collectionsTitle')}
           action={
-            <Link href={`${b}/c/all`} className="sw-link d-only">
+            <Link href={`${b}/shop`} className="sw-link d-only">
               {t('viewAll')}
             </Link>
           }
@@ -138,7 +138,7 @@ export function SkywoodHome(props: {
           eyebrow={t('theEdit')}
           title={t('theEditSub')}
           action={
-            <Link href={`${b}/c/all`} className="sw-link d-only">
+            <Link href={`${b}/shop`} className="sw-link d-only">
               {t('seeAll')}
             </Link>
           }

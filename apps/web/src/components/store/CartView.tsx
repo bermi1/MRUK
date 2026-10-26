@@ -20,7 +20,7 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
     return (
       <div style={{ border: '1px dashed var(--line)', borderRadius: 20, padding: 40, textAlign: 'center', color: 'var(--muted2)' }}>
         Your cart is empty.{' '}
-        <Link href={`/${brand}/c/all`} style={{ fontWeight: 600, color: 'var(--monthly)' }}>
+        <Link href={`/${brand}/shop`} style={{ fontWeight: 600, color: 'var(--monthly)' }}>
           Browse products
         </Link>
       </div>

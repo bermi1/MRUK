@@ -3,6 +3,7 @@ import type { ProductView } from '@/lib/types';
 import { fmt } from '@/lib/format';
 import { img } from '@/lib/img';
 import { AddButton, CompareToggle } from '../CartButtons';
+import { PlusIcon } from '../../icons';
 import { PImg } from '../PImg';
 
 /**
@@ -35,7 +36,7 @@ export function ProductCard({ p, brand, badge, was, price, perMonth, inCompare }
             </div>
             <div className="pc-mo">{perMonth.replace('{amount}', fmt(now / 12))}</div>
           </div>
-          {p.stock > 0 && <AddButton brand={brand} id={p.id} name={p.name} className="pc-add" label={<span aria-hidden="true">+</span>} />}
+          {p.stock > 0 && <AddButton brand={brand} id={p.id} name={p.name} className="pc-add" label={<PlusIcon size={18} strokeWidth={1.8} />} />}
         </div>
       </div>
     </article>

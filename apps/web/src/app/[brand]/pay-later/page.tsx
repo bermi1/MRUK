@@ -41,7 +41,7 @@ export default async function PayLaterPage({ params }: { params: Promise<{ brand
             <h1>{t('payLaterTitle')}</h1>
             <p className="pl-intro">{t('payLaterIntro')}</p>
             <div className="pl-cta">
-              <Link href={`${b}/c/all`} className="pl-btn">
+              <Link href={`${b}/shop`} className="pl-btn">
                 {t('plShop')} <span aria-hidden="true">→</span>
               </Link>
               <a href="#how" className="pl-link">

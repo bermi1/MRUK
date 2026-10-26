@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [cats, products] = await Promise.all([getCategories(b), getProducts(b)]);
     out.push({ url: `${base}/${b}`, changeFrequency: 'daily', priority: 0.9 });
     out.push({ url: `${base}/${b}/deals`, changeFrequency: 'daily', priority: 0.7 });
+    out.push({ url: `${base}/${b}/shop`, changeFrequency: 'daily', priority: 0.8 });
     for (const c of cats) out.push({ url: `${base}/${b}/c/${c.id}`, changeFrequency: 'daily', priority: 0.8 });
     for (const p of products) out.push({ url: `${base}/${b}/p/${p.id}`, lastModified: p.createdAt, changeFrequency: 'weekly', priority: 0.6 });
   }

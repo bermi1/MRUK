@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ProductRow, ProductTile } from '@/components/store/ProductTile';
 import { CatGlyph, glyphKind } from '@/components/store/CatGlyph';
 import { SafeImg } from '@/components/store/SafeImg';
@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function CategoryPage({ params, searchParams }: { params: Promise<{ brand: string; cat: string }>; searchParams: SP }) {
   const { brand: key, cat: catId } = (await params) as { brand: BrandKey; cat: string };
+  if (catId === 'all') permanentRedirect(`/${key}/shop`);
   const sp = await searchParams;
   const [brand, cats, products, cmp, cart] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key)]);
   const cat = catId === 'all' ? null : cats.find((c) => c.id === catId);

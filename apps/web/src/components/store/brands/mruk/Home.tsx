@@ -99,7 +99,7 @@ export function MrukHome(props: {
             kicker={t('shopByCategory')}
             title={`${brand.tagline}.`}
             action={
-              <Link href={`${b}/c/all`} className="mu-link d-only">
+              <Link href={`${b}/shop`} className="mu-link d-only">
                 {t('viewAll')} →
               </Link>
             }
@@ -238,7 +238,7 @@ export function MrukHome(props: {
               <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={46} height={36} className="mu-az" loading="lazy" />
               <h2>{t('advanceTitle')}</h2>
               <p>{t('fromPerMonth', { amount: fmt(exampleMonthly) })}</p>
-              <Link href={`${b}/c/all`} className="mu-btn mu-btn-sky">
+              <Link href={`${b}/shop`} className="mu-btn mu-btn-sky">
                 {t('buyWithAdvance')} <span aria-hidden="true">→</span>
               </Link>
             </div>

@@ -227,7 +227,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
     return (
       <div style={{ border: '1px dashed var(--line)', borderRadius: 20, padding: 40, textAlign: 'center', color: 'var(--muted2)', marginTop: 22 }}>
         Your cart is empty.{' '}
-        <Link href={`${b}/c/all`} style={{ fontWeight: 600, color: 'var(--monthly)' }}>
+        <Link href={`${b}/shop`} style={{ fontWeight: 600, color: 'var(--monthly)' }}>
           Browse products
         </Link>
       </div>

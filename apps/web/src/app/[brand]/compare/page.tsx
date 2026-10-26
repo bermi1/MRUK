@@ -38,7 +38,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
           <h1 className="h1">Compare products</h1>
           <div style={{ fontSize: 14.5, color: 'var(--muted2)', marginTop: 6 }}>The AI answers only from the product data in our catalogue, so it never invents specs.{chosen.length < 2 ? ' Showing suggestions — add products with “Compare”.' : ''}</div>
         </div>
-        <Link href={`/${key}/c/all`} className="link-u">
+        <Link href={`/${key}/shop`} className="link-u">
           Add products
         </Link>
       </div>

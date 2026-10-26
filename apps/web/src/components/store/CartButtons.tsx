@@ -11,7 +11,7 @@ function stop(e: React.MouseEvent) {
 }
 
 /** Quick add (+) used on product cards. */
-export function AddButton({ brand, id, name, className = 'plus', label = '+', ariaLabel }: { brand: string; id: string; name: string; className?: string; label?: React.ReactNode; ariaLabel?: string }) {
+export function AddButton({ brand, id, name, className = 'plus', label = <PlusIcon size={18} strokeWidth={2} />, ariaLabel }: { brand: string; id: string; name: string; className?: string; label?: React.ReactNode; ariaLabel?: string }) {
   const [pending, start] = useTransition();
   const toast = useToast();
   const router = useRouter();
