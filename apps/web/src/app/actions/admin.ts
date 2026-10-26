@@ -20,7 +20,7 @@ import { integrations } from '@/server/integrations';
 import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
 import { RateLimitError } from '@/server/ratelimit';
 import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue } from '@/server/admin/context';
-import { storePublicImage, UploadError } from '@/server/admin/files';
+import { storePublicImage, storePublicMedia, UploadError } from '@/server/admin/files';
 
 type Msg = { message?: string };
 
@@ -386,7 +386,7 @@ export async function saveHeroAction(brand: string, fd: FormData): Promise<Actio
     assertBrand(ctx, b);
     const f = fields(fd);
     const ids = await brandProductIds(b);
-    const current = await getCmsJson<{ img?: string; imgMobile?: string }[]>(b, 'hero', []);
+    const current = await getCmsJson<{ img?: string; imgMobile?: string; video?: string; videoPoster?: string; audio?: string }[]>(b, 'hero', []);
     const hrefZ = z
       .string()
       .trim()
@@ -436,7 +436,16 @@ export async function saveHeroAction(brand: string, fd: FormData): Promise<Actio
       let imgMobile = checkbox(f[`clearm_${i}`]) ? '' : (current[i]?.imgMobile ?? '');
       const mfile = fd.get(`imgm_${i}`);
       if (mfile instanceof File && mfile.size > 0) imgMobile = await storePublicImage(mfile, `cms/${b}-hero-${i + 1}-mobile`);
-      slides.push({ ...s, img, imgMobile });
+      let video = checkbox(f[`clearv_${i}`]) ? '' : (current[i]?.video ?? '');
+      const vfile = fd.get(`video_${i}`);
+      if (vfile instanceof File && vfile.size > 0) video = await storePublicMedia(vfile, `cms/${b}-hero-${i + 1}-video`, 'video');
+      let videoPoster = checkbox(f[`clearp_${i}`]) || !video ? '' : (current[i]?.videoPoster ?? '');
+      const pfile = fd.get(`poster_${i}`);
+      if (video && pfile instanceof File && pfile.size > 0) videoPoster = await storePublicImage(pfile, `cms/${b}-hero-${i + 1}-poster`);
+      let audio = checkbox(f[`cleara_${i}`]) ? '' : (current[i]?.audio ?? '');
+      const afile = fd.get(`audio_${i}`);
+      if (afile instanceof File && afile.size > 0) audio = await storePublicMedia(afile, `cms/${b}-hero-${i + 1}-music`, 'audio');
+      slides.push({ ...s, img, imgMobile, video, videoPoster, audio });
     }
     await setCms(ctx, b, 'hero', slides);
     return { message: `Hero slides published (${slides.length} live)` };

@@ -22,7 +22,7 @@ const config: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
-  experimental: { serverActions: { bodySizeLimit: '6mb' } },
+  experimental: { serverActions: { bodySizeLimit: '30mb' } },
   async headers() {
     return [
       {

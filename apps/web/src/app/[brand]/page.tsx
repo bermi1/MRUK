@@ -39,6 +39,9 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
         name: p.name,
         kind: `${p.sub} ${p.catName}`,
         features: p.features,
+        video: h.video,
+        videoPoster: h.videoPoster,
+        audio: h.audio,
       };
     })
     .filter((s): s is HeroSlideView => !!s);
@@ -53,6 +56,8 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     discover: t('discover'),
     scrollHint: t('scrollHint'),
     addToCart: t('addToCart'),
+    musicOn: t('musicOn'),
+    musicOff: t('musicOff'),
   };
   const cities = [...new Set(suppliers.map((s) => s.city))];
   const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };

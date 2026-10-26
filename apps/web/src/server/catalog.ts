@@ -129,6 +129,11 @@ export function safeHref(v: unknown): string {
   return /^\/(?!\/)[^\s]*$/.test(s) || /^https:\/\/[^\s]+$/.test(s) ? s : '';
 }
 
+/** Hero media must be one of our own uploaded public files. */
+export function safeMedia(v: unknown): string {
+  return typeof v === 'string' && /^\/api\/files\/public\/[a-z0-9][a-z0-9/_.-]{0,200}$/i.test(v) && !v.includes('..') ? v : '';
+}
+
 /** Fill the optional hero fields with safe defaults so older CMS rows keep working. */
 export function heroDefaults(h: Partial<HeroSlide>): Required<HeroSlide> {
   const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -146,6 +151,9 @@ export function heroDefaults(h: Partial<HeroSlide>): Required<HeroSlide> {
     theme: h.theme === 'light' ? 'light' : 'dark',
     align: h.align === 'center' || h.align === 'right' ? h.align : 'left',
     focal: typeof h.focal === 'string' && /^\d{1,3}% \d{1,3}%$/.test(h.focal.trim()) ? h.focal.trim() : '50% 50%',
+    video: safeMedia(h.video),
+    videoPoster: safeMedia(h.videoPoster),
+    audio: safeMedia(h.audio),
   };
 }
 

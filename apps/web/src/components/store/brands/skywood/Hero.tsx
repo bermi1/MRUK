@@ -6,6 +6,7 @@ import { ArrowRightIcon, PauseIcon, PlayIcon } from '../../../icons';
 import { AddButton } from '../../CartButtons';
 import { PImg } from '../../PImg';
 import { HeroImage } from '../HeroImage';
+import { HeroSound, HeroVideo } from '../HeroMedia';
 import { fill, headlineLines, type HeroLabels, type HeroSlideView } from '../shared';
 
 /**
@@ -29,7 +30,8 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
     setI(((k % n) + n) % n);
   };
   const lines = headlineLines(s.title);
-  const photo = s.layout === 'photo';
+  // A slide with a background video behaves like a full-bleed photo slide (the image is its fallback).
+  const photo = s.layout === 'photo' || !!s.video;
   const first = i === 0 && !moved;
 
   return (
@@ -50,7 +52,8 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
 
       {photo ? (
         <div className="sw-hero-scene" key={`ph${i}`}>
-          <HeroImage src={s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={first} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="sw-hero-photo" />
+          <HeroImage src={s.video ? s.videoPoster || s.img : s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={first} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="sw-hero-photo" />
+          {s.video && <HeroVideo src={s.video} poster={s.videoPoster || undefined} className="sw-hero-photo hero-video" />}
           <span className="sw-photo-shade" aria-hidden="true" />
         </div>
       ) : (
@@ -119,8 +122,10 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
         </div>
       </div>
 
-      {n > 1 && (
+      {(n > 1 || s.audio) && (
         <div className="wrap sw-hero-ctrl">
+          {s.audio && <HeroSound key={`a${i}`} src={s.audio} labels={{ on: labels.musicOn, off: labels.musicOff }} className="sw-pause sw-sound" />}
+          {n > 1 && (
           <div className="sw-thumbs" role="tablist" aria-label={labels.slideN.replace('{n}', '').trim()}>
             {slides.map((x, k) => (
               <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={fill(labels.slideN, { n: k + 1 })} className={k === i ? 'on' : ''} onClick={() => go(k)}>
@@ -135,9 +140,12 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
               </button>
             ))}
           </div>
+          )}
+          {n > 1 && (
           <button type="button" className="sw-pause" onClick={() => setPaused((p) => !p)} aria-pressed={paused} aria-label={paused ? labels.play : labels.pause}>
             {paused ? <PlayIcon size={16} strokeWidth={1.5} /> : <PauseIcon size={16} strokeWidth={1.5} />}
           </button>
+          )}
         </div>
       )}
     </section>

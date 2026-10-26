@@ -74,6 +74,12 @@ export interface HeroSlide {
   align?: 'left' | 'center' | 'right';
   /** Focal point of a photo as CSS object-position, e.g. "50% 40%". */
   focal?: string;
+  /** Optional muted background video (uploaded mp4/webm, /api/files/public/...); empty = none. */
+  video?: string;
+  /** Poster image shown before/instead of the video; empty = the slide image. */
+  videoPoster?: string;
+  /** Optional background music (uploaded mp3). Never autoplays: the shopper turns it on. */
+  audio?: string;
 }
 
 export interface CmsView {

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { fmt } from '@/lib/format';
 import { AddButton } from '../../CartButtons';
 import { HeroImage } from '../HeroImage';
+import { HeroSound, HeroVideo } from '../HeroMedia';
 import { fill, type HeroLabels, type HeroSlideView } from '../shared';
 
 /**
@@ -26,7 +27,8 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
     setI(((k % n) + n) % n);
   };
   const words = s.title.split(/\s+/);
-  const photo = s.layout === 'photo';
+  // A slide with a background video behaves like a full-bleed photo slide (the image is its fallback).
+  const photo = s.layout === 'photo' || !!s.video;
   return (
     <section
       className={`mu-hero ${moved ? '' : 'is-first'} ${paused || hover ? 'is-paused' : ''} ${photo ? `is-photo theme-${s.theme}` : ''} align-${s.align}`}
@@ -44,7 +46,8 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
       </div>
       {photo && (
         <div className="mu-hero-photo" key={`p${i}`}>
-          <HeroImage src={s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="mu-hero-photo-img" />
+          <HeroImage src={s.video ? s.videoPoster || s.img : s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="mu-hero-photo-img" />
+          {s.video && <HeroVideo src={s.video} poster={s.videoPoster || undefined} className="mu-hero-photo-img hero-video" />}
         </div>
       )}
       <div className="wrap mu-hero-in">
@@ -104,8 +107,9 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
         </div>
         )}
       </div>
-      {n > 1 && (
+      {(n > 1 || s.audio) && (
         <div className="wrap mu-hero-ctrl">
+          {n > 1 && (
           <div className="mu-tabs" role="tablist" aria-label={labels.slideN.replace('{n}', '').trim()}>
             {slides.map((x, k) => (
               <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={fill(labels.slideN, { n: k + 1 })} className={k === i ? 'on' : ''} onClick={() => go(k)}>
@@ -114,6 +118,9 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
               </button>
             ))}
           </div>
+          )}
+          {s.audio && <HeroSound key={`a${i}`} src={s.audio} labels={{ on: labels.musicOn, off: labels.musicOff }} className="mu-pause mu-sound" />}
+          {n > 1 && (
           <button type="button" className="mu-pause" onClick={() => setPaused((p) => !p)} aria-label={paused ? labels.play : labels.pause} aria-pressed={paused}>
             {paused ? (
               <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -125,6 +132,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
               </svg>
             )}
           </button>
+          )}
         </div>
       )}
     </section>

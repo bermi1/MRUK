@@ -201,6 +201,10 @@ export interface HeroSlideView {
   focal: string;
   /** False when the CMS sets price 0 (e.g. a brand/campaign slide). */
   showPrice: boolean;
+  /** Optional background video, its poster, and optional background music (CMS). */
+  video: string;
+  videoPoster: string;
+  audio: string;
 }
 
 export interface HeroLabels {
@@ -214,6 +218,8 @@ export interface HeroLabels {
   discover: string;
   scrollHint: string;
   addToCart: string;
+  musicOn: string;
+  musicOff: string;
 }
 
 /** Split a headline into display lines: at sentence/comma breaks, else into two balanced halves. */

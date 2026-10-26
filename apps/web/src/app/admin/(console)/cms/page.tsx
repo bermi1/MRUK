@@ -175,6 +175,45 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                           </label>
                         )}
                       </div>
+                      <div className="ad-field">
+                        Background video (optional, MP4 or WebM, up to 15 MB)
+                        <input type="file" name={`video_${i}`} accept="video/mp4,video/webm" />
+                        <small className="ad-muted">Plays muted and looped behind the copy. Not loaded for data-saver, slow connections or reduced motion; the image shows instead.</small>
+                        {s.video && (
+                          <span style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
+                            <a href={s.video} target="_blank" rel="noopener noreferrer">
+                              Current video
+                            </a>
+                            <label className="ad-check" style={{ fontSize: 12 }}>
+                              <input type="checkbox" name={`clearv_${i}`} /> Remove video
+                            </label>
+                          </span>
+                        )}
+                      </div>
+                      <div className="ad-field">
+                        Video poster image (optional)
+                        <ImagePick name={`poster_${i}`} current={s.videoPoster} text={`Slide ${i + 1} · Video poster`} />
+                        {s.videoPoster && (
+                          <label className="ad-check" style={{ fontSize: 12 }}>
+                            <input type="checkbox" name={`clearp_${i}`} /> Remove poster
+                          </label>
+                        )}
+                      </div>
+                      <div className="ad-field">
+                        Background music (optional, MP3 up to 5 MB)
+                        <input type="file" name={`audio_${i}`} accept="audio/mpeg" />
+                        <small className="ad-muted">Never plays on its own: shoppers turn it on with the sound button on the hero.</small>
+                        {s.audio && (
+                          <span style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
+                            <a href={s.audio} target="_blank" rel="noopener noreferrer">
+                              Current music
+                            </a>
+                            <label className="ad-check" style={{ fontSize: 12 }}>
+                              <input type="checkbox" name={`cleara_${i}`} /> Remove music
+                            </label>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

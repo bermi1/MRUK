@@ -28,6 +28,7 @@ function csp(nonce: string, dev: boolean) {
     // Inline style attributes are used for brand theming; no inline scripts are allowed.
     `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' data: blob: https://www.mruk.co.tz https://www.skywood.co.tz`,
+    `media-src 'self' blob:`,
     `font-src 'self' data:`,
     `connect-src 'self'${dev ? ' ws:' : ''}`,
     `frame-src https://maps.google.com https://www.google.com`,

@@ -223,6 +223,8 @@ const en = {
   swRated: 'Average {r} out of 5 from {n} reviews',
   ratedOutOf: 'Rated {r} out of 5',
   fromPrice: 'From {amount}',
+  musicOn: 'Play background music',
+  musicOff: 'Mute background music',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -449,6 +451,8 @@ const sw: Record<MessageKey, string> = {
   swRated: 'Wastani wa {r} kati ya 5 kutoka maoni {n}',
   ratedOutOf: 'Imepimwa {r} kati ya 5',
   fromPrice: 'Kuanzia {amount}',
+  musicOn: 'Cheza muziki wa nyuma',
+  musicOff: 'Zima muziki wa nyuma',
 };
 
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, sw };

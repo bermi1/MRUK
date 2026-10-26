@@ -14,6 +14,33 @@ export function sniffImage(b: Uint8Array): { ext: 'jpg' | 'png' | 'webp'; type: 
 
 export class UploadError extends Error {}
 
+export const MAX_VIDEO_BYTES = 15 * 1024 * 1024;
+export const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
+export const MEDIA_TYPES = ['video/mp4', 'video/webm', 'audio/mpeg'];
+
+/** Identify hero media by magic bytes: MP4 (ftyp box), WebM (EBML header) or MP3 (ID3 tag or MPEG frame sync). */
+export function sniffMedia(b: Uint8Array): { ext: 'mp4' | 'webm' | 'mp3'; type: string; kind: 'video' | 'audio' } | null {
+  if (b.length > 12 && String.fromCharCode(...b.slice(4, 8)) === 'ftyp') return { ext: 'mp4', type: 'video/mp4', kind: 'video' };
+  if (b.length > 4 && b[0] === 0x1a && b[1] === 0x45 && b[2] === 0xdf && b[3] === 0xa3) return { ext: 'webm', type: 'video/webm', kind: 'video' };
+  if (b.length > 3 && b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) return { ext: 'mp3', type: 'audio/mpeg', kind: 'audio' };
+  if (b.length > 2 && b[0] === 0xff && (b[1]! & 0xe0) === 0xe0) return { ext: 'mp3', type: 'audio/mpeg', kind: 'audio' };
+  return null;
+}
+
+/** Validate and store a public hero video (mp4/webm, 15 MB) or music track (mp3, 5 MB). Returns its /api/files URL. */
+export async function storePublicMedia(file: unknown, prefix: string, kind: 'video' | 'audio'): Promise<string> {
+  if (!(file instanceof File) || file.size === 0) throw new UploadError(kind === 'video' ? 'Choose a video file' : 'Choose an audio file');
+  const max = kind === 'video' ? MAX_VIDEO_BYTES : MAX_AUDIO_BYTES;
+  if (file.size > max) throw new UploadError(kind === 'video' ? 'Videos must be 15 MB or smaller' : 'Music must be 5 MB or smaller');
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const m = sniffMedia(bytes);
+  if (!m || m.kind !== kind) throw new UploadError(kind === 'video' ? 'Only MP4 or WebM videos are accepted' : 'Only MP3 audio is accepted');
+  if (!/^[a-z0-9][a-z0-9/_-]{0,120}$/.test(prefix)) throw new UploadError('Invalid upload target');
+  const key = `public/${prefix}-${Date.now().toString(36)}.${m.ext}`;
+  await integrations.storage.put(key, bytes, m.type);
+  return `/api/files/${key}`;
+}
+
 /**
  * Validate and store a public image. `prefix` is e.g. "products/mruk-uk-g3500q".
  * Returns the public URL served by /api/files.
