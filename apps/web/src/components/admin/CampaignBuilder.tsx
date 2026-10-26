@@ -135,7 +135,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
           </label>
           <label className="ad-field">
             Brand
-            <select value={brand} onChange={(e) => setBrand(e.target.value as Brand)} disabled={brands.length < 2}>
+            <select aria-label="Brand" value={brand} onChange={(e) => setBrand(e.target.value as Brand)} disabled={brands.length < 2}>
               {brands.map((b) => (
                 <option key={b} value={b}>
                   {BRAND_NAME[b]}
@@ -145,7 +145,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
           </label>
           <label className="ad-field">
             Channel
-            <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)}>
+            <select aria-label="Channel" value={channel} onChange={(e) => setChannel(e.target.value as Channel)}>
               <option value="sms">SMS</option>
               <option value="whatsapp">WhatsApp</option>
               <option value="email">Email</option>
@@ -153,7 +153,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
           </label>
           <label className="ad-field">
             Audience
-            <select value={type} onChange={(e) => setType(e.target.value as typeof type)}>
+            <select aria-label="Audience" value={type} onChange={(e) => setType(e.target.value as typeof type)}>
               <option value="subscribers">Subscribers</option>
               <option value="customers">Customers</option>
               <option value="all">Subscribers and customers</option>
@@ -168,7 +168,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
           <div className="ad-form three">
             <label className="ad-field">
               Bought from category
-              <select value={cat} onChange={(e) => setCat(e.target.value)}>
+              <select aria-label="Bought from category" value={cat} onChange={(e) => setCat(e.target.value)}>
                 <option value="">Any</option>
                 {categories[brand].map((c) => (
                   <option key={c.slug} value={c.slug}>
@@ -187,7 +187,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
             </label>
             <label className="ad-field">
               Loyalty tier
-              <select value={tier} onChange={(e) => setTier(e.target.value)}>
+              <select aria-label="Loyalty tier" value={tier} onChange={(e) => setTier(e.target.value)}>
                 <option value="">Any</option>
                 <option>Member</option>
                 <option>Silver</option>
@@ -221,7 +221,7 @@ export function CampaignBuilder({ brands, initialBrand, categories, codes, canCr
         )}
         <label className="ad-field">
           Message
-          <textarea ref={ta} value={message} onChange={(e) => setMessage(e.target.value)} rows={5} maxLength={1000} aria-describedby="seg-count" />
+          <textarea aria-label="Message" ref={ta} value={message} onChange={(e) => setMessage(e.target.value)} rows={5} maxLength={1000} aria-describedby="seg-count" />
         </label>
         <div className="ad-between" style={{ flexWrap: 'wrap', gap: 8 }}>
           <span className="ad-row" style={{ gap: 6 }}>
