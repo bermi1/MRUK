@@ -386,17 +386,60 @@ export async function saveHeroAction(brand: string, fd: FormData): Promise<Actio
     assertBrand(ctx, b);
     const f = fields(fd);
     const ids = await brandProductIds(b);
-    const current = await getCmsJson<{ img?: string }[]>(b, 'hero', []);
+    const current = await getCmsJson<{ img?: string; imgMobile?: string }[]>(b, 'hero', []);
+    const hrefZ = z
+      .string()
+      .trim()
+      .max(200)
+      .refine((v) => v === '' || /^\/[A-Za-z0-9/_?=&.%-]*$/.test(v) || /^https:\/\/[^\s]+$/.test(v), 'Button link must start with / or https://');
+    const priceZ = z
+      .string()
+      .trim()
+      .transform((v) => (v === '' ? null : Number(v.replace(/[,\s]/g, ''))))
+      .refine((v) => v === null || (Number.isInteger(v) && v >= 0 && v <= 1_000_000_000), 'Price must be a whole number of shillings');
     const slides = [];
-    for (let i = 0; i < 3; i++) {
-      const s = z.object({ pid: z.string().refine((v) => ids.has(v), `Slide ${i + 1}: choose a product`), eyebrow: textZ(40), title: textZ(80, 2), sub: textZ(160) }).parse({ pid: f[`pid_${i}`], eyebrow: f[`eyebrow_${i}`] ?? '', title: f[`title_${i}`] ?? '', sub: f[`sub_${i}`] ?? '' });
-      const file = fd.get(`img_${i}`);
+    // Up to 5 slides; a slide with an empty headline is switched off (slide 1 is required).
+    for (let i = 0; i < 5; i++) {
+      const title = (f[`title_${i}`] ?? '').trim();
+      if (i > 0 && !title) continue;
+      const n = `Slide ${i + 1}: `;
+      const s = z
+        .object({
+          pid: z.string().refine((v) => ids.has(v), `${n}choose a product`),
+          eyebrow: textZ(40),
+          title: textZ(80, 2),
+          sub: textZ(160),
+          cta: textZ(40),
+          href: hrefZ,
+          price: priceZ,
+          layout: z.enum(['product', 'photo']).default('product'),
+          theme: z.enum(['dark', 'light']).default('dark'),
+          align: z.enum(['left', 'center', 'right']).default('left'),
+          focal: z.string().trim().regex(/^\d{1,3}% \d{1,3}%$/, `${n}photo focus looks like "50% 40%"`).default('50% 50%'),
+        })
+        .parse({
+          pid: f[`pid_${i}`],
+          eyebrow: f[`eyebrow_${i}`] ?? '',
+          title,
+          sub: f[`sub_${i}`] ?? '',
+          cta: f[`cta_${i}`] ?? '',
+          href: f[`href_${i}`] ?? '',
+          price: f[`price_${i}`] ?? '',
+          layout: f[`layout_${i}`] || undefined,
+          theme: f[`theme_${i}`] || undefined,
+          align: f[`align_${i}`] || undefined,
+          focal: f[`focal_${i}`] || undefined,
+        });
       let img = checkbox(f[`clear_${i}`]) ? '' : (current[i]?.img ?? '');
+      const file = fd.get(`img_${i}`);
       if (file instanceof File && file.size > 0) img = await storePublicImage(file, `cms/${b}-hero-${i + 1}`);
-      slides.push({ ...s, img });
+      let imgMobile = checkbox(f[`clearm_${i}`]) ? '' : (current[i]?.imgMobile ?? '');
+      const mfile = fd.get(`imgm_${i}`);
+      if (mfile instanceof File && mfile.size > 0) imgMobile = await storePublicImage(mfile, `cms/${b}-hero-${i + 1}-mobile`);
+      slides.push({ ...s, img, imgMobile });
     }
     await setCms(ctx, b, 'hero', slides);
-    return { message: 'Hero slides published' };
+    return { message: `Hero slides published (${slides.length} live)` };
   });
 }
 

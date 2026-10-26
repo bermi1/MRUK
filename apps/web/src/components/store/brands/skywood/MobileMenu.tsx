@@ -49,7 +49,7 @@ export function SkywoodMobileMenu({ brand, brandName, cats, labels, announcement
               <Link href={`${b}/track`}>{labels.track}</Link>
               <Link href={`${b}/suppliers`}>{labels.suppliers}</Link>
               <Link href={`${b}/support`}>{labels.support}</Link>
-              <Link href="/">{labels.allBrands}</Link>
+              <Link href={labels.allBrandsHref}>{labels.allBrands}</Link>
             </nav>
             <p className="sw-mm-ann">{announcement}</p>
           </div>,

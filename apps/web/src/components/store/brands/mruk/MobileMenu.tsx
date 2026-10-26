@@ -68,7 +68,7 @@ export function MrukMobileMenu({ brand, cats, labels, announcement }: MobileMenu
               <Link href={`${b}/suppliers`}>{labels.suppliers}</Link>
               <Link href={`${b}/support`}>{labels.support}</Link>
               <Link href={`${b}/compare`}>{labels.compare}</Link>
-              <Link href="/">{labels.allBrands}</Link>
+              <Link href={labels.allBrandsHref}>{labels.allBrands}</Link>
             </nav>
           </div>,
           document.querySelector('.brand-root') ?? document.body,

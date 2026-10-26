@@ -322,7 +322,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   await prisma.salaryAdvanceApplication.update({ where: { id: app.id }, data: { bankReference: sub.bankReference } });
 
   if (!cartOverride) await clearCart(brand);
-  await notifyCustomer(c.phone, `${brandName(brand)}: order ${order.number} received. Your Salary Advance (${input.months} x ${fmtTZS(monthly)}) is with Azania Bank for review. Contract ${cno}.`);
+  await notifyCustomer(c.phone, `${brandName(brand)}: order ${order.number} received. Your Pay Later plan (${input.months} x ${fmtTZS(monthly)}) is with Azania Bank for review. Contract ${cno}.`);
   return { number: order.number, contract: cno };
 }
 
@@ -457,8 +457,8 @@ export async function decideAdvance(applicationId: string, decision: 'approved' 
   await notifyCustomer(
     a.phone,
     decision === 'approved'
-      ? `${brandName(a.order.brandKey)}: Azania Bank approved your Salary Advance for order ${a.order.number}. ${a.termMonths} x ${fmtTZS(a.monthly)}. We are packing your order.`
-      : `${brandName(a.order.brandKey)}: Azania Bank could not approve the Salary Advance for order ${a.order.number}. Please contact support for other payment options.`,
+      ? `${brandName(a.order.brandKey)}: Azania Bank approved your Pay Later plan for order ${a.order.number}. ${a.termMonths} x ${fmtTZS(a.monthly)}. We are packing your order.`
+      : `${brandName(a.order.brandKey)}: Azania Bank could not approve Pay Later for order ${a.order.number}. Please contact support for other payment options.`,
   );
 }
 

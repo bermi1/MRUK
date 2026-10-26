@@ -50,6 +50,9 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const { brand: key } = await params;
   if (!isBrandKey(key)) notFound();
   const [brand, cms, cats, products, cartCount, cmp, customer, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT()]);
+  // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
+  const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
+  const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
   const mega: Record<string, MegaProduct[]> = Object.fromEntries(
     cats.map((c) => [c.id, photoFirst(products.filter((p) => p.cat === c.id)).slice(0, 4).map((p) => ({ id: p.id, model: p.model, name: p.name, sub: p.sub, price: p.price, img: p.img }))]),
   );
@@ -71,7 +74,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
       deals: t('deals'),
       search: t('searchHint', { brand: brand.name }),
       searchShort: t('searchShort'),
-      allBrands: t('allBrands'),
+      allBrands: sister ? sister.label : t('allBrands'),
+      allBrandsHref: sister ? sister.href : '/',
       allCategories: t('allCategories'),
       menu: t('menu'),
       close: t('close'),
@@ -106,7 +110,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
       track: t('trackOrder'),
       suppliers: t('suppliersNearYou'),
       support: t('support'),
-      allBrands: t('allBrands'),
+      allBrands: sister ? sister.label : t('allBrands'),
+      allBrandsHref: sister ? sister.href : '/',
       compare: t('compare'),
       salaryAdvance: t('salaryAdvance'),
       salaryAdvanceSub: t('salaryAdvanceSub'),

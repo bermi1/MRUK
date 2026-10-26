@@ -220,7 +220,7 @@ function SkywoodIndex({
           {labels.close} <span aria-hidden="true">×</span>
         </button>
         <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} />
-        <Link href="/" className="sw-index-brands">
+        <Link href={labels.allBrandsHref} className="sw-index-brands">
           {labels.allBrands}
         </Link>
       </div>

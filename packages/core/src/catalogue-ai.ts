@@ -133,7 +133,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
   if (/(monthly|salary|instal|per month|\/mo)/.test(q)) {
     return {
       grounded: true,
-      text: `With Salary Advance over ${months} months: ${items.map((p) => `${p.model} ${fmtTZS(p.price / months)}/mo`).join(', ')}. Terms of 3, 6 or 12 months are available, subject to Azania Bank approval.`,
+      text: `With Pay Later over ${months} months: ${items.map((p) => `${p.model} ${fmtTZS(p.price / months)}/mo`).join(', ')}. Terms of 3, 6 or 12 months are available, subject to Azania Bank approval.`,
       sources: src(items),
     };
   }
@@ -142,7 +142,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
     const best = s[0]!;
     return {
       grounded: true,
-      text: `Best value: ${best.name} (${best.model}) at ${fmtTZS(best.price)}, or ${fmtTZS(best.price / months)}/mo with Salary Advance. Prices: ${s.map((p) => `${p.model} ${fmtTZS(p.price)}`).join(', ')}.`,
+      text: `Best value: ${best.name} (${best.model}) at ${fmtTZS(best.price)}, or ${fmtTZS(best.price / months)}/mo with Pay Later. Prices: ${s.map((p) => `${p.model} ${fmtTZS(p.price)}`).join(', ')}.`,
       sources: src(s),
     };
   }
