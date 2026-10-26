@@ -484,6 +484,29 @@ export async function saveDealsAction(brand: string, fd: FormData): Promise<Acti
   });
 }
 
+export async function saveSocialAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('cms.write', async (ctx) => {
+    const b = brandZ.parse(brand);
+    assertBrand(ctx, b);
+    const f = fields(fd);
+    const url = z
+      .string()
+      .trim()
+      .max(200)
+      .refine((v) => v === '' || /^https:\/\/[^\s]+$/.test(v), 'Links must start with https://');
+    const social = z.object({ facebook: url, instagram: url, tiktok: url, youtube: url, x: url, linkedin: url }).parse({
+      facebook: f.facebook ?? '',
+      instagram: f.instagram ?? '',
+      tiktok: f.tiktok ?? '',
+      youtube: f.youtube ?? '',
+      x: f.x ?? '',
+      linkedin: f.linkedin ?? '',
+    });
+    await setCms(ctx, b, 'social', social);
+    return { message: 'Social links published' };
+  });
+}
+
 export async function saveSeoAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
   return run('cms.write', async (ctx) => {
     const b = brandZ.parse(brand);

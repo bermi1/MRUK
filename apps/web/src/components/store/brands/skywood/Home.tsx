@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { img } from '@/lib/img';
 import type { BrandView, CategoryView, ProductView } from '@/lib/types';
 import type { MessageKey } from '@/lib/i18n';
 import { REVIEWS } from '@/lib/content';
@@ -71,6 +72,8 @@ export function SkywoodHome(props: {
   const reviews = REVIEWS.skywood;
   const example = slides[0]?.showPrice ? slides[0].price : (products[0]?.price ?? 0);
   const exampleName = slides[0]?.showPrice ? slides[0].name : (products[0]?.name ?? '');
+  // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
+  const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
@@ -106,11 +109,14 @@ export function SkywoodHome(props: {
       </section>
 
       {/* Statement */}
-      <section className="sw-statement wrap" data-reveal>
+      <section className="sw-statement" data-reveal>
+        <img className="sw-statement-bg" src={img(statementImg, 1200)} alt="" loading="lazy" decoding="async" />
+        <div className="wrap sw-statement-in">
         <p className="sw-statement-t">
           {tag1} {tagRest.length > 0 && <em>{tagRest.join(' ')}</em>}
         </p>
         <p className="sw-statement-s">{t('swIntro')}</p>
+        </div>
       </section>
 
       {/* Collections */}
@@ -291,7 +297,6 @@ export function SkywoodHome(props: {
                 {t('salaryAdvance')}
               </p>
               <h2>{t('swAdvanceTitle')}</h2>
-              <p>{t('swAdvanceBody')}</p>
               <div className="sw-pl-cta">
                 <Link href={`${b}/pay-later`} className="sw-btn">
                   {t('payLaterHow')}
@@ -313,21 +318,6 @@ export function SkywoodHome(props: {
               {exampleName && <p className="sw-pl-note">{t('plExample', { name: `${exampleName} · ${fmt(example)}` })}</p>}
             </div>
           </div>
-          <ol className="sw-pl-steps">
-            {(
-              [
-                ['advanceStep1', 'advanceStep1Sub'],
-                ['advanceStep2', 'advanceStep2Sub'],
-                ['advanceStep3', 'advanceStep3Sub'],
-              ] as const
-            ).map(([a, s], k) => (
-              <li key={a} data-reveal style={{ ['--i' as string]: k }}>
-                <span className="sw-pl-step">{['I', 'II', 'III'][k]}</span>
-                <b>{t(a)}</b>
-                <span>{t(s)}</span>
-              </li>
-            ))}
-          </ol>
         </div>
       </section>
 

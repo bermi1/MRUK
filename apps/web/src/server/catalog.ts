@@ -4,7 +4,8 @@ import { notFound } from 'next/navigation';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@bt/db';
 import { bundlePrice, salePrice, type ProductFacts } from '@bt/core';
-import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView } from '@/lib/types';
+import { SOCIAL_KEYS } from '@/lib/types';
+import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView , SocialLinks } from '@/lib/types';
 
 export const BRAND_KEYS: BrandKey[] = ['mruk', 'skywood'];
 
@@ -157,6 +158,12 @@ export function heroDefaults(h: Partial<HeroSlide>): Required<HeroSlide> {
   };
 }
 
+/** Only https profile links are shown. */
+function socialLinks(v: unknown): SocialLinks {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  return Object.fromEntries(SOCIAL_KEYS.map((k) => [k, typeof o[k] === 'string' && /^https:\/\/[^\s]+$/.test(o[k] as string) ? (o[k] as string) : ''])) as SocialLinks;
+}
+
 export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
   const blocks = await loadCmsBlocks(brand);
   const m = Object.fromEntries(blocks.map((b) => [b.key, b.json])) as Record<string, unknown>;
@@ -167,6 +174,7 @@ export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
     deals: (m.deals as CmsView['deals']) ?? [],
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },
     hot: (m.hot as string[]) ?? [],
+    social: socialLinks(m.social),
   };
 });
 

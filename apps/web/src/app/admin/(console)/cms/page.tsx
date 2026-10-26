@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
-import { saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveSeoAction } from '@/app/actions/admin';
+import { saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveSeoAction, saveSocialAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
 import { ImagePick } from '@/components/admin/PhotoUpload';
 import { SeoEditor } from '@/components/admin/SeoEditor';
@@ -33,6 +33,7 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
     deals: (m.deals as CmsView['deals']) ?? [],
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },
     hot: [],
+    social: { facebook: '', instagram: '', tiktok: '', youtube: '', x: '', linkedin: '', ...((m.social as Record<string, string>) ?? {}) },
   };
   const updated = blocks.reduce<{ at: Date; by: string } | null>((a, x) => (!a || x.updatedAt > a.at ? { at: x.updatedAt, by: x.updatedBy } : a), null);
   const write = ctx.can('cms.write');
@@ -220,6 +221,22 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
               </AForm>
             )}
             {ro}
+          </section>
+
+          <section className="ad-card">
+            <h2 className="ad-h">Social media</h2>
+            <p className="ad-sub">Profile links shown as icons in the {BRAND_NAME[brand]} footer. Leave empty to hide.</p>
+            {ro}
+            {write && (
+              <AForm action={saveSocialAction.bind(null, brand)} submit="Publish social links" className="ad-form" label="Social media">
+                {(['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'] as const).map((k) => (
+                  <label className="ad-field" key={k}>
+                    {k === 'x' ? 'X (Twitter)' : k === 'tiktok' ? 'TikTok' : k === 'youtube' ? 'YouTube' : k === 'linkedin' ? 'LinkedIn' : k[0]!.toUpperCase() + k.slice(1)}
+                    <input name={k} type="url" defaultValue={cms.social[k]} placeholder="https://" maxLength={200} />
+                  </label>
+                ))}
+              </AForm>
+            )}
           </section>
 
           <section className="ad-card">

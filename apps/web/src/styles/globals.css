@@ -1028,3 +1028,11 @@ textarea.input { resize: vertical; }
 }
 
 .i-arrow { display: inline-block; vertical-align: -0.18em; flex: none; }
+
+/* Footer social links (both brands) */
+.foot-social { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.foot-social a { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: #fff; border: 1px solid rgba(255, 255, 255, 0.25); transition: background 0.25s, color 0.25s, border-color 0.25s; }
+.foot-social.mu a { border-radius: 50%; }
+.foot-social.mu a:hover { background: #0098da; border-color: #0098da; }
+.foot-social.sw a { border-radius: 2px; border-color: rgba(201, 169, 110, 0.45); color: #e2c891; }
+.foot-social.sw a:hover { background: #c9a96e; color: #1c1915; }

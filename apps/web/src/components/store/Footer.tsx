@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { MessageKey } from '@/lib/i18n';
 import { waLink } from '@/lib/format';
-import type { BrandView, CategoryView } from '@/lib/types';
-import { CardIcon, PinIcon, RouteIcon, WhatsAppIcon } from '../icons';
+import { SOCIAL_KEYS, type BrandView, type CategoryView, type SocialLinks } from '@/lib/types';
+import { CardIcon, PinIcon, RouteIcon, SocialIcon, WhatsAppIcon } from '../icons';
 import { Subscribe, type SubscribeLabels } from './Subscribe';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -12,8 +12,27 @@ export function subscribeLabels(t: T, brandName: string): SubscribeLabels {
 }
 
 /** Same links and data for both brands; each brand gets its own footer design. */
-export function Footer({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]; t: T }) {
-  return brand.key === 'skywood' ? <SkywoodFooter brand={brand} cats={cats} t={t} /> : <MrukFooter brand={brand} cats={cats} t={t} />;
+const SOCIAL_NAMES: Record<string, string> = { facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', x: 'X', linkedin: 'LinkedIn' };
+
+/** Social profile links set in Admin › Website (hidden when none are set). */
+function Social({ links, brand, className }: { links?: SocialLinks; brand: string; className: string }) {
+  const set = SOCIAL_KEYS.filter((k) => links?.[k]);
+  if (!set.length) return null;
+  return (
+    <ul className={`foot-social ${className}`}>
+      {set.map((k) => (
+        <li key={k}>
+          <a href={links![k]} target="_blank" rel="noopener noreferrer" aria-label={`${brand} on ${SOCIAL_NAMES[k]}`}>
+            <SocialIcon name={k} />
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function Footer({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
+  return brand.key === 'skywood' ? <SkywoodFooter brand={brand} cats={cats} t={t} social={social} /> : <MrukFooter brand={brand} cats={cats} t={t} social={social} />;
 }
 
 function Columns({ brand, cats, t, headClass }: { brand: BrandView; cats: CategoryView[]; t: T; headClass: string }) {
@@ -45,7 +64,7 @@ function Columns({ brand, cats, t, headClass }: { brand: BrandView; cats: Catego
   );
 }
 
-function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]; t: T }) {
+function MrukFooter({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
   const b = `/${brand.key}`;
   return (
     <footer className="mu-foot">
@@ -89,6 +108,7 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
             <span>{t('advancePartner')}</span>
             <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
           </div>
+          <Social links={social} brand={brand.name} className="mu" />
         </div>
         <Columns brand={brand} cats={cats} t={t} headClass="mu-foot-h" />
         <div className="foot-col">
@@ -113,7 +133,7 @@ function MrukFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]
   );
 }
 
-function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryView[]; t: T }) {
+function SkywoodFooter({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
   const [first, ...rest] = brand.tagline.split(/(?<=\.)\s+/);
   const b = `/${brand.key}`;
   return (
@@ -163,6 +183,7 @@ function SkywoodFooter({ brand, cats, t }: { brand: BrandView; cats: CategoryVie
               <span>{t('advancePartner')}</span>
               <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
             </div>
+            <Social links={social} brand={brand.name} className="sw" />
           </div>
           <Columns brand={brand} cats={cats} t={t} headClass="sw-foot-h" />
         </div>

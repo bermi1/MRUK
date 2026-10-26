@@ -98,3 +98,34 @@ export function Stars({ value, size = 14, className, label }: { value: number; s
     </span>
   );
 }
+
+/** Social profile glyphs (simple outline marks, currentColor). */
+const SOCIAL_PATHS: Record<string, React.ReactNode> = {
+  facebook: <path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z" />,
+  instagram: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" />
+    </>
+  ),
+  tiktok: <path d="M14 3v11.5a3.5 3.5 0 11-3.5-3.5M14 3c.4 2.6 2.2 4.3 5 4.5" />,
+  youtube: (
+    <>
+      <rect x="2.5" y="5.5" width="19" height="13" rx="4" />
+      <path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor" stroke="none" />
+    </>
+  ),
+  x: <path d="M4 4l16 16M20 4L4 20" />,
+  linkedin: (
+    <>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="2.5" />
+      <path d="M8 10.5V16M8 7.8v.2M11.5 16v-5.5M11.5 13c0-1.6 1-2.6 2.4-2.6s2.1.9 2.1 2.6V16" />
+    </>
+  ),
+};
+export const SocialIcon = ({ name, size = 18 }: { name: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {SOCIAL_PATHS[name]}
+  </svg>
+);

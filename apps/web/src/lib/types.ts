@@ -89,7 +89,12 @@ export interface CmsView {
   deals: { title: string; items: string[]; save: number; tag?: string }[];
   seo: { title: string; desc: string; img: string };
   hot: string[];
+  /** Social profile links shown in the footer (empty = hidden). */
+  social: SocialLinks;
 }
+
+export const SOCIAL_KEYS = ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'] as const;
+export type SocialLinks = Record<(typeof SOCIAL_KEYS)[number], string>;
 
 export interface CartLine {
   productId: string;

@@ -137,7 +137,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         <AppBar brand={key} brandName={brand.name} searchLabel={t('searchShort')} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
-        <Footer brand={brand} cats={cats} t={t} />
+        <Footer brand={brand} cats={cats} t={t} social={cms.social} />
         <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
           <WhatsAppIcon />
         </a>
