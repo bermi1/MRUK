@@ -91,3 +91,37 @@ export function orderNumber(brand: string, seq: number): string {
 export function normaliseOrderNumber(input: string): string {
   return input.trim().toUpperCase().replace(/\s+/g, '');
 }
+
+/** Customer dashboard stepper: placed → paid/approved → packed → out for delivery → delivered. */
+export const STEPPER_KEYS = ['placed', 'confirmed', 'packed', 'out_for_delivery', 'delivered'] as const;
+export type StepperKey = (typeof STEPPER_KEYS)[number];
+
+export interface StepperStep {
+  key: StepperKey;
+  state: 'done' | 'current' | 'pending';
+  /** When the order reached this step (first matching OrderEvent), or null when not recorded. */
+  at: Date | null;
+}
+
+const STEP_OF_STATUS: Partial<Record<OrderStatus, number>> = { placed: 0, approved: 1, packed: 2, out_for_delivery: 3, delivered: 4 };
+
+/**
+ * Stepper state from the order status, with each step dated from the order's events.
+ * Steps without an event of their own keep `at: null` (we never invent a timestamp).
+ * Closed orders (cancelled / rejected) return null: the caller shows a "closed" note instead.
+ */
+export function orderStepper(status: OrderStatus, method: PaymentMethod, events: { status: string; at: Date }[]): StepperStep[] | null {
+  if (status === 'cancelled' || status === 'rejected') return null;
+  const states = trackingSteps(status, method).map((s) => s.state);
+  const at: (Date | null)[] = STEPPER_KEYS.map(() => null);
+  for (const e of [...events].sort((a, b) => a.at.getTime() - b.at.getTime())) {
+    const i = isOrderStatus(e.status) ? STEP_OF_STATUS[e.status] : undefined;
+    if (i !== undefined && !at[i]) at[i] = e.at;
+  }
+  return STEPPER_KEYS.map((key, i) => ({ key, state: states[i]!, at: states[i] === 'pending' ? null : (at[i] ?? null) }));
+}
+
+/** Orders still moving (the dashboard's "Active" filter). */
+export function isActiveOrder(status: string): boolean {
+  return isOrderStatus(status) && !isTerminal(status);
+}
