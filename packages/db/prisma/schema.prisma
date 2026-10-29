@@ -408,9 +408,53 @@ model StaffUser {
   mustChangePassword Boolean   @default(false)
   /// Null until the staff member chooses their own password (seeded or invited accounts).
   passwordChangedAt  DateTime?
+  /// Work phone (E.164) for task notifications by SMS / WhatsApp. Optional.
+  phone         String    @default("")
+  /// Channels this staff member opted in to for task notifications: sms | whatsapp | email.
+  notifyVia     String[]  @default([])
   createdAt     DateTime  @default(now())
   role          Role      @relation(fields: [roleId], references: [id])
   sessions      Session[]
+  tasks         StaffTask[]
+}
+
+/// Work routed to the responsible team (role) and, optionally, one staff member, per brand.
+/// Created from events (packages/core/src/tasks.ts routeEvent) and closed when the record moves on.
+model StaffTask {
+  id         String     @id @default(cuid())
+  /// e.g. order.pack, advance.review, ticket.respond, stock.reorder (see TaskKind)
+  kind       String
+  /// Notification category: orders | bank | stock | tickets | marketing
+  category   String
+  title      String
+  detail     String     @default("")
+  /// Responsible role id (Role.id)
+  roleId     String
+  assigneeId String?
+  /// null = both brands
+  brandKey   String?
+  /// Linked record: Order (number) | Ticket (id) | Product (id) | Brand (key) | Campaign (id)
+  entity     String
+  entityId   String
+  href       String
+  priority   String     @default("normal") // low | normal | high | urgent
+  status     String     @default("open") // open | done
+  dueAt      DateTime?
+  /// One open task per key; renamed to "<key>~<id>" when done so the same work can open again later.
+  key        String     @unique
+  createdBy  String     @default("system")
+  doneBy     String?
+  doneAt     DateTime?
+  doneNote   String     @default("")
+  /// Channels the assignment was sent on (mock adapters until real ones are configured).
+  notifiedVia String[]  @default([])
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  assignee   StaffUser? @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([status, roleId])
+  @@index([assigneeId, status])
+  @@index([entity, entityId])
 }
 
 model AuditLog {

@@ -9,3 +9,4 @@ export * from './orders';
 export * from './advance';
 export * from './catalogue-ai';
 export * from './marketing';
+export * from './tasks';
