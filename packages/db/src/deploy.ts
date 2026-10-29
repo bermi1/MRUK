@@ -64,12 +64,37 @@ async function lockDataApi() {
   console.log(`[db:deploy] Row Level Security on ${tables.length} tables; public API roles revoked: ${roles.map((r) => r.rolname).join(', ') || 'none'}.`);
 }
 
+/**
+ * Break-glass 2FA reset: STAFF_2FA_RESET="a@x.co.tz,b@y.co.tz" in the hosting environment clears those
+ * staff members' authenticator so their next sign-in shows a fresh QR code. Runs once per value
+ * (remembered in Setting "ops.2faReset"), signs them out everywhere and writes an audit entry.
+ */
+async function resetStaff2fa() {
+  const raw = (process.env.STAFF_2FA_RESET ?? '').trim().toLowerCase();
+  if (!raw) return;
+  const done = await prisma.setting.findUnique({ where: { key: 'ops.2faReset' } });
+  if ((done?.value as { value?: string } | null)?.value === raw) {
+    console.log('[db:deploy] STAFF_2FA_RESET already applied; remove it from the environment.');
+    return;
+  }
+  const emails = raw.split(/[\s,]+/).filter((e) => /^[^@\s]+@[^@\s]+$/.test(e));
+  const users = await prisma.staffUser.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } });
+  for (const u of users) {
+    await prisma.staffUser.update({ where: { id: u.id }, data: { totpEnabled: false, totpSecretEnc: null } });
+    await prisma.session.deleteMany({ where: { staffId: u.id } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'staff.2fa.reset', entity: 'StaffUser', entityId: u.id } });
+  }
+  await prisma.setting.upsert({ where: { key: 'ops.2faReset' }, create: { key: 'ops.2faReset', value: { value: raw, at: new Date().toISOString() } }, update: { value: { value: raw, at: new Date().toISOString() } } });
+  console.log(`[db:deploy] Two-factor reset for ${users.length} staff account(s); they will see a new QR code at next sign-in.`);
+}
+
 async function main() {
   await resolveConnection();
   console.log('[db:deploy] Applying schema…');
   execSync('prisma db push --skip-generate', { stdio: 'inherit', env: process.env });
   prisma = new PrismaClient({ datasources: { db: { url: process.env.DIRECT_URL } } });
   await lockDataApi();
+  await resetStaff2fa();
   const brands = await prisma.brand.count();
   await prisma.$disconnect();
   if (brands === 0) {

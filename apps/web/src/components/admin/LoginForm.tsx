@@ -86,7 +86,7 @@ export function LoginForm() {
       {step === 'totp' && (
         <div>
           <h2>Enter your 6-digit code</h2>
-          <p className="ad-sub" style={{ fontSize: 13.5 }}>Open your authenticator app for Commerce OS.</p>
+          <p className="ad-sub" style={{ fontSize: 13.5 }}>Open your authenticator app for Commerce OS. No code for this account, or a new phone? Ask an owner to reset your two-factor sign-in (Settings › Staff), then sign in again to scan a new QR code.</p>
         </div>
       )}
       {step !== 'password' && (
