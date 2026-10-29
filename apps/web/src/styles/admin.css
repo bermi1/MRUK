@@ -405,7 +405,9 @@ a.ad-stat:hover { background: #eceef4; }
 .ad-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .ad-filters .ad-field { min-width: 170px; }
 .ad-tasks { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ad-tasks.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .ad-task { position: relative; border-radius: 14px; }
+.ad-tasks.grid .ad-task .body { height: 100%; }
 .ad-task .swipe { position: absolute; inset: 1px; border-radius: 14px; background: var(--ok); display: flex; align-items: center; justify-content: flex-end; padding-right: 20px; color: #fff; font-weight: 700; font-size: 14px; }
 .ad-task .body { position: relative; background: #fff; border: 1px solid var(--bd); border-left: 4px solid #d5d7e0; border-radius: 14px; padding: 12px 14px; transition: transform 0.15s; touch-action: pan-y; }
 .ad-task.p-urgent .body { border-left-color: var(--bad); }
@@ -421,6 +423,7 @@ a.ad-stat:hover { background: #eceef4; }
 .ad-menu .ad-badge { margin-left: 8px; background: var(--az); }
 .ad-phone-only { display: none; }
 @media (max-width: 1180px) {
+  .ad-tasks.grid { grid-template-columns: minmax(0, 1fr); }
   .ad-stats.s5 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {

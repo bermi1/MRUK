@@ -108,10 +108,10 @@ function TaskRow({ t, showTeam }: { t: TaskView; showTeam: boolean }) {
   );
 }
 
-export function TaskList({ tasks, showTeam = false, empty = 'Nothing waiting. Nice work.' }: { tasks: TaskView[]; showTeam?: boolean; empty?: string }) {
+export function TaskList({ tasks, showTeam = false, grid = false, empty = 'Nothing waiting. Nice work.' }: { tasks: TaskView[]; showTeam?: boolean; grid?: boolean; empty?: string }) {
   if (!tasks.length) return <div className="ad-empty">{empty}</div>;
   return (
-    <ul className="ad-tasks" aria-label="Tasks">
+    <ul className={`ad-tasks${grid ? ' grid' : ''}`} aria-label="Tasks">
       {tasks.map((t) => (
         <TaskRow key={t.id} t={t} showTeam={showTeam} />
       ))}

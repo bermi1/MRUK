@@ -72,11 +72,11 @@ export default async function Dashboard() {
             {tasks.total > tasks.items.length ? `All ${tasks.total} tasks` : 'Task list'}
           </Link>
         </div>
-        <TaskList tasks={tasks.items} showTeam={ctx.role === 'owner'} />
+        <TaskList tasks={tasks.items} showTeam={ctx.role === 'owner'} grid />
       </section>
 
-      {has('overview') && <Overview ctx={ctx} f={f} />}
       {has('teams') && <TeamsWidget f={f} />}
+      {has('overview') && <Overview ctx={ctx} f={f} />}
       {has('finance') && <FinanceWidgets f={f} />}
       {has('warehouse') && <WarehouseWidgets f={f} />}
       {has('support') && <SupportWidgets ctx={ctx} f={f} />}
