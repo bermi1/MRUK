@@ -1,82 +1,164 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { prisma } from '@bt/db';
-import { ORDER_STATUS_LABEL, paymentLabel, type OrderStatus, type PaymentMethod } from '@bt/core';
-import { ProfileForm, SignInPrompt } from '@/components/store/AccountPanel';
-import { fmt, fmtDate, formatTzPhone } from '@/lib/format';
+import { REGIONS } from '@bt/core';
+import { AddressBook, DataPanel, DetailsForm, MarketingPrefs, SignInPrompt } from '@/components/store/AccountPanel';
+import { OrdersPanel, OverviewPanel, PayLaterPanel, RewardsPanel, SupportPanel } from '@/components/store/account/Dashboard';
+import { fmtDay, makeT, parseTab, type AccountTab } from '@/components/store/account/util';
+import { GridIcon, HelpIcon, TruckIcon, UserIcon } from '@/components/icons';
+import { formatTzPhone } from '@/lib/format';
+import type { MessageKey } from '@/lib/i18n';
 import type { BrandKey } from '@/lib/types';
+import { accountData } from '@/server/account';
+import { getBrand } from '@/server/catalog';
 import { getLocale } from '@/server/locale';
-import { confirmationPath } from '@/server/orders';
-import { getLoyalty } from '@/server/loyalty';
-import { getT } from '@/server/locale';
+import { BRAND_NAMES } from '@/server/marketing';
 import { currentCustomer } from '@/server/session';
+import '@/styles/account.css';
 
 export const metadata: Metadata = { title: 'Account', robots: { index: false } };
+export const dynamic = 'force-dynamic';
 
-export default async function AccountPage({ params }: { params: Promise<{ brand: string }> }) {
+const TAB_LABEL: Record<AccountTab, MessageKey> = {
+  overview: 'accTabOverview',
+  orders: 'accTabOrders',
+  paylater: 'accTabPayLater',
+  rewards: 'accTabRewards',
+  support: 'accTabSupport',
+  addresses: 'accTabAddresses',
+  settings: 'accTabSettings',
+};
+
+type Search = { tab?: string; f?: string; ticket?: string };
+
+export default async function AccountPage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<Search> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [c, locale] = await Promise.all([currentCustomer(), getLocale()]);
+  const sp = await searchParams;
+  const [c, locale, brand] = await Promise.all([currentCustomer(), getLocale(), getBrand(key)]);
+  const t = makeT(locale);
   if (!c)
     return (
-      <div className="wrap-narrow page-top" style={{ maxWidth: 560 }}>
-        <div className="eyebrow">Account</div>
-        <h1 className="h1">Sign in to see your orders</h1>
-        <p style={{ color: 'var(--muted2)', lineHeight: 1.6 }}>We send a one-time code by SMS to your +255 number. No password needed.</p>
-        <SignInPrompt />
+      <div className={`acc acc-${key}`}>
+        <div className="wrap-narrow page-top acc-signin">
+          <div className="eyebrow">{t('accEyebrow')}</div>
+          <h1 className="h1">{t('accSignInTitle')}</h1>
+          <p className="acc-lead">{t('accSignInSub')}</p>
+          <SignInPrompt label={t('accSignInBtn')} />
+        </div>
       </div>
     );
-  const orders = await prisma.order.findMany({ where: { OR: [{ customerId: c.id }, { contactPhone: c.phone }] }, orderBy: { createdAt: 'desc' }, take: 50, include: { items: true, advance: true } });
+
+  const tab = parseTab(sp.tab);
+  const d = await accountData(c, key);
+  const ctx = { brand: key, brandName: brand.name, locale, t };
+  const first = c.name.trim().split(/\s+/)[0];
+  const activeCount = d.orders.filter((o) => o.active).length;
+  const openTickets = d.tickets.filter((x) => x.open).length;
+  const counts: Partial<Record<AccountTab, number>> = { orders: activeCount, support: openTickets };
+  const filter = sp.f === 'active' || sp.f === 'completed' ? sp.f : 'all';
+  const ticket = /^TK-\d{1,8}$/.test(sp.ticket ?? '') ? sp.ticket : undefined;
+
   return (
-    <div className="wrap page-top">
-      <div className="eyebrow">Account</div>
-      <h1 className="h1">Habari, {c.name.split(' ')[0] || 'there'}</h1>
-      <div style={{ color: 'var(--muted2)' }}>{formatTzPhone(c.phone)}</div>
-      <LoyaltyCard customerId={c.id} brand={key} />
-      <div className="two-col">
-        <section>
-          <h2 style={{ fontSize: 20, fontWeight: 600, margin: '0 0 12px' }}>My orders</h2>
-          {orders.length === 0 && <div className="card">No orders yet. <Link href={`/${key}`} style={{ color: 'var(--monthly)', fontWeight: 600 }}>Start shopping</Link></div>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {orders.map((o) => (
-              <Link key={o.id} href={confirmationPath(o.brandKey as BrandKey, o.number)} className="card row" style={{ padding: 16, borderRadius: 18 }}>
-                <div>
-                  <div className="mono" style={{ fontWeight: 600 }}>{o.number}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted2)' }}>
-                    {fmtDate(o.createdAt)} · {o.items.map((i) => i.name).join(', ')}
-                  </div>
-                  <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{paymentLabel(o.paymentMethod as PaymentMethod)}{o.advance ? ` · ${o.advance.termMonths} × ${fmt(o.advance.monthly)}` : ''}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 600 }}>{fmt(o.total)}</div>
-                  <span className="badge" style={{ background: 'var(--surface)' }}>{ORDER_STATUS_LABEL[o.status as OrderStatus]}</span>
-                </div>
-              </Link>
-            ))}
+    <div className={`acc acc-${key}`}>
+      <div className="wrap">
+        <header className="acc-hero" data-testid="account-header">
+          <div className="acc-hero-main">
+            <div className="acc-avatar" aria-hidden="true">
+              <UserIcon size={26} />
+            </div>
+            <div className="acc-hero-txt">
+              <p className="acc-eyebrow">{t('accEyebrow')}</p>
+              <h1 className="acc-h1">{first ? t('accHello', { name: first }) : t('accHelloAnon')}</h1>
+              <p className="acc-hero-sub">
+                <span className="mono">{formatTzPhone(c.phone)}</span>
+                <span aria-hidden="true"> · </span>
+                <span>{t('accSince', { date: fmtDay(locale, c.createdAt) })}</span>
+              </p>
+            </div>
+            <span className={`acc-tier tier-${d.loyalty.tier.toLowerCase()}`} data-testid="tier-badge">
+              {t('accTierBadge', { tier: t(`accTier_${d.loyalty.tier}` as MessageKey) })}
+            </span>
           </div>
-        </section>
-        <section className="card-soft">
-          <h2 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 12px' }}>My details</h2>
-          <ProfileForm name={c.name} email={c.email} locale={locale} />
-        </section>
+          <nav className="acc-quick" aria-label={t('accEyebrow')}>
+            <Link href={`/${key}/track`}>
+              <TruckIcon size={20} />
+              <span>{t('accQTrack')}</span>
+            </Link>
+            <Link href={`/${key}/support`}>
+              <HelpIcon size={20} />
+              <span>{t('accQHelp')}</span>
+            </Link>
+            <Link href={`/${key}/shop`}>
+              <GridIcon size={20} />
+              <span>{t('accQShop')}</span>
+            </Link>
+          </nav>
+        </header>
+
+        <nav className="acc-tabs nsb" aria-label={t('accTabsLabel')}>
+          {(Object.keys(TAB_LABEL) as AccountTab[]).map((k) => (
+            <Link key={k} href={`/${key}/account${k === 'overview' ? '' : `?tab=${k}`}`} className={tab === k ? 'on' : ''} aria-current={tab === k ? 'page' : undefined} scroll={false} data-testid={`tab-${k}`}>
+              {t(TAB_LABEL[k])}
+              {!!counts[k] && <span className="acc-tab-n">{counts[k]}</span>}
+            </Link>
+          ))}
+        </nav>
+
+        {d.sisterOrders > 0 && (tab === 'overview' || tab === 'orders') && (
+          <p className="acc-sister" data-testid="sister-note">
+            {t('accSisterNote', { n: d.sisterOrders, brand: BRAND_NAMES[d.other] })}{' '}
+            <Link href={`/${d.other}/account?tab=orders`} className="link-u">
+              {t('accSisterLink', { brand: BRAND_NAMES[d.other] })}
+            </Link>
+          </p>
+        )}
+
+        <div className="acc-body" id="account-panel">
+          {tab === 'overview' && <OverviewPanel d={d} ctx={ctx} />}
+          {tab === 'orders' && <OrdersPanel d={d} ctx={ctx} filter={filter} />}
+          {tab === 'paylater' && <PayLaterPanel d={d} ctx={ctx} />}
+          {tab === 'rewards' && <RewardsPanel d={d} ctx={ctx} />}
+          {tab === 'support' && <SupportPanel d={d} ctx={ctx} openId={ticket} />}
+          {tab === 'addresses' && (
+            <section className="acc-card" data-testid="addresses-panel">
+              <div className="acc-card-h">
+                <h2 className="acc-h2">{t('accAddressesTitle')}</h2>
+              </div>
+              <AddressBook brand={key} locale={locale} addresses={d.addresses.map((a) => ({ id: a.id, region: a.region, line: a.line, isDefault: a.isDefault }))} regions={REGIONS.map((r) => r.name)} />
+            </section>
+          )}
+          {tab === 'settings' && (
+            <div className="acc-two">
+              <section className="acc-card" data-testid="settings-details">
+                <div className="acc-card-h">
+                  <h2 className="acc-h2">{t('accMyDetails')}</h2>
+                </div>
+                <DetailsForm name={c.name} email={c.email} locale={locale} />
+              </section>
+              <div className="acc-stack">
+                <section className="acc-card" data-testid="settings-offers">
+                  <div className="acc-card-h">
+                    <h2 className="acc-h2">{t('accOffersTitle', { brand: brand.name })}</h2>
+                  </div>
+                  <p className="note">{t('accOffersSub', { brand: brand.name })}</p>
+                  <MarketingPrefs
+                    brand={key}
+                    brandName={brand.name}
+                    locale={locale}
+                    prefs={{ ...d.prefs, consentAt: d.prefs.consentAt ? fmtDay(locale, d.prefs.consentAt) : null, unsubscribedAt: d.prefs.unsubscribedAt ? fmtDay(locale, d.prefs.unsubscribedAt) : null }}
+                  />
+                </section>
+                <section className="acc-card" data-testid="settings-data">
+                  <div className="acc-card-h">
+                    <h2 className="acc-h2">{t('accYourData')}</h2>
+                  </div>
+                  <p className="note">{t('accYourDataSub')}</p>
+                  <DataPanel locale={locale} />
+                </section>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  );
-}
-
-/** Rewards card (data from server/loyalty.ts; display only). */
-async function LoyaltyCard({ customerId, brand }: { customerId: string; brand: BrandKey }) {
-  const [l, t] = await Promise.all([getLoyalty(customerId, brand), getT()]);
-  return (
-    <section className={`loyal loyal-${brand}`} aria-label={t('rewards')}>
-      <div>
-        <p className="loyal-k">{t('rewards')}</p>
-        <p className="loyal-tier">{l.tier}</p>
-      </div>
-      <div className="loyal-pts">
-        <b>{t('pointsN', { n: l.points.toLocaleString('en-US') })}</b>
-        <span>{t('worthN', { amount: fmt(l.valueTzs) })}</span>
-        {l.nextTier && <span>{t('toNextTier', { n: l.pointsToNext.toLocaleString('en-US'), tier: l.nextTier })}</span>}
-      </div>
-    </section>
   );
 }
