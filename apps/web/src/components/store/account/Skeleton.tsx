@@ -1,11 +1,8 @@
-import { getT } from '@/server/locale';
-import '@/styles/account.css';
 
-/** Skeleton while the dashboard loads (slow 3G): same frame as the page, no layout shift. */
-export default async function AccountLoading() {
-  const t = await getT();
+/** Skeleton while the dashboard data streams in (slow 3G): same frame as the page, no layout shift. */
+export function AccountSkeleton({ label }: { label: string }) {
   return (
-    <div className="acc acc-skel" aria-busy="true" aria-label={t('accLoading')} role="status">
+    <div className="acc-skel" aria-busy="true" aria-label={label} role="status">
       <div className="wrap">
         <div className="acc-hero sk-hero">
           <div className="acc-hero-main">
@@ -42,7 +39,7 @@ export default async function AccountLoading() {
             ))}
           </div>
         </div>
-        <span className="sr-only">{t('accLoading')}</span>
+        <span className="sr-only">{label}</span>
       </div>
     </div>
   );

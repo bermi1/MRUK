@@ -39,8 +39,9 @@ export function AuthModal({ brand, user, onClose }: { brand: string; user: Sessi
     start(async () => {
       const r = await verifyOtpAction(f.phone, f.code.trim(), tab === 'up' ? { name: f.name, email: f.email } : undefined);
       if (!r.ok) return setErr(r.error);
+      // verifyOtpAction revalidates the layout, so the action response already carries the signed-in
+      // tree. A second router.refresh() here raced it and could leave a streamed page signed out.
       onClose();
-      router.refresh();
     });
 
   return (

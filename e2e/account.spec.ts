@@ -76,6 +76,14 @@ async function seedCustomers(db: PrismaClient) {
   return { me, number, otherAddress };
 }
 
+/** Switch dashboard tab (client navigation; retried in case a click lands mid-refresh). */
+async function openTab(page: Page, tab: string, panel: string) {
+  await expect(async () => {
+    await page.getByTestId(`tab-${tab}`).click();
+    await expect(page.getByTestId(panel)).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 20_000 });
+}
+
 async function signIn(page: Page, phone: string) {
   await page.goto('/mruk/account');
   await page.getByTestId('account-sign-in').click();
@@ -107,11 +115,11 @@ test('customer dashboard: order stepper, Pay Later, addresses, marketing prefere
     await expect(page.getByTestId('tier-badge')).toContainText('Member');
 
     // Pay Later tab: full schedule.
-    await page.getByTestId('tab-paylater').click();
+    await openTab(page, 'paylater', 'paylater-panel');
     await expect(page.getByTestId('paylater-panel').locator('tbody tr')).toHaveCount(3);
 
     // Addresses: add one, scoped to this customer.
-    await page.getByTestId('tab-addresses').click();
+    await openTab(page, 'addresses', 'addresses-panel');
     await page.getByTestId('address-form').locator('select[name=region]').selectOption('Mwanza');
     await page.getByTestId('address-form').locator('input[name=line]').fill('Plot 4, Isamilo Road, near the water tank');
     await page.getByTestId('address-save').click();
@@ -135,7 +143,7 @@ test('customer dashboard: order stepper, Pay Later, addresses, marketing prefere
     expect(await db.address.count({ where: { id: mine.id } })).toBe(1);
 
     // Settings: opt in to SMS offers; consent is recorded for this brand only.
-    await page.getByTestId('tab-settings').click();
+    await openTab(page, 'settings', 'marketing-prefs');
     const sms = page.getByTestId('pref-sms');
     await expect(sms).toHaveAttribute('aria-checked', 'false');
     await sms.click();

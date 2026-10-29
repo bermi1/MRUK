@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { REGIONS } from '@bt/core';
 import { AddressBook, DataPanel, DetailsForm, MarketingPrefs, SignInPrompt } from '@/components/store/AccountPanel';
 import { OrdersPanel, OverviewPanel, PayLaterPanel, RewardsPanel, SupportPanel } from '@/components/store/account/Dashboard';
+import { AccountSkeleton } from '@/components/store/account/Skeleton';
 import { fmtDay, makeT, parseTab, type AccountTab } from '@/components/store/account/util';
 import { GridIcon, HelpIcon, TruckIcon, UserIcon } from '@/components/icons';
 import { formatTzPhone } from '@/lib/format';
-import type { MessageKey } from '@/lib/i18n';
+import type { Locale, MessageKey } from '@/lib/i18n';
 import type { BrandKey } from '@/lib/types';
 import { accountData } from '@/server/account';
 import { getBrand } from '@/server/catalog';
@@ -47,6 +49,20 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
       </div>
     );
 
+  return (
+    <div className={`acc acc-${key}`}>
+      <Suspense fallback={<AccountSkeleton label={t('accLoading')} />}>
+        <Dashboard c={c} brandKey={key} brandName={brand.name} locale={locale} sp={sp} />
+      </Suspense>
+    </div>
+  );
+}
+
+type Customer = NonNullable<Awaited<ReturnType<typeof currentCustomer>>>;
+
+async function Dashboard({ c, brandKey: key, brandName, locale, sp }: { c: Customer; brandKey: BrandKey; brandName: string; locale: Locale; sp: Search }) {
+  const t = makeT(locale);
+  const brand = { name: brandName };
   const tab = parseTab(sp.tab);
   const d = await accountData(c, key);
   const ctx = { brand: key, brandName: brand.name, locale, t };
@@ -58,7 +74,7 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
   const ticket = /^TK-\d{1,8}$/.test(sp.ticket ?? '') ? sp.ticket : undefined;
 
   return (
-    <div className={`acc acc-${key}`}>
+    <>
       <div className="wrap">
         <header className="acc-hero" data-testid="account-header">
           <div className="acc-hero-main">
@@ -161,6 +177,6 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
