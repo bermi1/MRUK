@@ -274,6 +274,7 @@ function currentAdvance(d: AccountData) {
 export function OverviewPanel({ d, ctx }: { d: AccountData; ctx: Ctx }) {
   const { t, brand } = ctx;
   const active = d.orders.filter((o) => o.active);
+  const recent = d.orders.filter((o) => !o.active).slice(0, active.length > 1 ? 2 : 4);
   const adv = currentAdvance(d);
   const open = d.tickets.filter((x) => x.open);
   return (
@@ -291,6 +292,32 @@ export function OverviewPanel({ d, ctx }: { d: AccountData; ctx: Ctx }) {
               {t('accStartShopping')}
             </Link>
           </Empty>
+        )}
+        {recent.length > 0 && (
+          <>
+            <div className="acc-h3">{t('accRecentOrders')}</div>
+            <ul className="acc-recent" data-testid="recent-orders">
+              {recent.map((o) => (
+                <li key={o.number}>
+                  <div className="acc-recent-l">
+                    <PImg src={o.items[0]?.img ?? ''} alt={o.items[0]?.name ?? o.number} model={o.items[0]?.model ?? ''} sub={o.items[0]?.sub} size="xs" className="acc-thumb" />
+                    <div style={{ minWidth: 0 }}>
+                      <Link href={`/${brand}/order/${o.number}`} className="mono acc-ono">
+                        {o.number}
+                      </Link>
+                      <span className="acc-meta acc-thumbs-n">
+                        {fmtDay(ctx.locale, o.createdAt)} · {o.items.map((i) => i.name).join(', ')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="acc-recent-r">
+                    {statusBadge(o, t)}
+                    {o.items.some((i) => i.available) && o.status === 'delivered' && <ReorderButton brand={brand} number={o.number} locale={ctx.locale} />}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </Card>
       <div className="acc-ov-side">

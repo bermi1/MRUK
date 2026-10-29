@@ -22,7 +22,8 @@
 .acc-h1 { margin: 6px 0 0; font-size: 34px; line-height: 1.08; font-weight: 700; letter-spacing: -0.03em; overflow-wrap: anywhere; }
 .acc-skywood .acc-h1 { font-family: var(--sw-display, var(--font-fraunces)), serif; font-weight: 360; letter-spacing: -0.02em; }
 .acc-hero-sub { margin: 8px 0 0; font-size: 14px; opacity: 0.85; }
-.acc-tier { flex: none; align-self: flex-start; margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); white-space: nowrap; }
+.acc-eyerow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.acc-tier { flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); white-space: nowrap; }
 .acc-mruk .acc-tier.tier-silver { background: #dfe3ee; color: #1d2366; }
 .acc-mruk .acc-tier.tier-gold { background: #f2c94c; color: #12164a; }
 .acc-skywood .acc-tier { border-radius: 2px; background: transparent; color: #e2c891; box-shadow: inset 0 0 0 1px #c9a96e; letter-spacing: 0.18em; font-weight: 600; }
@@ -83,6 +84,23 @@
 .acc-empty-ico { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; color: var(--p); box-shadow: 0 1px 2px rgba(18, 21, 43, 0.08); }
 .acc-skywood .acc-empty { border: 1px dashed var(--line); background: transparent; }
 .acc-skywood .acc-empty-ico { border-radius: 2px; color: var(--sw-bronze); box-shadow: inset 0 0 0 1px var(--sw-gold); background: transparent; }
+
+/* Skywood keeps status colours warm and quiet. */
+.acc-skywood .acc-badge { background: var(--sw-ivory); color: var(--sw-ink); box-shadow: inset 0 0 0 1px var(--line); }
+.acc-skywood .acc-badge.st-out_for_delivery, .acc-skywood .acc-badge.st-packed, .acc-skywood .acc-badge.st-approved, .acc-skywood .acc-badge.adv-approved, .acc-skywood .acc-badge.adv-disbursed, .acc-skywood .acc-badge.adv-repaying, .acc-skywood .acc-badge.tk-open { background: var(--sw-ink); color: var(--sw-gold-hi); box-shadow: none; }
+.acc-skywood .acc-badge.st-delivered, .acc-skywood .acc-badge.adv-closed, .acc-skywood .acc-badge.tk-resolved { background: #eef3ec; color: #2f5a3a; box-shadow: none; }
+.acc-skywood .acc-badge.st-placed, .acc-skywood .acc-badge.st-bank_review, .acc-skywood .acc-badge.adv-submitted, .acc-skywood .acc-badge.tk-new, .acc-skywood .acc-badge.tk-waiting { background: transparent; color: var(--sw-bronze); box-shadow: inset 0 0 0 1px var(--sw-gold); }
+.acc-skywood .acc-badge.st-cancelled, .acc-skywood .acc-badge.st-rejected, .acc-skywood .acc-badge.adv-rejected { background: #f6e9e4; color: #8a2e1b; box-shadow: none; }
+.acc-skywood .acc-badge-def { background: var(--sw-ink); color: var(--sw-gold-hi); box-shadow: none; }
+
+/* Recent (completed) orders: compact rows under the active ones. */
+.acc-recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.acc-recent li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.acc-recent li:first-child { border-top: 0; }
+.acc-recent-l { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.acc-recent-r { display: flex; align-items: center; gap: 8px; flex: none; }
+.acc-recent .acc-thumbs-n { display: block; }
+@media (max-width: 767px) { .acc-recent li { flex-wrap: wrap; } .acc-recent-r { margin-left: 56px; } }
 
 /* Orders ------------------------------------------------------------------------------ */
 .acc-order { border: 1px solid var(--border); border-radius: calc(var(--acc-r) - 6px); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
@@ -249,7 +267,7 @@
   .acc-hero-txt { flex: 1; }
   .acc-h1 { font-size: 26px; }
   .acc-hero-sub { font-size: 13px; }
-  .acc-tier { position: absolute; top: 18px; right: 16px; font-size: 10.5px; padding: 5px 10px; }
+  .acc-tier { font-size: 10.5px; padding: 4px 9px; }
   .acc-quick { gap: 8px; }
   .acc-quick a { min-height: 72px; padding: 12px; font-size: 12.5px; gap: 8px; }
   .acc-tabs { margin: 14px -16px 14px; padding: 2px 16px; }

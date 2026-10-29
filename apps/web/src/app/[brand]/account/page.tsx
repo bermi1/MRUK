@@ -66,7 +66,12 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
               <UserIcon size={26} />
             </div>
             <div className="acc-hero-txt">
-              <p className="acc-eyebrow">{t('accEyebrow')}</p>
+              <div className="acc-eyerow">
+                <p className="acc-eyebrow">{t('accEyebrow')}</p>
+                <span className={`acc-tier tier-${d.loyalty.tier.toLowerCase()}`} data-testid="tier-badge">
+                  {d.loyalty.tier === 'Member' ? t('accTier_Member') : t('accTierBadge', { tier: t(`accTier_${d.loyalty.tier}` as MessageKey) })}
+                </span>
+              </div>
               <h1 className="acc-h1">{first ? t('accHello', { name: first }) : t('accHelloAnon')}</h1>
               <p className="acc-hero-sub">
                 <span className="mono">{formatTzPhone(c.phone)}</span>
@@ -74,9 +79,6 @@ export default async function AccountPage({ params, searchParams }: { params: Pr
                 <span>{t('accSince', { date: fmtDay(locale, c.createdAt) })}</span>
               </p>
             </div>
-            <span className={`acc-tier tier-${d.loyalty.tier.toLowerCase()}`} data-testid="tier-badge">
-              {t('accTierBadge', { tier: t(`accTier_${d.loyalty.tier}` as MessageKey) })}
-            </span>
           </div>
           <nav className="acc-quick" aria-label={t('accEyebrow')}>
             <Link href={`/${key}/track`}>
