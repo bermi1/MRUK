@@ -41,7 +41,7 @@ export async function GET() {
   try {
     const tables = await prisma.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM pg_tables WHERE schemaname = 'public'`;
     const n = Number(tables[0]?.n ?? 0);
-    database = n === 0 ? { reachable: true, tables: 0, hint: 'Connected, but no tables. Redeploy so the build runs the database setup (DIRECT_URL must be set).' } : { reachable: true, tables: n, brands: await prisma.brand.count(), products: await prisma.product.count(), orders: await prisma.order.count(), staff: await prisma.staffUser.count() };
+    database = n === 0 ? { reachable: true, tables: 0, hint: 'Connected, but no tables. Redeploy so the build runs the database setup (DIRECT_URL must be set).' } : { reachable: true, tables: n, brands: await prisma.brand.count(), products: await prisma.product.count(), orders: await prisma.order.count(), staff: await prisma.staffUser.count(), staffWith2fa: await prisma.staffUser.count({ where: { totpEnabled: true } }), twoFactorResetAt: (((await prisma.setting.findUnique({ where: { key: 'ops.2faReset' } }))?.value as { at?: string } | null)?.at ?? null) };
   } catch (e) {
     const code = (e as { errorCode?: string; code?: string }).errorCode ?? (e as { code?: string }).code ?? (e instanceof Error ? e.constructor.name : 'unknown');
     const hints: Record<string, string> = {

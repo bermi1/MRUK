@@ -15,27 +15,52 @@ export function LoginForm() {
   const [error, setError] = useState('');
   const [pending, start] = useTransition();
 
-  const submitPassword = () =>
+  /** A deploy while this page was open makes the old page's server calls fail: reload once instead of crashing. */
+  const guard = (fn: () => Promise<void>) =>
     start(async () => {
+      try {
+        await fn();
+      } catch {
+        let reloaded = false;
+        try {
+          reloaded = sessionStorage.getItem('bt-login-reloaded') === '1';
+          if (!reloaded) sessionStorage.setItem('bt-login-reloaded', '1');
+        } catch {
+          /* storage blocked */
+        }
+        if (!reloaded) {
+          setError('The admin was just updated. Reloading the page, please sign in again.');
+          window.setTimeout(() => window.location.reload(), 1200);
+        } else setError('Could not reach the server. Check your connection and try again.');
+      }
+    });
+
+  const submitPassword = () =>
+    guard(async () => {
       setError('');
       const r = await staffLoginAction(email, password);
-      if (!r.ok) return setError(r.error);
+      if (!r.ok) return void setError(r.error);
       setPassword('');
       if (r.data?.next === 'enrol') {
         const e = await beginEnrolAction();
-        if (!e.ok) return setError(e.error);
+        if (!e.ok) return void setError(e.error);
         setEnrol(e.data ?? null);
         setStep('enrol');
       } else setStep('totp');
     });
 
   const submitCode = () =>
-    start(async () => {
+    guard(async () => {
       setError('');
       const r = await verifyTotpAction(code);
       if (!r.ok) {
         setCode('');
-        return setError(r.error);
+        return void setError(r.error);
+      }
+      try {
+        sessionStorage.removeItem('bt-login-reloaded');
+      } catch {
+        /* storage blocked */
       }
       router.replace('/admin');
       router.refresh();

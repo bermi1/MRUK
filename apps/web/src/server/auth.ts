@@ -11,7 +11,8 @@ import { integrations } from './integrations';
 import { limit } from './ratelimit';
 import { createSession, currentStaffSession, endSession, STAFF_COOKIE, startCustomerSession } from './session';
 
-authenticator.options = { window: 1 };
+// Accept codes up to two 30-second steps either side (phone clock drift and typing time).
+authenticator.options = { window: 2 };
 
 export class AuthError extends Error {}
 
@@ -90,8 +91,11 @@ async function pendingStaff() {
 export async function beginTotpEnrolment(): Promise<{ secret: string; otpauth: string }> {
   const u = await pendingStaff();
   if (u.totpEnabled) throw new AuthError('Two-factor authentication is already set up');
-  const secret = u.totpSecretEnc ? decrypt(u.totpSecretEnc) : authenticator.generateSecret();
-  if (!u.totpSecretEnc) await prisma.staffUser.update({ where: { id: u.id }, data: { totpSecretEnc: encrypt(secret) } });
+  // Store a secret only if none exists yet (atomic), then always show the stored one: two overlapping
+  // requests (double click, reload) must never show a QR code for a secret that was overwritten.
+  if (!u.totpSecretEnc) await prisma.staffUser.updateMany({ where: { id: u.id, totpSecretEnc: null }, data: { totpSecretEnc: encrypt(authenticator.generateSecret()) } });
+  const stored = await prisma.staffUser.findUniqueOrThrow({ where: { id: u.id }, select: { totpSecretEnc: true } });
+  const secret = decrypt(stored.totpSecretEnc!);
   return { secret, otpauth: authenticator.keyuri(u.email, 'Commerce OS', secret) };
 }
 
