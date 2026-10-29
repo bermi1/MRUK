@@ -41,6 +41,11 @@ export function LoginForm() {
       const r = await staffLoginAction(email, password);
       if (!r.ok) return void setError(r.error);
       setPassword('');
+      if (r.data?.next === 'done') {
+        router.replace('/admin');
+        router.refresh();
+        return;
+      }
       if (r.data?.next === 'enrol') {
         const e = await beginEnrolAction();
         if (!e.ok) return void setError(e.error);
@@ -79,7 +84,7 @@ export function LoginForm() {
         <>
           <div>
             <h2>Sign in to Commerce OS</h2>
-            <p className="ad-sub" style={{ fontSize: 13.5 }}>Staff only. Two-factor authentication is required.</p>
+            <p className="ad-sub" style={{ fontSize: 13.5 }}>Staff only.</p>
           </div>
           <label className="ad-field">
             Work email

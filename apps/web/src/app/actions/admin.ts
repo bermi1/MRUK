@@ -76,7 +76,7 @@ function revalidateStore() {
 
 // Sign-in ------------------------------------------------------------------------------
 
-export async function staffLoginAction(email: string, password: string): Promise<ActionResult<{ next: 'totp' | 'enrol' }>> {
+export async function staffLoginAction(email: string, password: string): Promise<ActionResult<{ next: 'totp' | 'enrol' | 'done' }>> {
   try {
     const p = z.object({ email: z.string().trim().email('Enter your work email').max(160), password: z.string().min(1, 'Enter your password').max(200) }).parse({ email, password });
     return { ok: true, data: { next: await staffPasswordLogin(p.email, p.password) } };

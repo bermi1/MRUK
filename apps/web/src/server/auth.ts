@@ -60,7 +60,13 @@ export async function verifyOtp(phoneInput: string, code: string, profile?: { na
 const STAFF_TTL = 12 * 3600;
 const PENDING_TTL = 10 * 60;
 
-export async function staffPasswordLogin(emailInput: string, password: string): Promise<'totp' | 'enrol'> {
+/**
+ * TEMPORARY switch: STAFF_2FA_REQUIRED=false lets staff sign in with email + password only
+ * (requested while authenticator onboarding is sorted out). Default and production intent: required.
+ */
+export const staff2faRequired = () => (process.env.STAFF_2FA_REQUIRED ?? 'true').trim().toLowerCase() !== 'false';
+
+export async function staffPasswordLogin(emailInput: string, password: string): Promise<'totp' | 'enrol' | 'done'> {
   const email = emailInput.trim().toLowerCase();
   await limit('staff-login', 5, 15 * 60, email);
   const u = await prisma.staffUser.findUnique({ where: { email } });
@@ -77,6 +83,13 @@ export async function staffPasswordLogin(emailInput: string, password: string): 
     throw fail;
   }
   await prisma.staffUser.update({ where: { id: u.id }, data: { failedLogins: 0, lockedUntil: null } });
+  if (!staff2faRequired()) {
+    await endSession(STAFF_COOKIE);
+    await prisma.staffUser.update({ where: { id: u.id }, data: { lastLoginAt: new Date() } });
+    await createSession('staff', { staffId: u.id }, STAFF_TTL);
+    await audit(u.email, 'login.password_only', 'StaffUser', u.id);
+    return 'done';
+  }
   await createSession('staff_pending_2fa', { staffId: u.id }, PENDING_TTL);
   return u.totpEnabled ? 'totp' : 'enrol';
 }
