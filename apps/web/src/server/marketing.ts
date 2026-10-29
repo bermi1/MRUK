@@ -379,3 +379,75 @@ export async function testSend(brand: Brand, channel: CampaignChannel, address: 
   await deliver(channel, address, `[TEST] ${subject || 'Campaign'}`, `[TEST] ${text}`);
   return text;
 }
+
+// Customer account preferences -------------------------------------------------------------------
+
+type PrefCustomer = { id: string; phone: string; email: string; name: string; consentAt: Date | null };
+
+export interface MarketingPrefs {
+  sms: boolean;
+  email: boolean;
+  whatsapp: boolean;
+  /** When the customer last gave marketing consent for this brand (any channel on). */
+  consentAt: Date | null;
+  /** Set when the customer is on this brand's suppression list (no offers on any channel). */
+  unsubscribedAt: Date | null;
+  /** DEFAULT soft opt-in applies: a past customer with no explicit choice may still get offers. */
+  softOptIn: boolean;
+  hasEmail: boolean;
+}
+
+/** This brand's subscriber rows for the signed-in customer (by phone, email or link). */
+async function prefRows(brand: Brand, c: PrefCustomer) {
+  const email = c.email ? c.email.toLowerCase() : null;
+  return prisma.subscriber.findMany({ where: { brandKey: brand, OR: [{ customerId: c.id }, { phone: c.phone }, ...(email ? [{ email }] : [])] }, orderBy: { updatedAt: 'desc' } });
+}
+
+export async function customerPrefs(brand: Brand, c: PrefCustomer, boughtHere: boolean): Promise<MarketingPrefs> {
+  const rows = await prefRows(brand, c);
+  const live = rows.filter((r) => !r.unsubscribedAt && r.consentAt);
+  const suppressed = rows.find((r) => r.unsubscribedAt && (r.phone === c.phone || (!!c.email && r.email === c.email.toLowerCase())));
+  const sms = live.some((r) => r.smsOptIn);
+  const email = live.some((r) => r.emailOptIn);
+  const whatsapp = live.some((r) => r.whatsappOptIn);
+  const any = sms || email || whatsapp;
+  return {
+    sms,
+    email,
+    whatsapp,
+    consentAt: any ? live.filter((r) => r.smsOptIn || r.emailOptIn || r.whatsappOptIn).reduce<Date | null>((a, r) => (!a || (r.consentAt && r.consentAt > a) ? r.consentAt : a), null) : null,
+    unsubscribedAt: !any && suppressed ? suppressed.unsubscribedAt : null,
+    softOptIn: !any && !suppressed && MARKETING_DEFAULTS.customersSoftOptIn && boughtHere && !!c.consentAt,
+    hasEmail: !!c.email,
+  };
+}
+
+/**
+ * Save the customer's channel choices for one brand. Any channel on records fresh consent on a
+ * single row (phone row first); every channel off puts them on the brand's suppression list, which
+ * also stops the soft opt-in offers past customers get by default.
+ */
+export async function setCustomerPrefs(brand: Brand, c: PrefCustomer, prefs: { sms: boolean; email: boolean; whatsapp: boolean }) {
+  const email = c.email ? c.email.toLowerCase() : null;
+  if (!prefs.sms && !prefs.email && !prefs.whatsapp) {
+    await suppress(brand, { phone: c.phone, email, customerId: c.id });
+    return;
+  }
+  if (prefs.email && !email) throw new Error('Add your email address in your details first');
+  const [byPhone, byEmail] = await Promise.all([
+    prisma.subscriber.findUnique({ where: { brandKey_phone: { brandKey: brand, phone: c.phone } } }),
+    email ? prisma.subscriber.findUnique({ where: { brandKey_email: { brandKey: brand, email } } }) : null,
+  ]);
+  const target = byPhone ?? byEmail;
+  // Phone and email on two rows: keep the phone row and move the email to it.
+  if (byPhone && byEmail && byPhone.id !== byEmail.id) {
+    if (byEmail.phone) await prisma.subscriber.update({ where: { id: byEmail.id }, data: { email: null, emailOptIn: false } });
+    else await prisma.subscriber.delete({ where: { id: byEmail.id } });
+  }
+  const data = { name: c.name || target?.name || '', phone: c.phone, email, smsOptIn: prefs.sms, emailOptIn: prefs.email, whatsappOptIn: prefs.whatsapp, consentAt: new Date(), unsubscribedAt: null, customerId: c.id };
+  if (target) await prisma.subscriber.update({ where: { id: target.id }, data });
+  else {
+    await prisma.subscriber.create({ data: { ...data, brandKey: brand, source: 'account' } });
+    await subscriberMilestone(brand);
+  }
+}
