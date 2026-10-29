@@ -5,6 +5,7 @@ import type { BrandKey, ProductView } from '@/lib/types';
 import { integrations } from './integrations';
 import { limit } from './ratelimit';
 import { toFacts } from './catalog';
+import { emitTaskEvent } from './tasks';
 
 /** Policy facts the support assistant may quote (from the storefront FAQ). */
 export const POLICIES: PolicyFact[] = [
@@ -94,6 +95,7 @@ export async function createTicket(t: TicketInput) {
     await integrations.storage.put(key, t.photo.data, t.photo.contentType);
     await prisma.ticket.update({ where: { id: ticket.id }, data: { photoKey: key } });
   }
+  await emitTaskEvent({ type: 'ticket.created', brand: t.brand, ticketId: ticket.id, number: ticket.number, issue: t.issue });
   await integrations.sms.send(phone, `${t.brand === 'skywood' ? 'Skywood' : 'Mr UK'} support: we received request ${ticket.number}. We will call you within 2 working hours.`).catch(() => undefined);
   return { number: ticket.number, phone };
 }

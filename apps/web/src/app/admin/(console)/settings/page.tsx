@@ -32,12 +32,15 @@ const PERMS: [string, string][] = [
   ['reports', 'Reports'],
   ['settings', 'Settings and users'],
 ];
+// Each switch pauses or allows messages for one kind of routed task. Staff choose their own channels
+// (SMS, WhatsApp, email) in My account; nothing is sent to anyone who has not opted in.
 const NOTIFS: [string, string, string][] = [
-  ['orders', 'New order', 'Email and SMS to store managers'],
-  ['bank', 'Azania Bank decision', 'When a Salary Advance is approved or declined'],
-  ['stock', 'Low stock', 'When a product drops to 6 units or fewer'],
-  ['tickets', 'New support ticket', 'Push to the support team'],
-  ['daily', 'Daily sales summary', 'Email at 8:00 PM'],
+  ['orders', 'Orders', 'Warehouse: orders to pack, dispatch or put back. Support: cancelled or unpaid orders'],
+  ['bank', 'Pay Later', 'Finance: new applications. Warehouse or support: Azania Bank decisions'],
+  ['stock', 'Stock and catalogue', 'Warehouse and catalogue: low stock (6 or fewer), products without a photo'],
+  ['tickets', 'Support tickets', 'Support: new tickets (round robin). Manager: tickets waiting over 24 hours'],
+  ['marketing', 'Marketing', 'Manager: campaign sent or failed, subscriber milestones'],
+  ['daily', 'Daily sales summary', 'Email at 8:00 PM (not sending yet)'],
 ];
 const AUDIT_PER = 100;
 const brandText = (b: string[]) => (b.includes('*') ? 'Both brands' : b.map((x) => (x === 'mruk' ? 'Mr UK' : 'Skywood')).join(', ') || 'None');

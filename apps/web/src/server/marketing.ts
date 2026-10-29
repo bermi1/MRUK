@@ -19,6 +19,7 @@ import { env } from './env';
 import { integrations } from './integrations';
 import { tiersFor } from './loyalty';
 import { sign, verifySigned } from './session';
+import { emitTaskEvent } from './tasks';
 
 /**
  * Marketing: sign-ups, consent and opt-out, audience resolution, campaign sending.
@@ -62,6 +63,7 @@ export async function subscribe(brand: Brand, input: { name: string; phone: stri
         await prisma.subscriber.create({
           data: { brandKey: brand, name: input.name, phone, email, smsOptIn: !!phone, whatsappOptIn: !!phone && MARKETING_DEFAULTS.phoneOptsInToWhatsApp, emailOptIn: !!email, consentAt: now, source: input.source, customerId },
         });
+        await subscriberMilestone(brand);
         return { created: true };
       }
       // Phone and email belong to two different rows: keep the phone row and move the email to it.
@@ -80,13 +82,25 @@ export async function subscribe(brand: Brand, input: { name: string; phone: stri
           customerId: target.customerId ?? customerId,
         },
       });
-      return { created: !target.consentAt || !!target.unsubscribedAt };
+      const created = !target.consentAt || !!target.unsubscribedAt;
+      if (created) await subscriberMilestone(brand);
+      return { created };
     } catch (e) {
       if (attempt === 0 && e && typeof e === 'object' && 'code' in e && (e as { code?: string }).code === 'P2002') continue; // a parallel sign-up won the race
       throw e;
     }
   }
   return { created: false };
+}
+
+/** Route a subscriber milestone (10, 25, 50, 100, …) to the manager. Never throws. */
+async function subscriberMilestone(brand: Brand) {
+  try {
+    const n = await prisma.subscriber.count({ where: { brandKey: brand, consentAt: { not: null }, unsubscribedAt: null } });
+    await emitTaskEvent({ type: 'subscribers.count', brand, before: n - 1, after: n });
+  } catch {
+    /* routing never blocks a sign-up */
+  }
 }
 
 type TokenKind = 's' | 'c'; // subscriber | customer
@@ -338,6 +352,7 @@ export async function sendCampaign(campaignId: string): Promise<{ status: string
   const stats = await campaignStats(c.id, all.length + [...done].filter((h) => !current.has(h)).length, optedOut);
   const status = finished ? 'sent' : 'sending';
   await prisma.campaign.update({ where: { id: c.id }, data: { status, stats: stats as unknown as Prisma.InputJsonValue, ...(finished ? { sentAt: new Date() } : {}) } });
+  if (finished) await emitTaskEvent({ type: 'campaign.result', brand, campaignId: c.id, name: c.name, ok: true, sent: stats.sent, failed: stats.failed });
   return { status, stats, done: finished };
 }
 
@@ -351,6 +366,8 @@ export async function runDueCampaigns(now = new Date()) {
       results.push({ id: d.id, status: r.status });
     } catch (e) {
       results.push({ id: d.id, status: 'error', error: e instanceof Error ? e.message.slice(0, 160) : 'error' });
+      const c = await prisma.campaign.findUnique({ where: { id: d.id }, select: { brandKey: true, name: true } }).catch(() => null);
+      if (c) await emitTaskEvent({ type: 'campaign.result', brand: c.brandKey, campaignId: d.id, name: c.name, ok: false });
     }
   }
   return results;

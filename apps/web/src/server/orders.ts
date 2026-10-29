@@ -35,6 +35,7 @@ import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
 import { sign } from './session';
+import { checkOrderStock, checkStock, emitTaskEvent } from './tasks';
 
 export class CheckoutError extends Error {
   constructor(
@@ -167,6 +168,9 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
     return o;
   });
   await clearCart(brand);
+  // Route the work (never blocks the order): confirmed orders go to the warehouse to pack.
+  await emitTaskEvent({ type: 'order.placed', brand, number: order.number, status: order.status as OrderStatus, method: input.method });
+  await checkStock(cart.lines.map((l) => l.productId));
   if (input.method === 'pay_on_delivery') await notifyCustomer(order.contactPhone, `${brandName(brand)}: order ${order.number} confirmed. Total ${fmtTZS(order.total)}, pay on delivery. Track: ${order.number}`);
   return { number: order.number, next: input.method === 'pay_on_delivery' ? ('confirmed' as const) : ('pay' as const) };
 }
@@ -322,6 +326,8 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   await prisma.salaryAdvanceApplication.update({ where: { id: app.id }, data: { bankReference: sub.bankReference } });
 
   if (!cartOverride) await clearCart(brand);
+  await emitTaskEvent({ type: 'advance.submitted', brand, number: order.number, applicationId: app.id });
+  await checkStock(lines.map((l) => l.productId));
   await notifyCustomer(c.phone, `${brandName(brand)}: order ${order.number} received. Your Pay Later plan (${input.months} x ${fmtTZS(monthly)}) is with Azania Bank for review. Contract ${cno}.`);
   return { number: order.number, contract: cno };
 }
@@ -381,20 +387,26 @@ export async function capturePayment(number: string, method: 'card' | 'azania_ac
     await tx.order.update({ where: { id: order.id }, data: { status: 'approved', reservedUntil: null, events: { create: { status: 'approved', note: `Payment confirmed (${paymentLabel(method)})`, actor: 'system' } } } });
     await issueInvoice(tx, order.id, order.total, 'paid');
   });
+  await emitTaskEvent({ type: 'order.paid', brand: order.brandKey, number: order.number, method });
   await notifyCustomer(order.contactPhone, `${brandName(order.brandKey)}: payment received for order ${order.number}, ${fmtTZS(order.total)}. We are packing your order.`);
 }
 
 /** Cancel unpaid orders whose reservation expired and return their stock. */
 export async function releaseExpiredReservations() {
-  const expired = await prisma.order.findMany({ where: { status: 'placed', reservedUntil: { lt: new Date() } }, select: { id: true } });
+  const expired = await prisma.order.findMany({ where: { status: 'placed', reservedUntil: { lt: new Date() } }, select: { id: true, number: true, brandKey: true, items: { select: { productId: true } } } });
   for (const o of expired) {
-    await prisma.$transaction(async (tx) => {
+    const released = await prisma.$transaction(async (tx) => {
       const r = await tx.order.updateMany({ where: { id: o.id, status: 'placed' }, data: { status: 'cancelled', reservedUntil: null } });
-      if (r.count !== 1) return;
+      if (r.count !== 1) return false;
       await restock(tx, o.id);
       await tx.orderEvent.create({ data: { orderId: o.id, status: 'cancelled', note: 'Payment not completed in time; stock released', actor: 'system' } });
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'failed' } });
+      return true;
     });
+    if (released) {
+      await emitTaskEvent({ type: 'order.status', brand: o.brandKey, number: o.number, from: 'placed', to: 'cancelled', reason: 'expired' });
+      await checkStock(o.items.map((i) => i.productId));
+    }
   }
   return expired.length;
 }
@@ -424,6 +436,8 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       await tx.salaryAdvanceApplication.update({ where: { id: o.advance.id }, data: { status: 'rejected', decisionNote: 'Order cancelled' } });
     }
   });
+  await emitTaskEvent({ type: 'order.status', brand: o.brandKey, number: o.number, from: o.status as OrderStatus, to }, actor);
+  if (releasesStock(to)) await checkOrderStock(o.id);
   // Loyalty (DEFAULT rules, server/loyalty.ts): earn on delivery, reverse on cancel/reject. Never blocks the order change.
   try {
     if (to === 'delivered') await awardOrderPoints(o.id);
@@ -454,6 +468,8 @@ export async function decideAdvance(applicationId: string, decision: 'approved' 
       else await restock(tx, a.orderId);
     }
   });
+  await emitTaskEvent({ type: 'advance.decided', brand: a.order.brandKey, number: a.order.number, applicationId: a.id, decision }, actor);
+  if (decision === 'rejected') await checkOrderStock(a.orderId);
   await notifyCustomer(
     a.phone,
     decision === 'approved'

@@ -21,6 +21,7 @@ import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder }
 import { RateLimitError } from '@/server/ratelimit';
 import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue } from '@/server/admin/context';
 import { storePublicImage, storePublicMedia, UploadError } from '@/server/admin/files';
+import { assignEntityTasks, checkPhotos, checkStock, emitTaskEvent } from '@/server/tasks';
 
 type Msg = { message?: string };
 
@@ -240,6 +241,7 @@ export async function updateProductFieldAction(id: string, field: 'price' | 'sto
     const v = f === 'price' ? intZ(1_000, 500_000_000).parse(String(value).replace(/[,\s]/g, '')) : intZ(0, 100_000).parse(value);
     await prisma.product.update({ where: { id: p.id }, data: { [f]: v } });
     await audit(ctx.email, `product.${f}`, 'Product', p.id, { from: p[f], to: v });
+    if (f === 'stock') await checkStock([p.id]);
     revalidateStore();
     return { message: 'Saved' };
   });
@@ -250,6 +252,8 @@ export async function toggleProductHiddenAction(id: string): Promise<ActionResul
     const p = await loadProduct(ctx, id);
     await prisma.product.update({ where: { id: p.id }, data: { hidden: !p.hidden } });
     await audit(ctx.email, p.hidden ? 'product.show' : 'product.hide', 'Product', p.id);
+    await checkStock([p.id]);
+    await checkPhotos(p.brandKey);
     revalidateStore();
     return { message: p.hidden ? 'Product is live' : 'Product hidden' };
   });
@@ -261,6 +265,7 @@ export async function uploadProductPhotoAction(id: string, fd: FormData): Promis
     const url = await storePublicImage(fd.get('photo'), `products/${p.id}`);
     await prisma.product.update({ where: { id: p.id }, data: { images: [url, ...p.images.filter((x) => x !== url)].slice(0, 8) } });
     await audit(ctx.email, 'product.photo', 'Product', p.id, { url });
+    await checkPhotos(p.brandKey);
     revalidateStore();
     return { message: 'Photo uploaded', url };
   });
@@ -321,6 +326,8 @@ export async function createProductAction(fd: FormData): Promise<ActionResult<Ms
       },
     });
     await audit(ctx.email, 'product.create', 'Product', id, { brand: f.brand, category: f.category, price: f.price, stock: f.stock });
+    await checkStock([id]);
+    await checkPhotos(f.brand);
     revalidateStore();
     return { message: `Published ${f.name} to the ${f.brand === 'mruk' ? 'Mr UK' : 'Skywood'} store`, id };
   });
@@ -332,6 +339,7 @@ export async function restockAction(id: string, fd: FormData): Promise<ActionRes
     const qty = intZ(1, 10_000).parse(fields(fd).qty);
     const u = await prisma.product.update({ where: { id: p.id }, data: { stock: { increment: qty } } });
     await audit(ctx.email, 'product.restock', 'Product', p.id, { add: qty, stock: u.stock });
+    await checkStock([p.id]);
     revalidateStore();
     return { message: `+${qty} · now ${u.stock}` };
   });
@@ -670,6 +678,7 @@ export async function replyTicketAction(id: string, fd: FormData): Promise<Actio
       await integrations.sms.send(t.phone, `${brand} support (${t.number}): ${body.slice(0, 400)}`).catch(() => undefined);
     }
     await audit(ctx.email, internal ? 'ticket.note' : 'ticket.reply', 'Ticket', t.number, { internal, status });
+    if (status !== t.status) await emitTaskEvent({ type: 'ticket.status', brand: t.brandKey, ticketId: t.id, number: t.number, status }, ctx.name);
     revalidateAdmin();
     return { message: internal ? 'Internal note added' : 'Reply sent to the customer by SMS' };
   });
@@ -680,6 +689,7 @@ export async function assignTicketAction(id: string): Promise<ActionResult<Msg>>
     const t = await loadTicket(ctx, id);
     await prisma.ticket.update({ where: { id: t.id }, data: { assignee: ctx.name, status: t.status === 'new' ? 'open' : t.status } });
     await audit(ctx.email, 'ticket.assign', 'Ticket', t.number, { assignee: ctx.id });
+    await assignEntityTasks('Ticket', t.id, ctx.id, ['ticket.respond']);
     revalidateAdmin();
     return { message: 'Assigned to you' };
   });
@@ -691,6 +701,7 @@ export async function ticketStatusAction(id: string, status: string): Promise<Ac
     const st = z.enum(['new', 'open', 'waiting', 'resolved']).parse(status);
     await prisma.ticket.update({ where: { id: t.id }, data: { status: st } });
     await audit(ctx.email, 'ticket.status', 'Ticket', t.number, { from: t.status, to: st });
+    await emitTaskEvent({ type: 'ticket.status', brand: t.brandKey, ticketId: t.id, number: t.number, status: st }, ctx.name);
     revalidateAdmin();
     return { message: `Ticket ${st}` };
   });
@@ -795,7 +806,7 @@ export async function changeOwnPasswordAction(fd: FormData): Promise<ActionResul
   }
 }
 
-const NOTIFY_KEYS = ['orders', 'bank', 'stock', 'tickets', 'daily'] as const;
+const NOTIFY_KEYS = ['orders', 'bank', 'stock', 'tickets', 'marketing', 'daily'] as const;
 
 export async function saveNotificationsAction(fd: FormData): Promise<ActionResult<Msg>> {
   return run('settings', async (ctx) => {
