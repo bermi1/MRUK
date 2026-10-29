@@ -21,6 +21,9 @@ import {
   type OrderStatus,
   type PaymentMethod,
   pointsForOrder,
+  routeEvent,
+  type TaskEvent,
+  type TaskSpec,
 } from '@bt/core';
 import { encrypt, hashPassword, prisma, sha256 } from './index';
 
@@ -105,7 +108,7 @@ const CUSTOMERS = [
 const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
 
 /** Permissions added after launch: granted to existing roles on every deploy (only ever adds; never removes what an owner set). */
-const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write'] };
+const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all'] };
 
 async function syncRolePermissions() {
   for (const [id, add] of Object.entries(ADDED_PERMISSIONS)) {
@@ -132,6 +135,7 @@ async function main() {
   const BT = loadHandoff();
   console.log('Clearing existing data…');
   await prisma.$transaction([
+    prisma.staffTask.deleteMany(),
     prisma.campaignSend.deleteMany(),
     prisma.campaign.deleteMany(),
     prisma.subscriber.deleteMany(),
@@ -257,7 +261,7 @@ async function main() {
   // Staff, roles ------------------------------------------------------------
   const PERMS = {
     owner: ['*'],
-    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports'],
+    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all'],
     finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
     catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
     warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
@@ -471,6 +475,8 @@ async function main() {
   });
   console.log(`  ${subs.length} subscribers, loyalty points on ${delivered.length} delivered orders`);
 
+  await seedTasks();
+
   // Counters and settings ------------------------------------------------------
   await prisma.counter.createMany({
     data: [
@@ -493,6 +499,94 @@ async function main() {
   console.log(`Staff logins (password: ${process.env.SEED_STAFF_PASSWORD ? '$SEED_STAFF_PASSWORD' : staffPassword}):`);
   for (const [name, email, roleId] of staff) console.log(`  ${email.padEnd(26)} ${ROLE_NAMES[roleId]} (${name})`);
   console.log('Two-factor authentication is enrolled on first sign-in.');
+}
+
+/**
+ * Demo work queues: the tasks each team would have been routed for the seeded orders, tickets,
+ * stock and campaigns (same rules as the live site, packages/core/src/tasks.ts), plus a few done ones.
+ */
+async function seedTasks() {
+  const H = 3_600_000;
+  const now = Date.now();
+  const staff = await prisma.staffUser.findMany({ select: { id: true, roleId: true, email: true, name: true } });
+  const byEmail = new Map(staff.map((s) => [s.email, s]));
+  // Demo opt-in: the warehouse lead gets task notifications by SMS (mock adapter, nothing is really sent).
+  await prisma.staffUser.update({ where: { email: 'daudi@mruk.co.tz' }, data: { phone: '+255754100200', notifyVia: ['sms'] } });
+
+  const rows: { spec: TaskSpec; at: Date; assigneeId?: string | null }[] = [];
+  const add = (e: TaskEvent, at: Date, assigneeId?: string | null) => {
+    for (const spec of routeEvent(e).open) rows.push({ spec, at, assigneeId });
+  };
+
+  const orders = await prisma.order.findMany({ where: { status: { in: ['approved', 'packed', 'bank_review', 'rejected', 'cancelled'] } }, include: { advance: true }, orderBy: { createdAt: 'asc' } });
+  for (const o of orders) {
+    const at = new Date(o.createdAt.getTime() + H);
+    if (o.status === 'approved') add({ type: 'order.paid', brand: o.brandKey, number: o.number, method: o.paymentMethod as 'card' }, at);
+    else if (o.status === 'packed') add({ type: 'order.status', brand: o.brandKey, number: o.number, from: 'approved', to: 'packed' }, at);
+    else if (o.status === 'bank_review' && o.advance) add({ type: 'advance.submitted', brand: o.brandKey, number: o.number, applicationId: o.advance.id }, o.createdAt);
+    else if (o.status === 'rejected' && o.advance) add({ type: 'advance.decided', brand: o.brandKey, number: o.number, applicationId: o.advance.id, decision: 'rejected' }, new Date(now - 5 * H));
+    else if (o.status === 'cancelled') add({ type: 'order.status', brand: o.brandKey, number: o.number, from: 'approved', to: 'cancelled' }, new Date(now - 20 * H));
+  }
+
+  // Tickets: one new ticket past the 2-hour reply SLA, one open ticket untouched for 30 hours (escalated).
+  const support = staff.find((s) => s.roleId === 'support');
+  const tickets = await prisma.ticket.findMany({ where: { status: { not: 'resolved' } }, orderBy: { number: 'asc' } });
+  for (const [i, t] of tickets.entries()) {
+    const created = new Date(now - (t.status === 'new' ? (i === 0 ? 3 : 1) : 30) * H);
+    await prisma.ticket.update({ where: { id: t.id }, data: { createdAt: created, updatedAt: created, assignee: support?.name ?? '' } });
+    add({ type: 'ticket.created', brand: t.brandKey, ticketId: t.id, number: t.number, issue: t.issue }, created, support?.id);
+    const hours = (now - created.getTime()) / H;
+    for (const spec of routeEvent({ type: 'ticket.stale', brand: t.brandKey, ticketId: t.id, number: t.number, status: t.status, hours }).open) {
+      const same = rows.find((r) => r.spec.key === spec.key);
+      if (same) same.spec = { ...same.spec, ...spec };
+      else rows.push({ spec, at: new Date(now - 6 * H) });
+    }
+  }
+
+  // Stock and photos.
+  for (const p of await prisma.product.findMany({ where: { stock: { lte: 6 } } })) add({ type: 'stock.level', brand: p.brandKey, productId: p.id, model: p.model, stock: p.stock, hidden: p.hidden }, new Date(now - 26 * H));
+  for (const b of ['mruk', 'skywood']) add({ type: 'catalogue.photos', brand: b, missing: await prisma.product.count({ where: { brandKey: b, hidden: false, images: { isEmpty: true } } }) }, new Date(now - 48 * H));
+
+  // Marketing: a sent campaign with a few failures goes back to the manager to review.
+  const owner = byEmail.get('amani@mruk.co.tz');
+  const sentAt = new Date(now - 4 * H);
+  const camp = await prisma.campaign.create({
+    data: { brandKey: 'mruk', name: 'Weekend generator offer', channel: 'sms', audience: { type: 'subscribers', filters: {} }, message: 'Hi {name}, 15% off generators this weekend with code {code}.', promoCode: 'POWER15', status: 'sent', sentAt, stats: { targeted: 6, sent: 5, failed: 1, optedOut: 1 }, createdBy: owner?.email ?? 'system', createdAt: new Date(sentAt.getTime() - H) },
+  });
+  add({ type: 'campaign.result', brand: 'mruk', campaignId: camp.id, name: camp.name, ok: true, sent: 5, failed: 1 }, sentAt);
+
+  for (const { spec, at, assigneeId } of rows) {
+    await prisma.staffTask.create({
+      data: {
+        kind: spec.kind,
+        category: spec.category,
+        title: spec.title,
+        detail: spec.detail,
+        roleId: spec.role,
+        assigneeId: assigneeId ?? null,
+        brandKey: spec.brand,
+        entity: spec.entity,
+        entityId: spec.entityId,
+        href: spec.href,
+        priority: spec.priority,
+        dueAt: spec.dueMinutes === null ? null : new Date(at.getTime() + spec.dueMinutes * 60_000),
+        key: spec.key,
+        createdAt: at,
+      },
+    });
+  }
+
+  // A little history: recent pack tasks finished by the warehouse.
+  const daudi = byEmail.get('daudi@mruk.co.tz');
+  const done = await prisma.order.findMany({ where: { status: { in: ['out_for_delivery', 'delivered'] }, brandKey: 'mruk' }, orderBy: { createdAt: 'desc' }, take: 4 });
+  for (const o of done) {
+    const spec = routeEvent({ type: 'order.paid', brand: o.brandKey, number: o.number, method: 'card' }).open[0]!;
+    const t = await prisma.staffTask.create({
+      data: { kind: spec.kind, category: spec.category, title: spec.title, detail: spec.detail, roleId: spec.role, brandKey: spec.brand, entity: spec.entity, entityId: spec.entityId, href: spec.href, priority: spec.priority, key: `${spec.key}~seed`, status: 'done', doneAt: new Date(o.createdAt.getTime() + 3 * H), doneBy: daudi?.name ?? 'Warehouse', createdAt: new Date(o.createdAt.getTime() + H), assigneeId: daudi?.id ?? null },
+    });
+    await prisma.staffTask.update({ where: { id: t.id }, data: { key: `${spec.key}~${t.id}` } });
+  }
+  console.log(`  ${rows.length} open staff tasks routed to teams`);
 }
 
 main()

@@ -9,6 +9,7 @@ import { DotIcon } from '@/components/icons';
 import { adminFilters, branchOptions, navCounts } from '@/server/admin/context';
 import { bankMode } from '@/server/admin/files';
 import { requireStaff } from '@/server/auth';
+import { myOpenTaskCount } from '@/server/tasks';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ const TITLES: Record<string, string> = {
   reports: 'Reports',
   settings: 'Settings and users',
   search: 'Search',
+  tasks: 'My tasks',
   account: 'My account',
 };
 
@@ -35,10 +37,11 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   // The password page lives inside this layout, so the layout itself must allow a pending password change.
   const ctx = await requireStaff(undefined, { allowPasswordChange: true });
   const f = await adminFilters(ctx);
-  const [counts, branches] = await Promise.all([navCounts(ctx, f), branchOptions()]);
+  const [counts, branches, myTasks] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands)]);
   const nav: { group?: string; href: string; label: string; d: string; perm: string; badge?: number }[] = [
-    { group: 'SALES', href: '/admin', label: 'Dashboard', d: ICON.dash, perm: 'dashboard' },
-    { href: '/admin/orders', label: 'Orders', d: ICON.orders, perm: 'orders', badge: counts.orders },
+    { group: 'MY WORK', href: '/admin', label: 'Dashboard', d: ICON.dash, perm: 'dashboard' },
+    { href: '/admin/tasks', label: 'My tasks', d: ICON.task, perm: 'dashboard', badge: myTasks },
+    { group: 'SALES', href: '/admin/orders', label: 'Orders', d: ICON.orders, perm: 'orders', badge: counts.orders },
     { href: '/admin/invoices', label: 'Invoices', d: ICON.invoice, perm: 'invoices' },
     { href: '/admin/advance', label: 'Salary Advance', d: ICON.adv, perm: 'advance', badge: counts.advances },
     { href: '/admin/customers', label: 'Customers', d: ICON.cust, perm: 'customers' },
@@ -73,7 +76,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
             <small>Mr UK and Skywood</small>
           </span>
         </Link>
-          <SideToggle />
+          <SideToggle tasks={myTasks} />
         </div>
         <nav id="ad-sidenav">
           {visible.map((n, i) => {

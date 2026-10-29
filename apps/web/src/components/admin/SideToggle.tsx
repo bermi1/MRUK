@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
  * Phone / small tablet: the sidebar collapses to its header row with a Menu button
  * (otherwise every page starts with a full screen of navigation). Closes on navigation.
  */
-export function SideToggle() {
+export function SideToggle({ tasks = 0 }: { tasks?: number }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [path]);
@@ -16,6 +16,11 @@ export function SideToggle() {
   return (
     <button type="button" className="ad-menu" aria-expanded={open} aria-controls="ad-sidenav" onClick={() => setOpen((v) => !v)}>
       {open ? 'Close' : 'Menu'}
+      {!open && tasks > 0 && (
+        <span className="ad-badge" aria-label={`${tasks} open tasks`}>
+          {tasks > 99 ? '99+' : tasks}
+        </span>
+      )}
     </button>
   );
 }

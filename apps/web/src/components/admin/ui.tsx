@@ -130,8 +130,50 @@ export function pageParam(v: string | undefined, max = 1000): number {
   return Math.max(1, Math.min(max, Math.floor(Number(v)) || 1));
 }
 
+/** Compact figure for role dashboards. `tone` colours the value (bad = needs action). Links when `href` is set (44 px touch target). */
+export function Stat({ label, value, sub, tone, href, testid }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: 'bad' | 'warn' | 'ok' | 'az'; href?: string; testid?: string }) {
+  const body = (
+    <>
+      <span className="l">{label}</span>
+      <span className="v">{value}</span>
+      {sub ? <span className="s">{sub}</span> : null}
+    </>
+  );
+  const cls = `ad-stat${tone ? ` t-${tone}` : ''}`;
+  return href ? (
+    <Link href={href} className={cls} data-testid={testid}>
+      {body}
+    </Link>
+  ) : (
+    <div className={cls} data-testid={testid}>
+      {body}
+    </div>
+  );
+}
+
+/** Dashboard widget card with a heading, a sub line and an optional "open" link. */
+export function Widget({ title, sub, link, testid, children }: { title: string; sub?: string; link?: { href: string; label: string }; testid?: string; children: React.ReactNode }) {
+  return (
+    <section className="ad-card ad-widget" data-testid={testid}>
+      <div className="ad-between">
+        <div>
+          <h2 className="ad-h">{title}</h2>
+          {sub ? <p className="ad-sub">{sub}</p> : null}
+        </div>
+        {link ? (
+          <Link href={link.href} className="ad-wlink">
+            {link.label}
+          </Link>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export const ICON = {
-  dash: 'M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 4v4h6V4z',
+  task: 'M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9',
+  dash:'M4 13h6V4H4zM14 20h6v-9h-6zM4 20h6v-4H4zM14 4v4h6V4z',
   orders: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10',
   invoice: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
   adv: 'M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2',
