@@ -80,10 +80,12 @@ async function resetStaff2fa() {
   const emails = raw.split(/[\s,]+/).filter((e) => /^[^@\s]+@[^@\s]+$/.test(e));
   const users = await prisma.staffUser.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } });
   for (const u of users) {
-    await prisma.staffUser.update({ where: { id: u.id }, data: { totpEnabled: false, totpSecretEnc: null } });
+    await prisma.staffUser.update({ where: { id: u.id }, data: { totpEnabled: false, totpSecretEnc: null, failedLogins: 0, lockedUntil: null, active: true } });
     await prisma.session.deleteMany({ where: { staffId: u.id } });
     await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'staff.2fa.reset', entity: 'StaffUser', entityId: u.id } });
   }
+  // Clear sign-in rate-limit windows too (keys are hashed, so all are cleared; they rebuild within minutes).
+  await prisma.rateLimit.deleteMany({});
   await prisma.setting.upsert({ where: { key: 'ops.2faReset' }, create: { key: 'ops.2faReset', value: { value: raw, at: new Date().toISOString() } }, update: { value: { value: raw, at: new Date().toISOString() } } });
   console.log(`[db:deploy] Two-factor reset for ${users.length} staff account(s); they will see a new QR code at next sign-in.`);
 }
