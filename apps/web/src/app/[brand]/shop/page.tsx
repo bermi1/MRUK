@@ -6,6 +6,7 @@ import { SafeImg } from '@/components/store/SafeImg';
 import { ProductCard } from '@/components/store/brands/ProductCard';
 import { ShopControls } from '@/components/store/ShopControls';
 import { PayLaterBanner } from '@/components/store/PayLaterBanner';
+import { payLaterOn } from '@/server/paylater';
 import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
@@ -45,7 +46,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const raw = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined;
   const q: Q = Query.parse({ cat: one(raw.cat), sort: one(raw.sort), min: one(raw.min), max: one(raw.max), stock: one(raw.stock), n: one(raw.n) });
-  const [cats, products, cmp, t] = await Promise.all([getCategories(key), getProducts(key), getCompareIds(key), getT()]);
+  const [cats, products, cmp, t, payLater] = await Promise.all([getCategories(key), getProducts(key), getCompareIds(key), getT(), payLaterOn(key)]);
   const b = `/${key}`;
   const cat = cats.find((c) => c.id === q.cat);
   const sort: Sort = q.sort ?? 'popular';
@@ -59,7 +60,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const list = sortList(filtered, sort);
   const pages = q.n ?? 1;
   const shown = list.slice(0, pages * PAGE);
-  const perMonth = t('perMonthShort');
+  const perMonth = payLater ? t('perMonthShort') : '';
   const filterOn = lo !== undefined || hi !== undefined || !!q.stock;
 
   const href = (patch: Partial<Record<keyof Q, string | number | undefined>>) => {
@@ -78,7 +79,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
     <div className={`wrap shop shop-${key}`}>
       <header className="shop-head">
         <h1 className="shop-title">{cat ? cat.name : t('shopTitle')}</h1>
-        <p className="shop-sub">{t('shopSub', { n: filtered.length })}</p>
+        <p className="shop-sub">{t(payLater ? 'shopSub' : 'shopSubNoPl', { n: filtered.length })}</p>
       </header>
 
       {/* "Shop by category": one compact row of category shortcuts. */}
@@ -153,7 +154,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
           </Link>
         )}
       </div>
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`${b}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`${b}/pay-later`} />}
     </div>
   );
 }

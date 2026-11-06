@@ -9,21 +9,22 @@ import { getT } from '@/server/locale';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catalog';
+import { payLaterOn } from '@/server/paylater';
 
 type SP = Promise<{ sub?: string; sort?: string; view?: string }>;
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; cat: string }> }): Promise<Metadata> {
   const { brand, cat } = await params;
-  const cats = await getCategories(brand as BrandKey);
+  const [cats, payLater] = await Promise.all([getCategories(brand as BrandKey), payLaterOn(brand as BrandKey)]);
   const c = cats.find((x) => x.id === cat);
-  return { title: c ? c.name : 'All products', description: c ? `${c.name}: ${c.subs.join(', ')}. Pay in full or monthly with Pay Later by Azania Bank.` : undefined };
+  return { title: c ? c.name : 'All products', description: c ? `${c.name}: ${c.subs.join(', ')}.${payLater ? ' Pay in full or monthly with Pay Later by Azania Bank.' : ''}` : undefined };
 }
 
 export default async function CategoryPage({ params, searchParams }: { params: Promise<{ brand: string; cat: string }>; searchParams: SP }) {
   const { brand: key, cat: catId } = (await params) as { brand: BrandKey; cat: string };
   if (catId === 'all') permanentRedirect(`/${key}/shop`);
   const sp = await searchParams;
-  const [brand, cats, products, cmp, cart, t] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key), getT()]);
+  const [brand, cats, products, cmp, cart, t, payLater] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key)]);
   const cat = catId === 'all' ? null : cats.find((c) => c.id === catId);
   if (catId !== 'all' && !cat) notFound();
   const sub = sp.sub && (cat?.subs.includes(sp.sub) ?? false) ? sp.sub : 'All';
@@ -98,17 +99,17 @@ export default async function CategoryPage({ params, searchParams }: { params: P
       {view === 'grid' ? (
         <div className="grid-5" style={{ marginTop: 20 }}>
           {list.map((p) => (
-            <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} />
+            <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} payLater={payLater} />
           ))}
         </div>
       ) : (
         <div className="grid-2" style={{ marginTop: 20 }}>
           {list.map((p) => (
-            <ProductRow key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} />
+            <ProductRow key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} payLater={payLater} />
           ))}
         </div>
       )}
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />}
     </div>
   );
 }

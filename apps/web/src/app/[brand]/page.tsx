@@ -5,6 +5,8 @@ import type { BrandKey } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
 import { getBrand, getBundles, getCategories, getCms, getFlashDeals, getProducts, getSuppliers } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
+import { stripPayLater } from '@bt/core';
 
 /**
  * Brand home. Same data for both brands (CMS hero slides, catalogue, bundles, flash deals,
@@ -12,7 +14,7 @@ import { getT } from '@/server/locale';
  */
 export default async function BrandHome({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, cms, cats, products, bundles, suppliers, flash, compare, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getCompareIds(key), getT()]);
+  const [brand, cms, cats, products, bundles, suppliers, flash, compare, t, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getCompareIds(key), getT(), payLaterOn(key)]);
   const b = `/${key}`;
   const byId = (id: string) => products.find((p) => p.id === id);
   const slides: HeroSlideView[] = cms.hero
@@ -21,9 +23,10 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
       if (!p) return null;
       const price = h.price ?? p.price;
       return {
-        eyebrow: h.eyebrow,
+        // Pay Later off: drop CMS hero copy that promises it.
+        eyebrow: payLater ? h.eyebrow : stripPayLater(h.eyebrow),
         title: h.title,
-        sub: h.sub,
+        sub: payLater ? h.sub : stripPayLater(h.sub),
         img: h.img || p.img || cats.find((c) => c.id === p.cat)?.img || '',
         href: h.href || `${b}/p/${p.id}`,
         price,
@@ -48,7 +51,8 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   const heroLabels: HeroLabels = {
     shopNow: t('shopNow'),
     seeDeals: t('seeDeals'),
-    perMonth: t('orPerMonth'),
+    // Empty when Pay Later is off: the heroes then show the price without the monthly chip.
+    perMonth: payLater ? t('orPerMonth') : '',
     withAdvance: t('withAdvance'),
     pause: t('pause'),
     play: t('play'),
@@ -60,7 +64,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     musicOff: t('musicOff'),
   };
   const cities = [...new Set(suppliers.map((s) => s.city))];
-  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };
+  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, payLater, t };
 
   if (key === 'skywood') {
     const heroIds = new Set(cms.hero.map((h) => h.pid));

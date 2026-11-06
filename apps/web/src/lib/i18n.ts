@@ -386,6 +386,14 @@ const en = {
   accErrGeneric: 'Something went wrong. Please try again.',
   accErrMaxAddresses: 'You can save up to 10 addresses.',
   accErrNeedEmail: 'Add your email address in your details first.',
+  // Pay Later switched off (admin Settings › Pay Later)
+  trustSupport: 'Help on WhatsApp',
+  trustSupportSub: 'Our team answers 7 days a week',
+  authSubNoPl: 'Track your orders and saved details.',
+  shopSubNoPl: '{n} products',
+  miniSoonTitle: 'Coming soon to the Azania app',
+  miniSoonBody: 'Shopping Mr UK and Skywood from the Azania Bank app is not open yet. Thank you for your patience. We will let you know when it is ready.',
+  miniSoonShop: 'Shop on the website',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -774,6 +782,13 @@ const sw: Record<MessageKey, string> = {
   accErrGeneric: 'Hitilafu imetokea. Tafadhali jaribu tena.',
   accErrMaxAddresses: 'Unaweza kuhifadhi hadi anwani 10.',
   accErrNeedEmail: 'Ongeza barua pepe yako kwenye taarifa zako kwanza.',
+  trustSupport: 'Msaada kwa WhatsApp',
+  trustSupportSub: 'Timu yetu inajibu siku 7 kwa wiki',
+  authSubNoPl: 'Fuatilia oda zako na taarifa ulizohifadhi.',
+  shopSubNoPl: 'Bidhaa {n}',
+  miniSoonTitle: 'Inakuja hivi karibuni kwenye programu ya Azania',
+  miniSoonBody: 'Ununuzi wa bidhaa za Mr UK na Skywood kupitia programu ya Azania Bank bado haujafunguliwa. Asante kwa uvumilivu wako. Tutakujulisha ukiwa tayari.',
+  miniSoonShop: 'Nunua kwenye tovuti',
 };
 
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, sw };

@@ -14,7 +14,7 @@ import { fill, useMobileMenu, type MobileMenuProps } from './shared';
  * that is not one of the four bottom-bar destinations: categories, Pay Later, deals, compare,
  * track order, suppliers, support, WhatsApp, language and the sister-site link.
  */
-export function MobileDrawer({ brand, brandName, cats, labels, announcement, locale, whatsapp, compareCount }: MobileMenuProps) {
+export function MobileDrawer({ brand, brandName, cats, labels, announcement, locale, whatsapp, compareCount, payLater }: MobileMenuProps) {
   const { open, setOpen, close, panel } = useMobileMenu();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -89,6 +89,7 @@ export function MobileDrawer({ brand, brandName, cats, labels, announcement, loc
                 </li>
               </ul>
 
+              {payLater && (
               <div className="dr-pl">
                 <img src="/brand/azania-bank-white.png" alt="" width={30} height={23} />
                 <div>
@@ -102,6 +103,7 @@ export function MobileDrawer({ brand, brandName, cats, labels, announcement, loc
                   <Link href={`${b}/pay-later#how`}>{labels.payLaterHow}</Link>
                 </div>
               </div>
+              )}
 
               <p className="dr-h">{labels.helpAndServices}</p>
               <nav className="dr-links" aria-label={labels.helpAndServices}>

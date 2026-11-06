@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { img } from '@/lib/img';
 import type { BrandView, CategoryView, ProductView } from '@/lib/types';
 import type { MessageKey } from '@/lib/i18n';
-import { REVIEWS } from '@/lib/content';
+import { reviewsFor } from '@/lib/content';
 import { fmt, initials } from '@/lib/format';
 import type { BundleView, FlashDeal } from '@/server/catalog';
-import { ArrowRightIcon, CardIcon, PinIcon, ShieldIcon, Stars, TruckIcon } from '../../../icons';
+import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIcon } from '../../../icons';
 import { AddBundleButton, AddButton } from '../../CartButtons';
 import { subscribeLabels } from '../../Footer';
 import { Subscribe } from '../../Subscribe';
@@ -63,13 +63,15 @@ export function SkywoodHome(props: {
   cities: string[];
   compare: string[];
   focus: ProductView | undefined;
+  /** Admin switch: false removes the Pay Later section, promise item and every monthly price. */
+  payLater: boolean;
   t: T;
 }) {
-  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, t } = props;
+  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, payLater, t } = props;
   const b = `/${brand.key}`;
-  const perMonth = t('perMonthShort');
+  const perMonth = payLater ? t('perMonthShort') : '';
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
-  const reviews = REVIEWS.skywood;
+  const reviews = reviewsFor('skywood', payLater);
   // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
   const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
@@ -91,7 +93,9 @@ export function SkywoodHome(props: {
             [
               [<TruckIcon key="1" size={22} strokeWidth={1.3} />, t('trustDelivery'), t('trustDeliverySub'), `${b}/track`],
               [<ShieldIcon key="2" size={22} strokeWidth={1.3} />, t('trustWarranty'), t('trustWarrantySub'), `${b}/support`],
-              [<CardIcon key="3" size={22} strokeWidth={1.3} />, t('trustAdvance'), t('trustAdvanceSub'), `${b}/pay-later`],
+              payLater
+                ? ([<CardIcon key="3" size={22} strokeWidth={1.3} />, t('trustAdvance'), t('trustAdvanceSub'), `${b}/pay-later`] as const)
+                : ([<ChatIcon key="3" size={22} strokeWidth={1.3} />, t('trustSupport'), t('trustSupportSub'), `${b}/support#whatsapp`] as const),
               [<PinIcon key="4" size={22} strokeWidth={1.3} />, t('trustShowrooms', { n: supplierCount }), t('trustShowroomsSub'), `${b}/suppliers`],
             ] as const
           ).map(([icon, a, s, href], k) => (
@@ -200,7 +204,7 @@ export function SkywoodHome(props: {
                     <div className="sw-offer-price">
                       <b>{fmt(p.dealPrice)}</b>
                       <s>{fmt(p.price)}</s>
-                      <span>{perMonth.replace('{amount}', fmt(p.dealPrice / 12))}</span>
+                      {perMonth && <span>{perMonth.replace('{amount}', fmt(p.dealPrice / 12))}</span>}
                     </div>
                     {p.stock > 0 && <AddButton brand="skywood" id={p.id} name={p.name} className="sw-offer-add" />}
                   </div>
@@ -234,7 +238,7 @@ export function SkywoodHome(props: {
               </ul>
               <p className="sw-story-price">
                 {fmt(focus.price)}
-                <em>{t('orPerMonth', { amount: fmt(focus.price / 12) })}</em>
+                {payLater && <em>{t('orPerMonth', { amount: fmt(focus.price / 12) })}</em>}
               </p>
               <div className="sw-story-cta">
                 <Link href={`${b}/p/${focus.id}`} className="sw-btn">
@@ -275,7 +279,7 @@ export function SkywoodHome(props: {
                   <div className="sw-set-price">
                     <s>{fmt(d.was)}</s>
                     <b>{fmt(d.now)}</b>
-                    <span>{t('orPerMonth', { amount: fmt(d.now / 12) })}</span>
+                    {payLater && <span>{t('orPerMonth', { amount: fmt(d.now / 12) })}</span>}
                   </div>
                   <AddBundleButton brand="skywood" ids={d.items.map((p) => p.id)} className="sw-btn sw-btn-sm" />
                 </div>
@@ -286,6 +290,7 @@ export function SkywoodHome(props: {
       )}
 
       {/* Pay Later */}
+      {payLater && (
       <section className="sw-pl">
         <div className="wrap">
           <div className="sw-pl-top" data-reveal>
@@ -323,6 +328,7 @@ export function SkywoodHome(props: {
           </div>
         </div>
       </section>
+      )}
 
       {/* Reviews */}
       {reviews.length > 0 && (

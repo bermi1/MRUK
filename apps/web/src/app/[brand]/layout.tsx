@@ -18,13 +18,16 @@ import { themeVars } from '@/lib/theme';
 import { getCartCount, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getCms, getProducts, isBrandKey, photoFirst } from '@/server/catalog';
 import { getLocale, getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
+import { stripPayLater } from '@bt/core';
 import { currentCustomer } from '@/server/session';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand } = await params;
   if (!isBrandKey(brand)) return {};
-  const [b, cms] = await Promise.all([getBrand(brand), getCms(brand)]);
+  const [b, cms, payLater] = await Promise.all([getBrand(brand), getCms(brand), payLaterOn(brand)]);
   const img = cms.seo.img || b.heroImg;
+  const desc = payLater ? cms.seo.desc : stripPayLater(cms.seo.desc) || b.tagline;
   const sky = brand === 'skywood';
   return {
     title: { default: cms.seo.title || b.name, template: `%s · ${b.name}` },
@@ -35,9 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
       : { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
     manifest: sky ? '/icons/skywood.webmanifest' : '/manifest.webmanifest',
     appleWebApp: { capable: true, title: b.name, statusBarStyle: 'default' },
-    description: cms.seo.desc,
-    openGraph: { title: cms.seo.title, description: cms.seo.desc, siteName: b.name, images: img ? [{ url: img }] : undefined, url: `/${brand}` },
-    twitter: { card: 'summary_large_image', title: cms.seo.title, description: cms.seo.desc, images: img ? [img] : undefined },
+    description: desc,
+    openGraph: { title: cms.seo.title, description: desc, siteName: b.name, images: img ? [{ url: img }] : undefined, url: `/${brand}` },
+    twitter: { card: 'summary_large_image', title: cms.seo.title, description: desc, images: img ? [img] : undefined },
   };
 }
 
@@ -49,8 +52,11 @@ export async function generateViewport({ params }: { params: Promise<{ brand: st
 export default async function BrandLayout({ children, params }: { children: React.ReactNode; params: Promise<{ brand: string }> }) {
   const { brand: key } = await params;
   if (!isBrandKey(key)) notFound();
-  const [brand, cms, cats, products, cartCount, cmp, customer, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT()]);
+  const [brand, cms, cats, products, cartCount, cmp, customer, t, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT(), payLaterOn(key)]);
   const locale = await getLocale();
+  // Pay Later off: CMS copy that promises it is dropped (the announcement falls back to the service promise).
+  const announcement = payLater ? cms.announcement : stripPayLater(cms.announcement) || `${t('trustDelivery')} · ${t('trustWarranty')}`;
+  const megaPromo = payLater ? cms.megaPromo : { ...cms.megaPromo, eyebrow: stripPayLater(cms.megaPromo.eyebrow), title: stripPayLater(cms.megaPromo.title) || cms.megaPromo.title };
   // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
   const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
   const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
@@ -59,12 +65,13 @@ export default async function BrandLayout({ children, params }: { children: Reac
   );
   const header: HeaderProps = {
     brand,
-    cms: { announcement: cms.announcement, megaPromo: cms.megaPromo },
+    cms: { announcement, megaPromo },
     cats,
     mega,
     cartCount,
     compareCount: cmp.length,
     user: customer ? { name: customer.name, phone: customer.phone, email: customer.email } : null,
+    payLater,
     labels: {
       track: t('trackOrder'),
       suppliers: t('suppliersNearYou'),
@@ -98,10 +105,11 @@ export default async function BrandLayout({ children, params }: { children: Reac
     brand: key,
     brandName: brand.name,
     cats,
-    announcement: cms.announcement,
+    announcement,
     locale,
     whatsapp: waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`),
     compareCount: cmp.length,
+    payLater,
     labels: {
       categories: t('categories'),
       shopAll: t('shopTitle'),
@@ -137,7 +145,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         <AppBar brand={key} brandName={brand.name} searchLabel={t('searchShort')} menu={sky ? <SkywoodMobileMenu {...menu} /> : <MrukMobileMenu {...menu} />} />
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
-        <Footer brand={brand} cats={cats} t={t} social={cms.social} />
+        <Footer brand={brand} cats={cats} t={t} social={cms.social} payLater={payLater} />
         <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
           <WhatsAppIcon />
         </a>
