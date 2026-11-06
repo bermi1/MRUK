@@ -11,12 +11,14 @@ import { RevealObserver } from '@/components/store/Reveal';
 import { archivo, fraunces } from '@/fonts/brand';
 import '@/styles/mruk.css';
 import '@/styles/skywood.css';
+import { MessagesProvider } from '@/components/store/Messages';
 import { ToastProvider } from '@/components/store/Toast';
 import { WhatsAppIcon } from '@/components/icons';
 import { waLink } from '@/lib/format';
 import { themeVars } from '@/lib/theme';
 import { getCartCount, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getCms, getProducts, isBrandKey, photoFirst } from '@/server/catalog';
+import { clientMessages } from '@/lib/i18n';
 import { getLocale, getT } from '@/server/locale';
 import { currentCustomer } from '@/server/session';
 
@@ -51,6 +53,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
   if (!isBrandKey(key)) notFound();
   const [brand, cms, cats, products, cartCount, cmp, customer, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT()]);
   const locale = await getLocale();
+  // Only this brand's products that are still on sale count (stale or foreign ids in the cookie are ignored).
+  const cmpCount = cmp.filter((id) => products.some((p) => p.id === id)).length;
   // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
   const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
   const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
@@ -63,7 +67,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
     cats,
     mega,
     cartCount,
-    compareCount: cmp.length,
+    compareCount: cmpCount,
     user: customer ? { name: customer.name, phone: customer.phone, email: customer.email } : null,
     labels: {
       track: t('trackOrder'),
@@ -101,7 +105,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
     announcement: cms.announcement,
     locale,
     whatsapp: waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`),
-    compareCount: cmp.length,
+    compareCount: cmpCount,
     labels: {
       categories: t('categories'),
       shopAll: t('shopTitle'),
@@ -130,6 +134,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const sky = key === 'skywood';
   return (
     <div className={`brand-root ${archivo.variable} ${fraunces.variable}`} data-brand={key} style={themeVars(brand)}>
+      <MessagesProvider messages={clientMessages(locale)}>
       <ToastProvider>
         <a href="#main" className="skip">
           {t('skipToContent')}
@@ -144,6 +149,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), account: t('account') }} />
         <RevealObserver />
       </ToastProvider>
+      </MessagesProvider>
     </div>
   );
 }

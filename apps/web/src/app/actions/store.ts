@@ -8,7 +8,7 @@ import { prisma } from '@bt/db';
 import { isPaymentMethod } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
 import { AuthError, requestOtp, verifyOtp } from '@/server/auth';
-import { addToCart, getCart, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
+import { COMPARE_MAX, addToCart, clearCompare, getCart, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
 import { getProducts, isBrandKey } from '@/server/catalog';
 import { LOCALE_COOKIE } from '@/server/locale';
 import { capturePayment, CheckoutError, confirmationPath, confirmationToken, placeAdvanceOrder, placeOrder } from '@/server/orders';
@@ -76,12 +76,23 @@ export async function updateCartAction(brand: string, patch: { region?: string; 
   }
 }
 
-export async function toggleCompareAction(brand: string, productId: string): Promise<ActionResult<{ ids: string[] }>> {
+export async function toggleCompareAction(brand: string, productId: string): Promise<ActionResult<{ ids: string[]; added: boolean; full: boolean; max: number }>> {
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
-    const ids = await toggleCompare(b, idZ.parse(productId));
+    const r = await toggleCompare(b, idZ.parse(productId));
     revalidatePath(`/${b}`, 'layout');
-    return { ok: true, data: { ids } };
+    return { ok: true, data: { ...r, max: COMPARE_MAX } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function clearCompareAction(brand: string): Promise<ActionResult> {
+  try {
+    const b = brandZ.parse(brand) as 'mruk' | 'skywood';
+    await clearCompare(b);
+    revalidatePath(`/${b}`, 'layout');
+    return { ok: true };
   } catch (e) {
     return fail(e);
   }

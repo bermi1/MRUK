@@ -90,7 +90,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
         </button>
       </div>
       <div style={{ display: 'flex', gap: 18, marginTop: 16, fontSize: 14, fontWeight: 600, alignItems: 'center' }}>
-        <CompareToggle brand={brand} id={p.id} on={inCompare} long className="cmp-link" />
+        <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link" />
         <button type="button" onClick={() => setShareOpen((x) => !x)} style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44 }} aria-expanded={shareOpen}>
           <ShareIcon /> {labels.share}
         </button>

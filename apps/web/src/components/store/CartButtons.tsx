@@ -1,7 +1,8 @@
 'use client';
-import { useTransition } from 'react';
+import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { addBundleAction, addToCartAction, toggleCompareAction } from '@/app/actions/store';
+import { addBundleAction, addToCartAction, clearCompareAction, toggleCompareAction } from '@/app/actions/store';
+import { useMessages } from './Messages';
 import { PlusIcon, TickIcon } from '../icons';
 import { useToast } from './Toast';
 
@@ -35,26 +36,60 @@ export function AddButton({ brand, id, name, className = 'plus', label = <PlusIc
   );
 }
 
-export function CompareToggle({ brand, id, on, long = false, className }: { brand: string; id: string; on: boolean; long?: boolean; className?: string }) {
+export function CompareToggle({ brand, id, name = '', on, long = false, className }: { brand: string; id: string; name?: string; on: boolean; long?: boolean; className?: string }) {
   const [pending, start] = useTransition();
+  const [shown, setShown] = useOptimistic(on);
   const router = useRouter();
-  const label = long ? (on ? 'Added to compare' : 'Add to compare') : 'Compare';
+  const toast = useToast();
+  const t = useMessages();
+  const label = long ? (shown ? t('addedCompare') : t('addCompare')) : t('compare');
   return (
     <button
       type="button"
-      className={className ?? `cmp-tag ${on ? 'on' : ''}`}
-      aria-pressed={on}
+      className={className ?? `cmp-tag ${shown ? 'on' : ''}`}
+      aria-pressed={shown}
+      aria-label={name ? t(shown ? 'cmpRemove' : 'cmpAddAria', { name }) : undefined}
       disabled={pending}
+      data-testid="compare-toggle"
       onClick={(e) => {
         stop(e);
         start(async () => {
-          await toggleCompareAction(brand, id);
+          setShown(!shown);
+          const r = await toggleCompareAction(brand, id);
+          if (!r.ok) toast(r.error);
+          else if (r.data!.full) toast(t('cmpLimit', { max: r.data!.max }));
+          else if (name) toast(t(r.data!.added ? 'cmpAdded' : 'cmpRemoved', { name }));
           router.refresh();
         });
       }}
     >
-      {on ? <TickIcon size={14} strokeWidth={2.4} /> : <PlusIcon size={14} strokeWidth={2.2} />}
+      {shown ? <TickIcon size={14} strokeWidth={2.4} /> : <PlusIcon size={14} strokeWidth={2.2} />}
       <span className="cmp-l">{label}</span>
+    </button>
+  );
+}
+
+/** Empties the compare list (compare page). */
+export function ClearCompareButton({ brand, className = 'link-u' }: { brand: string; className?: string }) {
+  const [pending, start] = useTransition();
+  const router = useRouter();
+  const toast = useToast();
+  const t = useMessages();
+  return (
+    <button
+      type="button"
+      className={className}
+      disabled={pending}
+      data-testid="compare-clear"
+      onClick={() =>
+        start(async () => {
+          const r = await clearCompareAction(brand);
+          if (!r.ok) toast(r.error);
+          router.refresh();
+        })
+      }
+    >
+      {t('cmpClearAll')}
     </button>
   );
 }
