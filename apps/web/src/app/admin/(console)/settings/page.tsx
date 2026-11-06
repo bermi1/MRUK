@@ -7,6 +7,8 @@ import { Forbidden, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { adapterStatus } from '@/server/admin/files';
 import { TickIcon } from '@/components/icons';
 import { requireStaff } from '@/server/auth';
+import { PayLaterSwitch } from '@/components/admin/PayLaterSwitch';
+import { payLaterAdminStates } from '@/server/paylater';
 
 export const metadata = { title: 'Settings and users' };
 
@@ -30,6 +32,7 @@ const PERMS: [string, string][] = [
   ['tickets', 'Support tickets'],
   ['tickets.write', 'Reply to tickets'],
   ['reports', 'Reports'],
+  ['paylater.toggle', 'Switch Pay Later on/off'],
   ['settings', 'Settings and users'],
 ];
 // Each switch pauses or allows messages for one kind of routed task. Staff choose their own channels
@@ -66,7 +69,13 @@ function BrandBoxes({ brands }: { brands?: string[] }) {
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const ctx = await requireStaff();
-  if (!ctx.can('settings')) return <Forbidden what="settings and users" />;
+  const canPl = ctx.can('paylater.toggle') || ctx.can('settings');
+  if (!ctx.can('settings') && !canPl) return <Forbidden what="settings and users" />;
+  const plBrands = (['mruk', 'skywood'] as const).filter((b) => ctx.canBrand(b));
+  const plStates = await payLaterAdminStates();
+  const payLater = <PayLaterSwitch states={plStates} brands={plBrands} canToggle={canPl} />;
+  // Store managers ('paylater.toggle' without 'settings') see only the Pay Later switch.
+  if (!ctx.can('settings')) return <div className="ad-stack">{payLater}</div>;
   const sp = await searchParams;
   const actor = (sp.actor ?? '').trim().slice(0, 80);
   const entity = (sp.entity ?? '').trim().slice(0, 40);
@@ -91,6 +100,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="ad-stack">
+      {payLater}
       <div className="ad-grid2 wide-left">
         <div className="ad-stack">
           <section className="ad-card">

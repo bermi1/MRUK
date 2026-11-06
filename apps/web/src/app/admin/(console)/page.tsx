@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { dashboardSections, greeting } from '@bt/core';
 import { TaskList } from '@/components/admin/TaskList';
 import { Forbidden } from '@/components/admin/ui';
+import { PayLaterStatus } from '@/components/admin/PayLaterSwitch';
+import { payLaterAdminStates } from '@/server/paylater';
 import { adminFilters } from '@/server/admin/context';
 import { loadTasks } from '@/server/admin/taskview';
 import { requireStaff, type StaffContext } from '@/server/auth';
@@ -40,6 +42,10 @@ export default async function Dashboard() {
   const has = (s: (typeof sections)[number]) => sections.includes(s);
   const tasks = await loadTasks(ctx, f.brands, 'mine', { take: 6 });
   const first = ctx.name.split(' ')[0] ?? ctx.name;
+  // Owners and managers see the Pay Later switch state at a glance.
+  const plRole = ctx.can('settings') || ctx.can('paylater.toggle');
+  const plStates = plRole ? await payLaterAdminStates() : null;
+  const plBrands = (['mruk', 'skywood'] as const).filter((b) => f.brands.includes(b));
 
   return (
     <div className="ad-stack" data-role={ctx.role}>
@@ -52,6 +58,11 @@ export default async function Dashboard() {
             {ctx.roleName} · {brandText(f.brands)}
             {f.branch ? ` · ${f.branch}` : ''} · {tasks.total ? `${tasks.total} open task${tasks.total === 1 ? '' : 's'} for you` : 'nothing waiting for you'}
           </p>
+          {plStates && plBrands.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <PayLaterStatus states={plStates} brands={plBrands} canChange />
+            </div>
+          )}
         </div>
         <nav className="ad-quick" aria-label="Quick actions">
           {quickActions(ctx).map((a) => (

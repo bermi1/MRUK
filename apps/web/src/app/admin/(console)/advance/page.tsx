@@ -9,6 +9,8 @@ import { adminFilters, ago, monthName, orderWhere, startOfMonthEAT } from '@/ser
 import { audit } from '@/server/audit';
 import { requireStaff } from '@/server/auth';
 import { integrations } from '@/server/integrations';
+import { PayLaterStatus } from '@/components/admin/PayLaterSwitch';
+import { payLaterAdminStates } from '@/server/paylater';
 
 export const metadata = { title: 'Salary Advance' };
 
@@ -36,11 +38,12 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
   const view = sp.view === 'rejected' || sp.view === 'closed' ? sp.view : 'pipeline';
   const month = startOfMonthEAT();
   const include = { order: { select: { number: true, brandKey: true, items: { select: { name: true }, take: 2 } } }, contract: { select: { number: true } } } as const;
-  const [financed, colRows, counts, listRows] = await Promise.all([
+  const [financed, colRows, counts, listRows, plStates] = await Promise.all([
     prisma.salaryAdvanceApplication.aggregate({ where: { order: ow, status: { in: ['approved', 'disbursed', 'repaying', 'closed'] }, decidedAt: { gte: month } }, _sum: { total: true } }),
     view === 'pipeline' ? Promise.all(COLS.map(([s]) => prisma.salaryAdvanceApplication.findMany({ where: { order: ow, status: s }, include, orderBy: { createdAt: s === 'submitted' ? 'asc' : 'desc' }, take: 30 }))) : Promise.resolve([]),
     prisma.salaryAdvanceApplication.groupBy({ by: ['status'], where: { order: ow }, _count: { _all: true } }),
     view !== 'pipeline' ? prisma.salaryAdvanceApplication.findMany({ where: { order: ow, status: view }, include, orderBy: { updatedAt: 'desc' }, take: 100 }) : Promise.resolve([]),
+    payLaterAdminStates(),
   ]);
   const count = (s: string) => counts.find((c) => c.status === s)?._count._all ?? 0;
   const id = sp.id && /^[a-z0-9]{10,40}$/.test(sp.id) ? sp.id : null;
@@ -83,6 +86,9 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Azania Bank Salary Advance pipeline</div>
           <p>Decisions come from {integrations.bank.name}. Stock is reserved when an application is submitted.</p>
+          <div style={{ marginTop: 6 }}>
+            <PayLaterStatus states={plStates} brands={(['mruk', 'skywood'] as const).filter((b) => f.allowed.includes(b))} canChange={ctx.can('paylater.toggle') || ctx.can('settings')} light />
+          </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 12.5, color: '#E3F4FC' }}>Financed in {monthName(new Date())}</div>
