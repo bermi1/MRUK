@@ -39,7 +39,12 @@ export interface ProductView {
   sub: string;
   model: string;
   name: string;
+  /** What the customer pays today: the list price less any live flash deal (same rule as the cart). */
   price: number;
+  /** Catalogue (list) price before any flash deal. Equal to price when there is no deal. */
+  listPrice: number;
+  /** Live flash-deal percentage off; 0 = no deal. */
+  off: number;
   stock: number;
   features: string[];
   img: string;

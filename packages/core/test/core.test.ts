@@ -43,6 +43,7 @@ import {
   paymentAllowed,
   paymentLabel,
   priceCart,
+  priceLabel,
   releasesStock,
   repaymentProgress,
   retrievePolicies,
@@ -353,6 +354,20 @@ describe('catalogue AI', () => {
     expect(p).toContain('UK F275');
     expect(p).toContain(SUPPORT_FALLBACK);
     expect(groundedPrompt('x', {})).toContain('CATALOGUE: []');
+  });
+  it('uses the live (flash deal) price and names the list price, never inventing one', () => {
+    const deal = { ...fridges[1]!, price: 850_000, listPrice: 1_000_000 };
+    const items = [fridges[0]!, deal];
+    expect(priceLabel(deal)).toBe('TZS 850,000 (flash deal, was TZS 1,000,000)');
+    expect(priceLabel(fridges[0]!)).not.toContain('was');
+    const cheapest = [...items].sort((a, b) => a.price - b.price)[0]!;
+    expect(compareVerdict(items).bestValue.model).toBe(cheapest.model);
+    const value = answerFromCatalogue('Which is best value?', items).text;
+    expect(value).toContain('TZS 850,000 (flash deal, was TZS 1,000,000)');
+    expect(answerFromCatalogue('monthly price?', [deal], 12).text).toContain(`${fmtTZS(850_000 / 12)}/mo`);
+    const prompt = groundedPrompt('Compare', { products: items });
+    expect(prompt).toContain('"priceTZS":850000,"listPriceTZS":1000000');
+    expect(prompt.match(/listPriceTZS/g)).toHaveLength(2); // the rule line + the one deal only
   });
   it('gives safe quick fixes', () => {
     expect(supportQuickFixes('Repair')).toContain('1. Check the power');

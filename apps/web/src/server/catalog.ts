@@ -71,6 +71,8 @@ export function toView(p: DbProduct): ProductView {
     model: p.model,
     name: p.name,
     price: p.price,
+    listPrice: p.price,
+    off: 0,
     stock: p.stock,
     features: p.features,
     img: p.images[0] ?? '',
@@ -83,12 +85,31 @@ export function toView(p: DbProduct): ProductView {
   };
 }
 
-export const getProducts = cache(
-  cached(async (brand: BrandKey): Promise<ProductView[]> => {
-    const ps = await prisma.product.findMany({ where: { brandKey: brand, hidden: false }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] });
-    return ps.map(toView);
-  }, 'products'),
-);
+const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
+  const ps = await prisma.product.findMany({ where: { brandKey: brand, hidden: false }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] });
+  return ps.map(toView);
+}, 'products');
+
+/** Live flash-deal percentage per product (deals past their end time are ignored). */
+function liveDeals(promos: { productId: string | null; percent: number; endsAt: string | null }[], now = Date.now()): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const pr of promos) if (pr.productId && !m.has(pr.productId) && (!pr.endsAt || new Date(pr.endsAt).getTime() > now)) m.set(pr.productId, pr.percent);
+  return m;
+}
+
+/**
+ * Storefront products with the price the customer actually pays. Flash deals are applied
+ * here, once, so cards, search, compare, the AI and the cart all agree (the cart applies
+ * the same rule from the database at checkout).
+ */
+export const getProducts = cache(async (brand: BrandKey): Promise<ProductView[]> => {
+  const [ps, promos] = await Promise.all([loadProducts(brand), loadFlashPromos(brand)]);
+  const deals = liveDeals(promos);
+  return ps.map((p) => {
+    const off = deals.get(p.id) ?? 0;
+    return off ? { ...p, off, listPrice: p.price, price: salePrice(p.price, off) } : p;
+  });
+});
 
 export const getAllProducts = cache(async (): Promise<ProductView[]> => {
   const [a, b] = await Promise.all([getProducts('mruk'), getProducts('skywood')]);
@@ -116,7 +137,7 @@ export function searchProducts(products: ProductView[], q: string): ProductView[
 }
 
 export function toFacts(p: ProductView): ProductFacts {
-  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, stock: p.stock, features: p.features };
+  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features };
 }
 
 // CMS --------------------------------------------------------------------------
@@ -209,14 +230,16 @@ export interface FlashDeal extends ProductView {
   dealPrice: number;
 }
 
+/** Live flash deals in promotion order. price = list price, dealPrice = what the customer pays. */
 export async function getFlashDeals(brand: BrandKey): Promise<FlashDeal[]> {
   const [promos, products] = await Promise.all([loadFlashPromos(brand), getProducts(brand)]);
-  const now = Date.now();
+  const seen = new Set<string>();
   return promos
-    .filter((pr) => !pr.endsAt || new Date(pr.endsAt).getTime() > now)
     .map((pr) => {
       const p = products.find((x) => x.id === pr.productId);
-      return p ? { ...p, off: pr.percent, dealPrice: salePrice(p.price, pr.percent) } : null;
+      if (!p || !p.off || seen.has(p.id)) return null;
+      seen.add(p.id);
+      return { ...p, price: p.listPrice, dealPrice: p.price };
     })
     .filter((x): x is FlashDeal => !!x);
 }

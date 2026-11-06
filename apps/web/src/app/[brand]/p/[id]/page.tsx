@@ -7,7 +7,7 @@ import { SparkleIcon, Stars } from '@/components/icons';
 import { fmt, stockLabel } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
-import { getBrand, getFlashDeals, getProduct, getProducts, getSuppliers } from '@/server/catalog';
+import { getBrand, getProduct, getProducts, getSuppliers } from '@/server/catalog';
 import { env } from '@/server/env';
 import { getT } from '@/server/locale';
 
@@ -34,9 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, base, products, cmp, cart, suppliers, t, flash] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), getFlashDeals(key)]);
-  const deal = flash.find((f) => f.id === base.id);
-  const p = deal ? { ...base, price: deal.dealPrice } : base;
+  const [brand, p, products, cmp, cart, suppliers, t] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT()]);
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -73,12 +71,12 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 600, letterSpacing: '-.02em' }}>{fmt(p.price)}</span>
-            {deal && (
+            <span data-testid="pdp-price" style={{ fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 600, letterSpacing: '-.02em' }}>{fmt(p.price)}</span>
+            {p.off > 0 && (
               <>
-                <span style={{ fontSize: 16, color: 'var(--muted)', textDecoration: 'line-through' }}>{fmt(base.price)}</span>
+                <s data-testid="pdp-was" style={{ fontSize: 16, color: 'var(--muted)' }}>{fmt(p.listPrice)}</s>
                 <span className="badge" style={{ background: '#E23B3B', color: '#fff' }}>
-                  Flash deal −{deal.off}%
+                  {t('flashDealOff', { n: p.off })}
                 </span>
               </>
             )}
@@ -125,7 +123,10 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
                 <PImg src={r.img} alt="" model={r.model} sub={r.sub} size="xs" style={{ height: 100 }} />
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{r.name}</div>
-                  <div style={{ fontSize: 14, marginTop: 4 }}>{fmt(r.price)}</div>
+                  <div style={{ fontSize: 14, marginTop: 4 }}>
+                    {fmt(r.price)}
+                    {r.off > 0 && <s style={{ color: 'var(--muted)', fontSize: 12, marginLeft: 6 }}>{fmt(r.listPrice)}</s>}
+                  </div>
                   <div className="monthly" style={{ fontSize: 12 }}>
                     {fmt(r.price / 12)}/mo
                   </div>

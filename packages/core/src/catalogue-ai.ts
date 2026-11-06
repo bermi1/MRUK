@@ -15,9 +15,17 @@ export interface ProductFacts {
   name: string;
   category: string;
   sub: string;
+  /** The price the customer pays today (after any live flash deal). */
   price: number;
+  /** List price before a flash deal; omitted or equal to price when there is no deal. */
+  listPrice?: number;
   stock: number;
   features: string[];
+}
+
+/** "TZS 850,000 (flash deal, was TZS 1,000,000)" or "TZS 850,000". */
+export function priceLabel(p: ProductFacts): string {
+  return p.listPrice && p.listPrice > p.price ? `${fmtTZS(p.price)} (flash deal, was ${fmtTZS(p.listPrice)})` : fmtTZS(p.price);
 }
 
 export interface PolicyFact {
@@ -103,7 +111,7 @@ export function compareVerdict(items: ProductFacts[], months = 12): Verdict {
   const bestOverall = [...items].sort((a, b) => b.features.length - a.features.length || b.price - a.price)[0]!;
   const lines = [
     `Best overall: ${bestOverall.name} (${bestOverall.model}), with ${bestOverall.features.join(', ').toLowerCase()}.`,
-    `Best value: ${bestValue.name} at ${fmtTZS(bestValue.price)}, or ${fmtTZS(bestValue.price / months)}/mo over ${months} months.`,
+    `Best value: ${bestValue.name} at ${priceLabel(bestValue)}, or ${fmtTZS(bestValue.price / months)}/mo over ${months} months.`,
     items.map((p) => `${p.model} suits buyers who need ${(p.features[0] ?? p.sub).toLowerCase()}.`).join(' '),
   ];
   const low = items.filter((p) => p.stock <= 5);
@@ -142,7 +150,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
     const best = s[0]!;
     return {
       grounded: true,
-      text: `Best value: ${best.name} (${best.model}) at ${fmtTZS(best.price)}, or ${fmtTZS(best.price / months)}/mo with Pay Later. Prices: ${s.map((p) => `${p.model} ${fmtTZS(p.price)}`).join(', ')}.`,
+      text: `Best value: ${best.name} (${best.model}) at ${priceLabel(best)}, or ${fmtTZS(best.price / months)}/mo with Pay Later. Prices: ${s.map((p) => `${p.model} ${priceLabel(p)}`).join(', ')}.`,
       sources: src(s),
     };
   }
@@ -183,9 +191,9 @@ export function groundedPrompt(task: string, facts: { products?: ProductFacts[];
     'You are a product advisor for Mr UK and Skywood in Tanzania.',
     'Use ONLY the catalogue and policy data below. Never invent specifications, prices or policies.',
     `If the data does not answer the question, reply exactly: "${SUPPORT_FALLBACK}"`,
-    'Prices are in Tanzanian shillings (TZS), no decimals. Plain text, no markdown, at most 110 words.',
+    'Prices are in Tanzanian shillings (TZS), no decimals. priceTZS is what the customer pays today; when listPriceTZS is present the product is on a flash deal. Plain text, no markdown, at most 110 words.',
     '',
-    `CATALOGUE: ${JSON.stringify((facts.products ?? []).map((p) => ({ model: p.model, name: p.name, type: p.sub, priceTZS: p.price, inStock: p.stock, features: p.features })))}`,
+    `CATALOGUE: ${JSON.stringify((facts.products ?? []).map((p) => ({ model: p.model, name: p.name, type: p.sub, priceTZS: p.price, ...(p.listPrice && p.listPrice > p.price ? { listPriceTZS: p.listPrice } : {}), inStock: p.stock, features: p.features })))}`,
     `POLICIES: ${JSON.stringify((facts.policies ?? []).map((f) => f.text))}`,
     '',
     `TASK: ${task}`,

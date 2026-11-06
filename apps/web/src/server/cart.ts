@@ -31,7 +31,7 @@ export async function getCart(brand: BrandKey): Promise<CartView> {
   const id = await cartId(brand);
   const cart = id ? await prisma.cart.findUnique({ where: { id }, include: { items: { include: { product: true }, orderBy: { id: 'asc' } } } }) : null;
   // Active flash deals reduce the unit price.
-  const flash = await prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true } });
+  const flash = await prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true }, orderBy: { createdAt: 'asc' } });
   const off = (pid: string) => flash.find((f) => f.productId === pid && (!f.endsAt || f.endsAt > new Date()))?.percent ?? 0;
   const lines = (cart?.items ?? [])
     .filter((i) => !i.product.hidden)
@@ -109,15 +109,46 @@ export async function getCartCount(brand: BrandKey): Promise<number> {
 
 // Compare list (max 3 products, non-sensitive, cookie only) -------------------------
 
+export const COMPARE_MAX = 3;
+
 export async function getCompareIds(brand: BrandKey): Promise<string[]> {
   const raw = (await cookies()).get(cmpCookie(brand))?.value ?? '';
-  return raw.split(',').filter((x) => /^[a-z0-9-]{1,80}$/.test(x)).slice(0, 3);
+  return [...new Set(raw.split(',').filter((x) => /^[a-z0-9-]{1,80}$/.test(x)))].slice(0, COMPARE_MAX);
 }
 
-export async function toggleCompare(brand: BrandKey, id: string): Promise<string[]> {
-  if (!/^[a-z0-9-]{1,80}$/.test(id)) return getCompareIds(brand);
-  const cur = await getCompareIds(brand);
-  const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-3);
-  (await cookies()).set(cmpCookie(brand), next.join(','), { sameSite: 'lax', secure: env.isProd, path: '/', maxAge: 60 * 60 * 24 * 30 });
-  return next;
+async function saveCompare(brand: BrandKey, ids: string[]) {
+  const jar = await cookies();
+  if (ids.length) jar.set(cmpCookie(brand), ids.join(','), { httpOnly: true, sameSite: 'lax', secure: env.isProd, path: '/', maxAge: 60 * 60 * 24 * 30 });
+  else jar.delete(cmpCookie(brand));
+}
+
+export type CompareToggle = { ids: string[]; added: boolean; full: boolean };
+
+/**
+ * Add or remove one product. Only products of this brand that are on sale can be added
+ * (a Skywood id never enters the Mr UK list). At the limit nothing is dropped silently:
+ * the caller gets full=true and tells the shopper to remove one first.
+ */
+export async function toggleCompare(brand: BrandKey, id: string): Promise<CompareToggle> {
+  const stored = await getCompareIds(brand);
+  if (stored.includes(id)) {
+    const ids = stored.filter((x) => x !== id);
+    await saveCompare(brand, ids);
+    return { ids, added: false, full: false };
+  }
+  // Drop ids that are no longer this brand's products (hidden or deleted) so they don't hold a slot.
+  const live = (await prisma.product.findMany({ where: { id: { in: [...stored, id] }, brandKey: brand, hidden: false }, select: { id: true } })).map((p) => p.id);
+  const cur = stored.filter((x) => live.includes(x));
+  if (!live.includes(id)) throw new Error('Product not found');
+  if (cur.length >= COMPARE_MAX) {
+    if (cur.length !== stored.length) await saveCompare(brand, cur);
+    return { ids: cur, added: false, full: true };
+  }
+  const ids = [...cur, id];
+  await saveCompare(brand, ids);
+  return { ids, added: true, full: false };
+}
+
+export async function clearCompare(brand: BrandKey) {
+  await saveCompare(brand, []);
 }
