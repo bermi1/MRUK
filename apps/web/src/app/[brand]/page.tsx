@@ -53,7 +53,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     seeDeals: t('seeDeals'),
     // Empty when Pay Later is off: the heroes then show the price without the monthly chip.
     perMonth: payLater ? t('orPerMonth') : '',
-    withAdvance: t('withAdvance'),
+    withAdvance: payLater ? t('withAdvance') : '',
     pause: t('pause'),
     play: t('play'),
     slideN: t('slideN'),

@@ -57,6 +57,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
   // Pay Later off: CMS copy that promises it is dropped (the announcement falls back to the service promise).
   const announcement = payLater ? cms.announcement : stripPayLater(cms.announcement) || `${t('trustDelivery')} · ${t('trustWarranty')}`;
   const megaPromo = payLater ? cms.megaPromo : { ...cms.megaPromo, eyebrow: stripPayLater(cms.megaPromo.eyebrow), title: stripPayLater(cms.megaPromo.title) || cms.megaPromo.title };
+  // Pay Later labels are not even sent to the browser while it is off.
+  const pl = (s: string) => (payLater ? s : '');
   // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
   const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
   const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
@@ -92,13 +94,13 @@ export default async function BrandLayout({ children, params }: { children: Reac
       productsN: t('productsN'),
       helpAndServices: t('helpAndServices'),
       account: t('account'),
-      perMonth: t('perMonthShort'),
-      payLater: t('payLater'),
-      payLaterBy: t('salaryAdvance'),
-      payLaterHow: t('payLaterHow'),
-      payLaterEligibility: t('payLaterEligibility'),
-      payLaterFaq: t('payLaterFaq'),
-      payLaterSteps: [t('plStep1'), t('plStep2'), t('plStep3'), t('plStep4'), t('plStep5')],
+      perMonth: pl(t('perMonthShort')),
+      payLater: pl(t('payLater')),
+      payLaterBy: pl(t('salaryAdvance')),
+      payLaterHow: pl(t('payLaterHow')),
+      payLaterEligibility: pl(t('payLaterEligibility')),
+      payLaterFaq: pl(t('payLaterFaq')),
+      payLaterSteps: payLater ? [t('plStep1'), t('plStep2'), t('plStep3'), t('plStep4'), t('plStep5')] : [],
     },
   };
   const menu: MobileMenuProps = {
@@ -113,7 +115,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
     labels: {
       categories: t('categories'),
       shopAll: t('shopTitle'),
-      payLaterHow: t('payLaterHow'),
+      payLaterHow: pl(t('payLaterHow')),
       chatWhatsApp: t('chatWhatsApp'),
       language: t('language'),
       menu: t('menu'),
@@ -130,9 +132,9 @@ export default async function BrandLayout({ children, params }: { children: Reac
       allBrands: sister ? sister.label : t('allBrands'),
       allBrandsHref: sister ? sister.href : '/',
       compare: t('compare'),
-      salaryAdvance: t('salaryAdvance'),
-      salaryAdvanceSub: t('salaryAdvanceSub'),
-      payLater: t('payLater'),
+      salaryAdvance: pl(t('salaryAdvance')),
+      salaryAdvanceSub: pl(t('salaryAdvanceSub')),
+      payLater: pl(t('payLater')),
     },
   };
   const sky = key === 'skywood';

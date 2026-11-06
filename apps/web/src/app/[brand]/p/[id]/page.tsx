@@ -97,7 +97,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
             payLater={payLater}
-            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: t('salaryAdvance'), salaryAdvanceSub: t('salaryAdvanceSub'), addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: t('buyWithAdvance'), share: t('share') }}
+            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
           />
           <div className="perks">
             <div>

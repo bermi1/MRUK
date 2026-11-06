@@ -1,4 +1,10 @@
 import { expect, test } from './fixtures';
+import { setPayLater } from './paylater';
+
+// The mini app sells only on Pay Later, which is off by default: switch it on for both brands first.
+test.beforeAll(async ({ browser }, info) => {
+  await setPayLater(browser, info.project.use.baseURL!, { mruk: true, skywood: true });
+});
 
 test('Azania mini app purchase with PIN', async ({ page }) => {
   await page.goto('/azania');
