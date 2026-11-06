@@ -53,4 +53,20 @@ export function miniAppOpen(states: Record<PayLaterBrand, Pick<PayLaterState, 'e
   return PAY_LATER_BRANDS.some((b) => states[b].enabled);
 }
 
+const PAY_LATER_WORDS = /pay later|lipa baadaye|salary advance|azania|from your salary|kupitia mshahara|pay monthly|per month|a month\b|\/mo\b|instal/i;
+
+/** Does free text (CMS copy) promise Pay Later or monthly payments? */
+export function mentionsPayLater(text: string): boolean {
+  return PAY_LATER_WORDS.test(text);
+}
+
+/** CMS copy with every sentence that mentions Pay Later removed (may return ''). */
+export function stripPayLater(text: string): string {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .filter((s) => !mentionsPayLater(s))
+    .join(' ')
+    .trim();
+}
+
 export const PAY_LATER_OFF_MESSAGE = 'Pay Later is not available at the moment. You can still pay in full.';

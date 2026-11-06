@@ -3,7 +3,9 @@ import {
   answerFromCatalogue,
   checkoutMethods,
   compareVerdict,
+  mentionsPayLater,
   miniAppOpen,
+  stripPayLater,
   PAY_LATER_DEFAULT,
   PAY_LATER_KEYS,
   parsePayLater,
@@ -48,6 +50,19 @@ describe('Pay Later switch', () => {
   it('opens the Azania mini app while either brand has Pay Later', () => {
     expect(miniAppOpen({ mruk: { enabled: false }, skywood: { enabled: false } })).toBe(false);
     expect(miniAppOpen({ mruk: { enabled: false }, skywood: { enabled: true } })).toBe(true);
+  });
+});
+
+describe('CMS copy while Pay Later is off', () => {
+  it('finds Pay Later promises in English and Kiswahili', () => {
+    for (const s of ['Pay monthly with Pay Later by Azania Bank', 'Lipa Baadaye kupitia Azania Bank', 'Take it home today, pay from your salary', 'TZS 20,000/mo']) expect(mentionsPayLater(s)).toBe(true);
+    expect(mentionsPayLater('Up to 15% off generators this month')).toBe(false);
+  });
+
+  it('drops only the sentences that mention it', () => {
+    expect(stripPayLater('Refrigerators, TVs and generators. Pay monthly with Pay Later by Azania Bank.')).toBe('Refrigerators, TVs and generators.');
+    expect(stripPayLater('Take it home today, pay from your salary with Pay Later by Azania Bank')).toBe('');
+    expect(stripPayLater('Beyond limits.')).toBe('Beyond limits.');
   });
 });
 
