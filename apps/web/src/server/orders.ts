@@ -95,6 +95,15 @@ async function reserveStock(tx: Prisma.TransactionClient, lines: { productId: st
   stockChanged();
 }
 
+/**
+ * Count one use of a discount code for a placed order, atomically: two shoppers cannot both take the
+ * last use of a code with a limit, and a code paused meanwhile is refused.
+ */
+async function countCodeUse(tx: Prisma.TransactionClient, code: string) {
+  const n = await tx.$executeRaw`UPDATE "DiscountCode" SET "uses" = "uses" + 1 WHERE "code" = ${code} AND "active" = true AND ("maxUses" IS NULL OR "uses" < "maxUses") AND ("expiresAt" IS NULL OR "expiresAt" > now())`;
+  if (n !== 1) throw new CheckoutError(`Discount code ${code} is no longer available. Remove it from your cart and try again.`);
+}
+
 /** Shown stock comes from the catalogue cache; refresh it when stock moves. */
 function stockChanged() {
   try {
@@ -163,7 +172,7 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
         payments: { create: { method: input.method, amount: cart.total, status: 'pending' } },
       },
     });
-    if (cart.discountCode && !cart.discountError) await tx.discountCode.update({ where: { code: cart.discountCode }, data: { uses: { increment: 1 } } });
+    if (cart.discountCode && !cart.discountError) await countCodeUse(tx, cart.discountCode);
     if (input.method === 'pay_on_delivery') await issueInvoice(tx, o.id, o.total, 'issued');
     return o;
   });
@@ -271,7 +280,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
         payments: { create: { method: 'salary_advance', amount: total, status: 'pending' } },
       },
     });
-    if (discountCode) await tx.discountCode.update({ where: { code: discountCode }, data: { uses: { increment: 1 } } });
+    if (discountCode) await countCodeUse(tx, discountCode);
     const a = await tx.salaryAdvanceApplication.create({
       data: {
         orderId: o.id,

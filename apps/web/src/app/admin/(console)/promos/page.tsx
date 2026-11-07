@@ -22,7 +22,7 @@ function CodeFields({ c, allowed }: { c?: Code; allowed: string[] }) {
       </label>
       <label className="ad-field">
         Discount %
-        <input name="percent" defaultValue={c?.percent ?? 10} required inputMode="numeric" />
+        <input name="percent" type="number" min={1} max={90} defaultValue={c?.percent ?? 10} required inputMode="numeric" />
       </label>
       <label className="ad-field">
         Brand

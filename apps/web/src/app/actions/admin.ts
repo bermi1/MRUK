@@ -595,8 +595,8 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       .object({
         id: z.string().regex(/^[a-z0-9]{0,40}$/).optional(),
         code: z.string().trim().toUpperCase().pipe(z.string().regex(/^[A-Z0-9]{3,20}$/, 'Codes are 3–20 letters or digits')),
-        percent: intZ(0, 90),
-        brand: z.enum(['both', 'mruk', 'skywood']),
+        percent: z.coerce.number({ invalid_type_error: 'Enter a number' }).int('Whole numbers only').min(1, 'Discount must be at least 1%').max(90, 'Discount can be at most 90%'),
+        brand: z.enum(['both', 'mruk', 'skywood'], { errorMap: () => ({ message: 'Choose a brand or both' }) }),
         minSubtotal: z.string().optional(),
         maxUses: z.string().optional(),
         expiresAt: z.string().optional(),
@@ -605,11 +605,11 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       .parse(fields(fd));
     const brandKey = f.brand === 'both' ? null : f.brand;
     assertCodeScope(ctx, brandKey);
-    const minSubtotal = f.minSubtotal ? intZ(0, 500_000_000).parse(f.minSubtotal.replace(/[,\s]/g, '')) : null;
-    const maxUses = f.maxUses ? intZ(1, 1_000_000).parse(f.maxUses) : null;
+    const minSubtotal = f.minSubtotal?.trim() ? intZ(0, 500_000_000).parse(f.minSubtotal.replace(/[,\s]/g, '')) : null;
+    const maxUses = f.maxUses?.trim() ? intZ(1, 1_000_000).parse(f.maxUses.replace(/[,\s]/g, '')) : null;
     let expiresAt: Date | null = null;
     if (f.expiresAt) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(f.expiresAt)) throw new Error('Choose a valid end date');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(f.expiresAt) || Number.isNaN(Date.parse(`${f.expiresAt}T00:00:00Z`))) throw new Error('Choose a valid end date');
       expiresAt = new Date(`${f.expiresAt}T20:59:59Z`); // 23:59 EAT
     }
     const data = { code: f.code, percent: f.percent, brandKey, minSubtotal, maxUses, expiresAt, active: checkbox(f.active) };
@@ -617,9 +617,12 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       const cur = await prisma.discountCode.findUnique({ where: { id: f.id } });
       if (!cur) throw new Error('Code not found');
       assertCodeScope(ctx, cur.brandKey);
+      if (maxUses !== null && maxUses < cur.uses) throw new Error(`This code has already been used ${cur.uses} times: the limit cannot be lower`);
+      if (expiresAt && expiresAt < new Date() && cur.expiresAt?.getTime() !== expiresAt.getTime()) throw new Error('The end date is in the past');
       await prisma.discountCode.update({ where: { id: cur.id }, data });
       await audit(ctx.email, 'discount.update', 'DiscountCode', cur.id, { ...data, expiresAt: expiresAt?.toISOString() ?? null });
     } else {
+      if (expiresAt && expiresAt < new Date()) throw new Error('The end date is in the past');
       const c = await prisma.discountCode.create({ data });
       await audit(ctx.email, 'discount.create', 'DiscountCode', c.id, { ...data, expiresAt: expiresAt?.toISOString() ?? null });
     }
