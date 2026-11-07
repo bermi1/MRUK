@@ -26,7 +26,7 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
           </div>
           {cart.bundles.map((b) => (
             <div key={b.title} className="sumrow" style={{ color: 'var(--ok)' }}>
-              <span>Bundle: {b.title}</span>
+              <span>{t('cartBundle', { title: b.title })}</span>
               <b style={{ color: 'var(--ok)' }}>−{fmt(b.saving)}</b>
             </div>
           ))}
@@ -70,7 +70,7 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
               {t('checkout')}
             </span>
           )}
-          <div className="note">Delivery is free in Dar es Salaam on orders over TZS 500,000. Change your region at checkout.</div>
+          <div className="note">{t('cartNote')}</div>
         </div>
       </div>
     </div>

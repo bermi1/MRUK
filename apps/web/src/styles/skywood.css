@@ -30,6 +30,10 @@
 /* Announcement + header -------------------------------------------------------------- */
 .sw-ann { background: var(--sw-ink); color: var(--sw-gold-hi); text-align: center; }
 .sw-ann p { margin: 0; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; padding: 0 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-ann { position: relative; }
+.sw-lang { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 11px; }
+.sw-lang button { letter-spacing: 0.14em; border-radius: 0 !important; }
+.sw-lang button.on { background: transparent !important; text-decoration: underline; text-underline-offset: 4px; }
 .sw-hdr { position: sticky; top: 0; z-index: 40; color: var(--sw-ink); background: rgba(251, 248, 243, 0.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 1px 0 var(--border); transition: background 0.5s var(--sw-slow), box-shadow 0.5s var(--sw-slow); }
 .sw-hdr.is-over { background: rgba(251, 248, 243, 0); box-shadow: 0 1px 0 rgba(28, 25, 21, 0); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .sw-hdr.is-over .sw-cats { border-top-color: rgba(28, 25, 21, 0.08); }

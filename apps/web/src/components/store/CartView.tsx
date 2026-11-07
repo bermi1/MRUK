@@ -7,22 +7,27 @@ import { fmt } from '@/lib/format';
 import type { CartView as Cart } from '@/lib/types';
 import { MinusIcon, PlusIcon, TickIcon } from '../icons';
 import { PImg } from './PImg';
+import { useMessages } from './Messages';
+import { useToast } from './Toast';
 
 /** `payLater` false (admin switch) hides the monthly line per item. */
 export function CartItems({ cart, brand, payLater }: { cart: Cart; brand: string; payLater: boolean }) {
   const [pending, start] = useTransition();
   const router = useRouter();
+  const t = useMessages();
+  const toast = useToast();
   const qty = (id: string, n: number) =>
     start(async () => {
-      await setQtyAction(brand, id, n);
+      const r = await setQtyAction(brand, id, n);
+      if (!r.ok) toast(r.error);
       router.refresh();
     });
   if (!cart.lines.length)
     return (
       <div style={{ border: '1px dashed var(--line)', borderRadius: 20, padding: 40, textAlign: 'center', color: 'var(--muted2)' }}>
-        Your cart is empty.{' '}
+        {t('emptyCart')}{' '}
         <Link href={`/${brand}/shop`} style={{ fontWeight: 600, color: 'var(--monthly)' }}>
-          Browse products
+          {t('browseProducts')}
         </Link>
       </div>
     );
@@ -38,25 +43,31 @@ export function CartItems({ cart, brand, payLater }: { cart: Cart; brand: string
               {l.model}
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{l.name}</div>
+            {(l.stock <= 0 || l.qty >= l.stock) && (
+              <div className="cart-stock" data-testid="cart-stock" role="status">
+                {l.stock <= 0 ? t('outOfStock') : l.qty > l.stock ? t('cartOnlyAvailable', { n: l.stock }) : t('onlyLeft', { n: l.stock })}
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: 999 }}>
-                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} aria-label={`Decrease ${l.name}`}>
+                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} disabled={l.qty <= 1} aria-label={t('cartDecrease', { name: l.name })}>
                   <MinusIcon size={16} />
                 </button>
                 <span style={{ width: 22, textAlign: 'center', fontWeight: 600, fontSize: 14 }} aria-live="polite">
                   {l.qty}
                 </span>
-                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={`Increase ${l.name}`}>
+                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={t('cartIncrease', { name: l.name })}>
                   <PlusIcon size={16} />
                 </button>
               </div>
-              <button type="button" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 36 }} onClick={() => qty(l.productId, 0)}>
-                Remove
+              <button type="button" style={{ fontSize: 13, color: 'var(--muted)', minHeight: 44, padding: '0 4px' }} onClick={() => qty(l.productId, 0)} aria-label={t('cartRemoveItem', { name: l.name })}>
+                {t('remove')}
               </button>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 17, fontWeight: 600 }}>{fmt(l.price * l.qty)}</div>
+            <div style={{ fontSize: 17, fontWeight: 600 }} data-testid="cart-line-total">{fmt(l.price * l.qty)}</div>
+            {l.listPrice > l.price && <s style={{ fontSize: 12.5, color: 'var(--muted)' }}>{fmt(l.listPrice * l.qty)}</s>}
             {payLater && (
               <div className="monthly" style={{ fontSize: 12 }}>
                 {fmt((l.price * l.qty) / cart.months)}/mo

@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@bt/db';
-import { bundlePrice, salePrice, type ProductFacts } from '@bt/core';
+import { bundlePrice, salePrice, type CompareFacts } from '@bt/core';
 import { SOCIAL_KEYS } from '@/lib/types';
 import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView , SocialLinks } from '@/lib/types';
 
@@ -71,6 +71,8 @@ export function toView(p: DbProduct): ProductView {
     model: p.model,
     name: p.name,
     price: p.price,
+    listPrice: p.price,
+    off: 0,
     stock: p.stock,
     features: p.features,
     img: p.images[0] ?? '',
@@ -84,40 +86,115 @@ export function toView(p: DbProduct): ProductView {
   };
 }
 
-export const getProducts = cache(
-  cached(async (brand: BrandKey): Promise<ProductView[]> => {
-    const ps = await prisma.product.findMany({ where: { brandKey: brand, hidden: false }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] });
-    return ps.map(toView);
-  }, 'products'),
-);
+const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
+  const ps = await prisma.product.findMany({ where: { brandKey: brand, hidden: false }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] });
+  return ps.map(toView);
+}, 'products');
+
+/**
+ * These products straight from the database (not the 60 s catalogue cache), with live deals
+ * applied, plus their updatedAt. Used by the AI compare so an admin edit to features or
+ * price is reflected in the next verdict.
+ */
+export async function getProductsLive(brand: BrandKey, ids: string[]): Promise<{ view: ProductView; updatedAt: Date }[]> {
+  const [rows, promos] = await Promise.all([
+    prisma.product.findMany({ where: { id: { in: ids }, brandKey: brand, hidden: false }, include: { category: true } }),
+    loadFlashPromos(brand),
+  ]);
+  const deals = liveDeals(promos);
+  return ids
+    .map((id) => rows.find((r) => r.id === id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => {
+      const v = toView(r);
+      const off = deals.get(v.id) ?? 0;
+      return { view: off ? { ...v, off, price: salePrice(v.price, off) } : v, updatedAt: r.updatedAt };
+    });
+}
+
+/** Live flash-deal percentage per product (deals past their end time are ignored). */
+function liveDeals(promos: { productId: string | null; percent: number; endsAt: string | null }[], now = Date.now()): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const pr of promos) if (pr.productId && !m.has(pr.productId) && (!pr.endsAt || new Date(pr.endsAt).getTime() > now)) m.set(pr.productId, pr.percent);
+  return m;
+}
+
+/**
+ * Storefront products with the price the customer actually pays. Flash deals are applied
+ * here, once, so cards, search, compare, the AI and the cart all agree (the cart applies
+ * the same rule from the database at checkout).
+ */
+export const getProducts = cache(async (brand: BrandKey): Promise<ProductView[]> => {
+  const [ps, promos] = await Promise.all([loadProducts(brand), loadFlashPromos(brand)]);
+  const deals = liveDeals(promos);
+  return ps.map((p) => {
+    const off = deals.get(p.id) ?? 0;
+    return off ? { ...p, off, listPrice: p.price, price: salePrice(p.price, off) } : p;
+  });
+});
 
 export const getAllProducts = cache(async (): Promise<ProductView[]> => {
   const [a, b] = await Promise.all([getProducts('mruk'), getProducts('skywood')]);
   return [...a, ...b];
 });
 
-export async function getProduct(brand: BrandKey, id: string): Promise<ProductView> {
+/**
+ * One product with live stock. Lists use the cached catalogue, but the product page reads
+ * stock (and hidden) from the database so a restock or sale shows at once, also on the
+ * other brand's deployment whose cache an admin action cannot clear.
+ */
+export const getProduct = cache(async (brand: BrandKey, id: string): Promise<ProductView> => {
   const p = (await getProducts(brand)).find((x) => x.id === id);
   if (!p) notFound();
-  return p;
-}
+  const live = await prisma.product.findFirst({ where: { id, brandKey: brand }, select: { stock: true, hidden: true } });
+  if (!live || live.hidden) notFound();
+  return live.stock === p.stock ? p : { ...p, stock: live.stock };
+});
 
 /** Sort products that have a photo first (prototype "popular" order). */
 export function photoFirst<T extends { img: string }>(list: T[]): T[] {
   return [...list].sort((a, b) => Number(!!b.img) - Number(!!a.img));
 }
 
+/** Kiswahili shopping words → catalogue (English) words, so "friji" or "jiko" finds products. */
+const SW_TERMS: Record<string, string[]> = {
+  friji: ['fridge', 'refrigerator'],
+  jokofu: ['fridge', 'refrigerator'],
+  friza: ['freezer'],
+  televisheni: ['tv', 'television'],
+  runinga: ['tv', 'television'],
+  tv: ['tv', 'television'],
+  jiko: ['cooker', 'stove', 'hob', 'oven'],
+  oveni: ['oven'],
+  feni: ['fan'],
+  pangaboi: ['fan'],
+  kiyoyozi: ['air conditioner', 'conditioner', 'ac'],
+  jenereta: ['generator'],
+  pampu: ['pump'],
+  maji: ['water'],
+  spika: ['speaker'],
+  redio: ['radio'],
+  muziki: ['music', 'speaker', 'sound'],
+  blenda: ['blender'],
+  birika: ['kettle'],
+  pasi: ['iron'],
+  kufulia: ['washing', 'washer'],
+  dobi: ['washing', 'washer'],
+  microwave: ['microwave'],
+  mikrowevu: ['microwave'],
+};
+
 export function searchProducts(products: ProductView[], q: string): ProductView[] {
   const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   return products.filter((p) => {
     const t = `${p.model} ${p.name} ${p.sub} ${p.catName} ${p.features.join(' ')}`.toLowerCase();
-    return terms.every((x) => t.includes(x));
+    return terms.every((x) => t.includes(x) || (SW_TERMS[x] ?? []).some((s) => t.includes(s)));
   });
 }
 
-export function toFacts(p: ProductView): ProductFacts {
-  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, stock: p.stock, features: p.features };
+export function toFacts(p: ProductView): CompareFacts {
+  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features, rating: p.rating, reviews: p.reviews };
 }
 
 // CMS --------------------------------------------------------------------------
@@ -212,14 +289,16 @@ export interface FlashDeal extends ProductView {
   dealEndsAt: string | null;
 }
 
+/** Live flash deals in promotion order. price = list price, dealPrice = what the customer pays. */
 export async function getFlashDeals(brand: BrandKey): Promise<FlashDeal[]> {
   const [promos, products] = await Promise.all([loadFlashPromos(brand), getProducts(brand)]);
-  const now = Date.now();
+  const seen = new Set<string>();
   return promos
-    .filter((pr) => !pr.endsAt || new Date(pr.endsAt).getTime() > now)
     .map((pr) => {
       const p = products.find((x) => x.id === pr.productId);
-      return p ? { ...p, off: pr.percent, dealPrice: salePrice(p.price, pr.percent), dealEndsAt: pr.endsAt } : null;
+      if (!p || !p.off || seen.has(p.id)) return null;
+      seen.add(p.id);
+      return { ...p, price: p.listPrice, dealPrice: p.price, dealEndsAt: pr.endsAt };
     })
     .filter((x): x is FlashDeal => !!x);
 }

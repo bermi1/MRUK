@@ -43,6 +43,9 @@ import {
   paymentAllowed,
   paymentLabel,
   priceCart,
+  priceLabel,
+  stockState,
+  LOW_STOCK,
   releasesStock,
   repaymentProgress,
   retrievePolicies,
@@ -196,6 +199,17 @@ describe('delivery and pricing', () => {
     expect(checkDiscount(rule, 50_000, 'mruk', now)).toMatchObject({ ok: false });
     expect(checkDiscount({ ...rule, uses: 5 }, 1_000_000, 'mruk', now)).toMatchObject({ ok: false });
     expect(checkDiscount({ code: 'X', percent: 200, active: true }, 1000, 'mruk')).toEqual({ ok: true, amount: 900 });
+  });
+  it('classifies stock: out, low (<= 6) and in', () => {
+    expect([0, -1, 1, 6, 7].map(stockState)).toEqual(['out', 'out', 'low', 'low', 'in']);
+    expect(LOW_STOCK).toBe(6);
+  });
+  it('applies a promo to the goods subtotal, never to delivery', () => {
+    const lines = [{ price: 400_000, qty: 1 }];
+    const d = checkDiscount({ code: 'K', percent: 10, active: true }, 400_000, 'mruk');
+    const t = priceCart(lines, 'Arusha', d.ok ? d.amount : 0);
+    expect(t.discount).toBe(40_000);
+    expect(t.total).toBe(400_000 - 40_000 + t.delivery);
   });
 });
 
@@ -353,6 +367,20 @@ describe('catalogue AI', () => {
     expect(p).toContain('UK F275');
     expect(p).toContain(SUPPORT_FALLBACK);
     expect(groundedPrompt('x', {})).toContain('CATALOGUE: []');
+  });
+  it('uses the live (flash deal) price and names the list price, never inventing one', () => {
+    const deal = { ...fridges[1]!, price: 850_000, listPrice: 1_000_000 };
+    const items = [fridges[0]!, deal];
+    expect(priceLabel(deal)).toBe('TZS 850,000 (flash deal, was TZS 1,000,000)');
+    expect(priceLabel(fridges[0]!)).not.toContain('was');
+    const cheapest = [...items].sort((a, b) => a.price - b.price)[0]!;
+    expect(compareVerdict(items).bestValue.model).toBe(cheapest.model);
+    const value = answerFromCatalogue('Which is best value?', items).text;
+    expect(value).toContain('TZS 850,000 (flash deal, was TZS 1,000,000)');
+    expect(answerFromCatalogue('monthly price?', [deal], 12).text).toContain(`${fmtTZS(850_000 / 12)}/mo`);
+    const prompt = groundedPrompt('Compare', { products: items });
+    expect(prompt).toContain('"priceTZS":850000,"listPriceTZS":1000000');
+    expect(prompt.match(/listPriceTZS/g)).toHaveLength(2); // the rule line + the one deal only
   });
   it('gives safe quick fixes', () => {
     expect(supportQuickFixes('Repair')).toContain('1. Check the power');

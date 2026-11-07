@@ -4,10 +4,11 @@ import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
 import { PImg } from '@/components/store/PImg';
 import { SparkleIcon, Stars } from '@/components/icons';
-import { fmt, stockLabel } from '@/lib/format';
+import { fmt, stockState } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getFlashDeals, getProduct, getProducts, getSuppliers } from '@/server/catalog';
+import { env } from '@/server/env';
 import { getT } from '@/server/locale';
 import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
 import { productLabel, publicUrl } from '@/lib/site';
@@ -32,9 +33,11 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, base, products, cmp, cart, suppliers, t, flash, payLater] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), getFlashDeals(key), payLaterOn(key)]);
-  const deal = flash.find((f) => f.id === base.id);
-  const p = deal ? { ...base, price: deal.dealPrice } : base;
+  const [brand, p, products, cmp, cart, suppliers, t, payLater, flash] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), payLaterOn(key), getFlashDeals(key)]);
+  // getProducts already applies live deals (p.price = what the customer pays); the deal gives its end date.
+  const deal = flash.find((f) => f.id === p.id);
+  const st = stockState(p.stock);
+  const stockText = st === 'out' ? t('outOfStock') : st === 'low' ? t('onlyLeft', { n: p.stock }) : t('inStock', { n: p.stock });
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
   const jsonLd = graph(
     productLd(brand, p, deal ? { price: deal.dealPrice, endsAt: deal.dealEndsAt } : null),
@@ -51,7 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         <Link href={`/${key}`}>Home</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
       <div className="pdp">
-        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockLabel(p.stock)} />
+        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}
@@ -68,17 +71,21 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 600, letterSpacing: '-.02em' }}>{fmt(p.price)}</span>
-            {deal && (
+            <span data-testid="pdp-price" style={{ fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 600, letterSpacing: '-.02em' }}>{fmt(p.price)}</span>
+            {p.off > 0 && (
               <>
-                <span style={{ fontSize: 16, color: 'var(--muted)', textDecoration: 'line-through' }}>{fmt(base.price)}</span>
+                <s data-testid="pdp-was" style={{ fontSize: 16, color: 'var(--muted)' }}>{fmt(p.listPrice)}</s>
                 <span className="badge" style={{ background: '#E23B3B', color: '#fff' }}>
-                  Flash deal −{deal.off}%
+                  {t('flashDealOff', { n: p.off })}
                 </span>
               </>
             )}
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t('vatNote')}</div>
+          <div className={`pdp-stock is-${st}`} data-testid="stock-status" data-stock={st} role="status">
+            <i aria-hidden="true" />
+            {stockText}
+          </div>
           {p.price >= 1000 && (
             <div className="earn-pts">
               <SparkleIcon size={16} /> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
@@ -121,7 +128,10 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
                 <PImg src={r.img} alt="" model={r.model} sub={r.sub} size="xs" style={{ height: 100 }} />
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{r.name}</div>
-                  <div style={{ fontSize: 14, marginTop: 4 }}>{fmt(r.price)}</div>
+                  <div style={{ fontSize: 14, marginTop: 4 }}>
+                    {fmt(r.price)}
+                    {r.off > 0 && <s style={{ color: 'var(--muted)', fontSize: 12, marginLeft: 6 }}>{fmt(r.listPrice)}</s>}
+                  </div>
                   {payLater && (
                     <div className="monthly" style={{ fontSize: 12 }}>
                       {fmt(r.price / 12)}/mo

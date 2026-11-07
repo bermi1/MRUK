@@ -4,6 +4,7 @@ import { fmt } from '@/lib/format';
 import { AddButton, CompareToggle } from './CartButtons';
 import { PImg } from './PImg';
 import { productLabel } from '@/lib/site';
+import { StockNote } from './StockNote';
 
 /** Category grid tile (prototype: 300px tall, image cover, gradient, meta at the bottom). `payLater` false hides the monthly line. */
 export function ProductTile({ p, brand, inCompare, months = 12, payLater }: { p: ProductView; brand: string; inCompare: boolean; months?: number; payLater: boolean }) {
@@ -13,23 +14,27 @@ export function ProductTile({ p, brand, inCompare, months = 12, payLater }: { p:
       <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="lg" />
       <div className="tags">
         <span className="glass">{p.sub.toUpperCase()}</span>
-        <CompareToggle brand={brand} id={p.id} on={inCompare} />
+        <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} />
       </div>
       <div className="meta">
         <div className="mono" style={{ fontSize: 11, opacity: 0.7 }}>
           {p.model}
         </div>
         <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.2, marginTop: 3 }}>{p.name}</div>
+        {p.stock > 0 && <StockNote stock={p.stock} className="tile-stock" />}
         <div className="row" style={{ alignItems: 'flex-end', marginTop: 8 }}>
           <div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{fmt(p.price)}</div>
+            <div style={{ fontSize: 15, fontWeight: 600 }}>
+              {fmt(p.price)}
+              {p.off > 0 && <s style={{ fontSize: 12, fontWeight: 500, opacity: 0.75, marginLeft: 6 }}>{fmt(p.listPrice)}</s>}
+            </div>
             {payLater && (
               <div className="monthly-light" style={{ fontSize: 11.5 }}>
                 {fmt(p.price / months)}/mo
               </div>
             )}
           </div>
-          {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <span style={{ fontSize: 11, fontWeight: 600 }}>Out of stock</span>}
+          {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <StockNote stock={0} className="tile-stock" />}
         </div>
       </div>
     </div>
@@ -47,10 +52,14 @@ export function ProductRow({ p, brand, inCompare, months = 12, payLater }: { p: 
         </div>
         <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{p.name}</div>
         <div style={{ fontSize: 13, color: 'var(--muted2)', marginTop: 6 }}>{p.features.join(' · ')}</div>
-        <CompareToggle brand={brand} id={p.id} on={inCompare} long className="cmp-link" />
+        <StockNote stock={p.stock} />
+        <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link" />
       </div>
       <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-        <div style={{ fontSize: 16, fontWeight: 600 }}>{fmt(p.price)}</div>
+        <div style={{ fontSize: 16, fontWeight: 600 }}>
+          {p.off > 0 && <s style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--muted)', marginRight: 6 }}>{fmt(p.listPrice)}</s>}
+          {fmt(p.price)}
+        </div>
         {payLater && (
           <div className="monthly" style={{ fontSize: 12 }}>
             {fmt(p.price / months)}/mo

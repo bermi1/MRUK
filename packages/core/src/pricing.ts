@@ -55,3 +55,12 @@ export function bundlePrice(prices: number[], savePercent: number): { was: numbe
 export function salePrice(price: number, offPercent: number): number {
   return Math.round(price * (1 - offPercent / 100));
 }
+
+/** Stock at or below this shows "Only N left" (client rule). */
+export const LOW_STOCK = 6;
+
+export type StockState = 'out' | 'low' | 'in';
+
+export function stockState(stock: number): StockState {
+  return stock <= 0 ? 'out' : stock <= LOW_STOCK ? 'low' : 'in';
+}

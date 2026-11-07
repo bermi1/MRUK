@@ -28,6 +28,7 @@ export interface HeaderLabels {
   /** Where "all brands" goes: the landing page, or the sister site when the brands are deployed separately. */
   allBrandsHref: string;
   allCategories: string;
+  language: string;
   menu: string;
   close: string;
   featured: string;
@@ -53,6 +54,7 @@ export interface HeaderProps {
   cartCount: number;
   compareCount: number;
   user: SessionUser | null;
+  locale: 'en' | 'sw';
   /** Admin switch: false hides every Pay Later entry and monthly price. */
   payLater: boolean;
   labels: HeaderLabels;

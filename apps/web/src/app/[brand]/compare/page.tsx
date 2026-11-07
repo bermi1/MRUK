@@ -1,86 +1,169 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CompareToggle } from '@/components/store/CartButtons';
-import { CompareAi } from '@/components/store/CompareAi';
+import { ClearCompareButton, CompareToggle } from '@/components/store/CartButtons';
+import { CompareAi, type VerdictLabels } from '@/components/store/CompareAi';
 import { PImg } from '@/components/store/PImg';
-import { TickIcon } from '@/components/icons';
-import { fmt } from '@/lib/format';
+import { Stars, TickIcon } from '@/components/icons';
+import { fmt, stockState } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
-import { getCart, getCompareIds } from '@/server/cart';
+import { COMPARE_MAX, getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
+import { getLocale, getT } from '@/server/locale';
+import { translate, type Locale } from '@/lib/i18n';
 import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Compare products', robots: { index: false, follow: true } };
 
+type Cell = { t: React.ReactNode; c?: string; w?: number };
+
 export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [products, ids, cart, payLater] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), payLaterOn(key)]);
+  const [products, ids, cart, t, payLater, locale] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key), getLocale()]);
+  const verdictLabels = (l: Locale): VerdictLabels => ({
+    title: translate(l, 'cmpVerdictTitle'),
+    hint: translate(l, 'cmpVerdictHint'),
+    generate: translate(l, 'cmpGenerate'),
+    regenerate: translate(l, 'cmpRegenerate'),
+    analysing: translate(l, 'cmpAnalysing'),
+    pick: translate(l, 'cmpOurPick'),
+    value: translate(l, 'cmpValue'),
+    bestFor: translate(l, 'cmpBestFor'),
+    pros: translate(l, 'cmpPros'),
+    cons: translate(l, 'cmpCons'),
+    notSpecified: translate(l, 'cmpNotSpecified'),
+    source: translate(l, 'cmpSourceNote'),
+  });
   const months = cart.months;
-  const chosen = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
+  // Only this brand's live products: ids of hidden/deleted products (or another brand's) are ignored.
+  const picked = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
+  // One category per comparison (a list saved before this rule keeps the first product's category).
+  const chosen = picked.filter((p) => p.cat === picked[0]?.cat);
   // Prototype: with fewer than 2 picks, suggest products from the same category.
   let items = chosen;
   const seed = chosen[0] ?? products.find((p) => p.img) ?? products[0];
-  if (items.length < 2 && seed) items = [...items, ...products.filter((p) => p.cat === seed.cat && !items.includes(p))].slice(0, 3);
-  const feats = [...new Set(items.flatMap((p) => p.features))].slice(0, 8);
+  if (items.length < 2 && seed) items = [...items, ...products.filter((p) => p.cat === seed.cat && !items.includes(p))].slice(0, COMPARE_MAX);
+  const feats = [...new Set(items.flatMap((p) => p.features))];
+  // Prices are what the customer pays today (flash deals applied, same as the cart).
   const minP = Math.min(...items.map((p) => p.price));
-  const rows: { label: string; cells: { t: React.ReactNode; c: string; w: number }[] }[] = [
-    { label: 'Price', cells: items.map((p) => ({ t: fmt(p.price), w: 600, c: p.price === minP ? 'var(--ok)' : 'var(--text)' })) },
-    ...(payLater ? [{ label: 'Pay Later', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) }] : []),
-    { label: 'Type', cells: items.map((p) => ({ t: p.sub, w: 400, c: 'var(--text)' })) },
-    { label: 'Stock', cells: items.map((p) => ({ t: p.stock <= 5 ? `Only ${p.stock} left` : 'In stock', w: 400, c: p.stock <= 5 ? 'var(--warn)' : 'var(--ok)' })) },
-    ...feats.map((f) => ({ label: f, cells: items.map((p) => ({ t: p.features.includes(f) ? <span role="img" aria-label="Yes" style={{ display: 'inline-flex' }}><TickIcon size={18} strokeWidth={2.4} /></span> : <span aria-label="No">—</span>, w: 600, c: p.features.includes(f) ? 'var(--ok)' : '#C8CBD8' })) })),
+  const lowest = items.filter((p) => p.price === minP).length < items.length;
+  const stock = (p: ProductView): Cell =>
+    stockState(p.stock) === 'out' ? { t: t('outOfStock'), c: 'var(--warn)' } : stockState(p.stock) === 'low' ? { t: t('onlyLeft', { n: p.stock }), c: 'var(--warn)' } : { t: t('inStock', { n: p.stock }), c: 'var(--ok)' };
+  const rows: { label: string; key: string; cells: Cell[] }[] = [
+    {
+      label: t('cmpPrice'),
+      key: 'price',
+      cells: items.map((p) => ({
+        w: 600,
+        t: (
+          <span className="cmp-price" data-testid="compare-price">
+            <b style={{ color: lowest && p.price === minP ? 'var(--ok)' : 'var(--text)' }}>{fmt(p.price)}</b>
+            {p.off > 0 && (
+              <>
+                <s>{fmt(p.listPrice)}</s>
+                <span className="cmp-off">−{p.off}%</span>
+              </>
+            )}
+            {lowest && p.price === minP && <small>{t('cmpBestPrice')}</small>}
+          </span>
+        ),
+      })),
+    },
+    ...(payLater ? [{ label: t('cmpMonthly'), key: 'monthly', cells: items.map((p): Cell => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) }] : []),
+    {
+      label: t('cmpRating'),
+      key: 'rating',
+      cells: items.map((p) => ({
+        t: (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', color: '#B7791F' }}>
+            <Stars value={p.rating} size={13} />
+            <span style={{ color: 'var(--muted2)', fontWeight: 500 }}>
+              {p.rating.toFixed(1)} · {t('cmpReviews', { n: p.reviews })}
+            </span>
+          </span>
+        ),
+      })),
+    },
+    { label: t('cmpType'), key: 'type', cells: items.map((p) => ({ t: p.sub })) },
+    { label: t('cmpStock'), key: 'stock', cells: items.map(stock) },
+    ...feats.map((f) => ({
+      label: f,
+      key: `f-${f}`,
+      cells: items.map((p) =>
+        p.features.includes(f)
+          ? { t: <span role="img" aria-label={t('cmpYes')} style={{ display: 'inline-flex' }}><TickIcon size={18} strokeWidth={2.4} /></span>, c: 'var(--ok)', w: 600 }
+          : { t: <span aria-label={t('cmpNo')}>—</span>, c: '#B4B8C8', w: 600 },
+      ),
+    })),
   ];
-  const cols = `200px repeat(${items.length}, minmax(180px, 1fr))`;
   return (
     <div className="wrap page-top">
-      <div className="row" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <div className="row cmp-head">
         <div>
-          <div className="eyebrow">AI compare</div>
-          <h1 className="h1">Compare products</h1>
-          <div style={{ fontSize: 14.5, color: 'var(--muted2)', marginTop: 6 }}>The AI answers only from the product data in our catalogue, so it never invents specs.{chosen.length < 2 ? ' Showing suggestions — add products with “Compare”.' : ''}</div>
+          <div className="eyebrow">{t('cmpEyebrow')}</div>
+          <h1 className="h1">{t('cmpTitle')}</h1>
+          <p className="cmp-sub">
+            {t('cmpSub')} {chosen.length === 1 ? t('cmpAddMore', { cat: chosen[0]!.catName }) : chosen.length < 2 ? t('cmpSuggest') : ''} {t('cmpSameCatOnly')}
+          </p>
         </div>
-        <Link href={`/${key}/shop`} className="link-u">
-          Add products
-        </Link>
+        <div className="cmp-actions">
+          <span className="cmp-count" data-testid="compare-count">
+            {t('cmpCount', { n: chosen.length, max: COMPARE_MAX })}
+          </span>
+          {chosen.length > 0 && <ClearCompareButton brand={key} />}
+          <Link href={`/${key}/shop`} className="link-u">
+            {t('cmpAddProducts')}
+          </Link>
+        </div>
       </div>
-      <div style={{ overflowX: 'auto', marginTop: 24 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: cols, border: '1px solid var(--border)', borderRadius: 24, overflow: 'hidden', minWidth: 560 }} role="table" aria-label="Product comparison">
-          <div style={{ background: 'var(--surface)' }} role="columnheader" />
-          {items.map((c) => (
-            <div key={c.id} style={{ padding: 16, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 10 }} role="columnheader">
-              <div style={{ position: 'relative' }}>
-                <Link href={`/${key}/p/${c.id}`}>
-                  <PImg src={c.img} alt={c.name} model={c.model} size="md" style={{ height: 170 }} />
-                </Link>
-                {chosen.includes(c) && (
-                  <span style={{ position: 'absolute', right: 8, top: 8 }}>
-                    <CompareToggle brand={key} id={c.id} on className="cmp-x" />
-                  </span>
-                )}
-              </div>
-              <div>
-                <div className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  {c.model}
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>{c.name}</div>
-              </div>
-            </div>
-          ))}
-          {rows.map((r) => (
-            <div key={r.label} style={{ display: 'contents' }} role="row">
-              <div style={{ padding: '13px 16px', background: 'var(--surface)', borderTop: '1px solid var(--border)', fontSize: 13, fontWeight: 600, color: 'var(--muted2)' }} role="rowheader">
-                {r.label}
-              </div>
-              {r.cells.map((v, i) => (
-                <div key={i} style={{ padding: '13px 16px', borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)', fontSize: 14, fontWeight: v.w, color: v.c }} role="cell">
-                  {v.t}
+      {items.length === 0 ? (
+        <p style={{ marginTop: 24 }}>{t('cmpEmpty')}</p>
+      ) : (
+        <div className="cmp-scroll">
+          <div className="cmp-table" style={{ ['--cmp-n' as string]: items.length }} role="table" aria-label={t('cmpTitle')}>
+            <div role="row" style={{ display: 'contents' }}>
+              <div className="cmp-corner" role="columnheader" />
+              {items.map((c) => (
+                <div key={c.id} className="cmp-col" role="columnheader" data-testid="compare-col">
+                  <div style={{ position: 'relative' }}>
+                    <Link href={`/${key}/p/${c.id}`} aria-label={c.name}>
+                      <PImg src={c.img} alt="" model={c.model} sub={c.sub} size="md" className="cmp-img" />
+                    </Link>
+                    {chosen.includes(c) ? (
+                      <span className="cmp-x-wrap">
+                        <CompareToggle brand={key} id={c.id} name={c.name} on className="cmp-x" />
+                      </span>
+                    ) : (
+                      <span className="cmp-suggest">{t('cmpSuggested')}</span>
+                    )}
+                  </div>
+                  <div>
+                    <div className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>
+                      {c.model}
+                    </div>
+                    <Link href={`/${key}/p/${c.id}`} className="cmp-name">
+                      {c.name}
+                    </Link>
+                  </div>
+                  {!chosen.includes(c) && <CompareToggle brand={key} id={c.id} name={c.name} on={false} long className="cmp-link" />}
                 </div>
               ))}
             </div>
-          ))}
+            {rows.map((r) => (
+              <div key={r.key} style={{ display: 'contents' }} role="row" data-row={r.key}>
+                <div className="cmp-label" role="rowheader">
+                  {r.label}
+                </div>
+                {r.cells.map((v, i) => (
+                  <div key={i} className="cmp-cell" style={{ fontWeight: v.w ?? 400, color: v.c ?? 'var(--text)' }} role="cell">
+                    {v.t}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} />}
+      )}
+      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} locale={locale} labels={{ en: verdictLabels('en'), sw: verdictLabels('sw') }} />}
     </div>
   );
 }

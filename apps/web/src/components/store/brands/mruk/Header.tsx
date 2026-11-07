@@ -6,6 +6,7 @@ import { ArrowRightIcon, BagIcon, CompareIcon, SearchIcon, UserIcon } from '../.
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
+import { LangSwitch } from '../../LangSwitch';
 import { PayLaterMenu } from '../PayLaterMenu';
 import { fill, useAuthModal, useMegaMenu, useScrolled, type HeaderProps } from '../shared';
 
@@ -20,7 +21,7 @@ const Caret = () => (
  * compare, cart) → category bar. Full-width mega menu with category tiles, sub-categories,
  * featured products and the CMS promo. The utility bar scrolls away; the rest stays pinned.
  */
-export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, user, payLater, labels }: HeaderProps) {
+export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, user, locale, payLater, labels }: HeaderProps) {
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(40);
@@ -60,6 +61,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             <Link href={labels.allBrandsHref} className="mu-util-brands">
               {labels.allBrands}
             </Link>
+            <LangSwitch locale={locale} label={labels.language} />
           </nav>
         </div>
       </div>
