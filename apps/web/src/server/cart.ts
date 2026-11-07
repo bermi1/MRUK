@@ -57,7 +57,8 @@ export async function getCart(brand: BrandKey): Promise<CartView> {
   let discountError: string | null = null;
   if (cart?.discountCode) {
     const rule = await prisma.discountCode.findUnique({ where: { code: cart.discountCode } });
-    const r = checkDiscount(rule, subtotal, brand);
+    // The database column is brandKey; checkDiscount reads brand (a Skywood-only code must not work on Mr UK).
+    const r = checkDiscount(rule && { ...rule, brand: rule.brandKey }, subtotal, brand);
     if (r.ok) discount += r.amount;
     else discountError = r.reason;
   }
