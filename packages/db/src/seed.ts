@@ -166,7 +166,16 @@ async function syncSkywoodPhotos(BT: ReturnType<typeof loadHandoff>) {
       created++;
       continue;
     }
-    if (!want.length || sameList(row.images, want)) continue;
+    // No official photo for this model yet: drop links to the dead site so the store shows its placeholder.
+    if (!want.length) {
+      if (row.images.length && row.images.every((u) => /^https?:\/\/(www\.)?skywood\.co\.tz\//i.test(u.trim()))) {
+        await prisma.product.update({ where: { id: p.id }, data: { images: [] } });
+        await audit('Product', p.id);
+        products++;
+      }
+      continue;
+    }
+    if (sameList(row.images, want)) continue;
     if (!row.images.every(isReplaceableSkywoodImage)) { kept++; continue; }
     await prisma.product.update({ where: { id: p.id }, data: { images: want } });
     await audit('Product', p.id);
