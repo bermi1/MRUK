@@ -14,12 +14,15 @@ interface Props {
   share: { url: string; domain: string; brandName: string };
   inCompare: boolean;
   initialMonths: number;
+  /** Admin switch: false shows Pay in full only (no Salary Advance option, no monthly prices). */
+  payLater: boolean;
   labels: Record<'payInFull' | 'payInFullSub' | 'salaryAdvance' | 'salaryAdvanceSub' | 'addToCart' | 'buyNow' | 'buyWithAdvance' | 'share', string>;
 }
 
 /** Two purchase paths (README): Pay in full, or Azania Salary Advance with 3/6/12 months. */
-export function BuyBox({ brand, product: p, share, inCompare, initialMonths, labels }: Props) {
-  const [pay, setPay] = useState<'full' | 'salary'>('salary');
+export function BuyBox({ brand, product: p, share, inCompare, initialMonths, payLater, labels }: Props) {
+  const [choice, setPay] = useState<'full' | 'salary'>(payLater ? 'salary' : 'full');
+  const pay = payLater ? choice : 'full';
   const [months, setMonths] = useState(initialMonths);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,12 +35,12 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
     start(async () => {
       const r = await addToCartAction(brand, p.id);
       if (!r.ok) return toast(r.error);
-      await updateCartAction(brand, { months });
+      if (payLater) await updateCartAction(brand, { months });
       if (checkout) router.push(`/${brand}/checkout?method=${pay === 'salary' ? 'salary_advance' : 'azania_account'}`);
       else router.push(`/${brand}/cart`);
     });
 
-  const text = `${p.name} (${p.model}) — ${fmt(p.price)} or ${fmt(p.price / months)}/mo. ${share.url}`;
+  const text = `${p.name} (${p.model}) — ${fmt(p.price)}${payLater ? ` or ${fmt(p.price / months)}/mo` : ''}. ${share.url}`;
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }} role="radiogroup" aria-label="Payment option">
@@ -48,6 +51,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
           </div>
           <span style={{ fontSize: 15, fontWeight: 600 }}>{fmt(p.price)}</span>
         </button>
+        {payLater && (
         <div role="radio" aria-checked={pay === 'salary'} tabIndex={0} onClick={() => setPay('salary')} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPay('salary')} className="payopt" style={{ display: 'block', border: pay === 'salary' ? '2px solid var(--az)' : '1px solid var(--line)', background: pay === 'salary' ? '#F3FAFE' : '#fff' }}>
           <div className="row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
@@ -80,6 +84,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
             ))}
           </div>
         </div>
+        )}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
         <button type="button" className="btn btn-outline-p" disabled={pending || out} onClick={() => go(false)}>
@@ -114,9 +119,11 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, lab
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 18, fontWeight: 700 }}>{fmt(p.price)}</div>
-                  <div className="monthly-light" style={{ fontSize: 12 }}>
-                    {fmt(p.price / 12)}/mo
-                  </div>
+                  {payLater && (
+                    <div className="monthly-light" style={{ fontSize: 12 }}>
+                      {fmt(p.price / 12)}/mo
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

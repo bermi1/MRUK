@@ -12,18 +12,19 @@ import { getT } from '@/server/locale';
 import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
 import { productLabel, publicUrl } from '@/lib/site';
 import { breadcrumbLd, graph, pageMeta, productDescription, productLd, productTitle } from '@/server/seo';
+import { payLaterOn } from '@/server/paylater';
 
 /** Server-side title, description, canonical and OG/Twitter card (image, model, name, price in TZS). */
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; id: string }> }): Promise<Metadata> {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, base, flash] = await Promise.all([getBrand(key), getProduct(key, id), getFlashDeals(key)]);
+  const [brand, base, flash, payLater] = await Promise.all([getBrand(key), getProduct(key, id), getFlashDeals(key), payLaterOn(key)]);
   const deal = flash.find((f) => f.id === base.id);
   const p = deal ? { ...base, price: deal.dealPrice } : base;
   return pageMeta({
     brand,
     path: `/p/${p.id}`,
     title: productTitle(p, brand.name),
-    description: productDescription(p, brand.name),
+    description: productDescription(p, brand.name, payLater),
     images: p.images.slice(0, 4).map((src) => ({ url: src, alt: productLabel(p) })),
     ogType: 'product',
   });
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, base, products, cmp, cart, suppliers, t, flash] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), getFlashDeals(key)]);
+  const [brand, base, products, cmp, cart, suppliers, t, flash, payLater] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), getFlashDeals(key), payLaterOn(key)]);
   const deal = flash.find((f) => f.id === base.id);
   const p = deal ? { ...base, price: deal.dealPrice } : base;
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
@@ -89,7 +90,8 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             share={{ url: publicUrl(key, `/p/${p.id}`), domain: brand.domain, brandName: brand.name }}
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
-            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: t('salaryAdvance'), salaryAdvanceSub: t('salaryAdvanceSub'), addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: t('buyWithAdvance'), share: t('share') }}
+            payLater={payLater}
+            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
           />
           <div className="perks">
             <div>
@@ -120,9 +122,11 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
                 <div>
                   <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{r.name}</div>
                   <div style={{ fontSize: 14, marginTop: 4 }}>{fmt(r.price)}</div>
-                  <div className="monthly" style={{ fontSize: 12 }}>
-                    {fmt(r.price / 12)}/mo
-                  </div>
+                  {payLater && (
+                    <div className="monthly" style={{ fontSize: 12 }}>
+                      {fmt(r.price / 12)}/mo
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}

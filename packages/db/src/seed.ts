@@ -108,7 +108,7 @@ const CUSTOMERS = [
 const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
 
 /** Permissions added after launch: granted to existing roles on every deploy (only ever adds; never removes what an owner set). */
-const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all'] };
+const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all', 'paylater.toggle'] };
 
 async function syncRolePermissions() {
   for (const [id, add] of Object.entries(ADDED_PERMISSIONS)) {
@@ -124,6 +124,11 @@ async function syncRolePermissions() {
 
 /** `seed.ts --tokens`: refresh only the brand design tokens and role permissions (safe on a live database). */
 async function syncTokens() {
+  // Dar es Salaam regional showroom: exact map position supplied by the client (Google Maps pin).
+  await prisma.supplier.updateMany({
+    where: { city: 'Dar es Salaam', area: 'Kariakoo', NOT: { lat: -6.822768 } },
+    data: { lat: -6.822768, lng: 39.272055, type: 'Regional showroom and service centre' },
+  });
   const BT = loadHandoff();
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
@@ -261,7 +266,7 @@ async function main() {
   // Staff, roles ------------------------------------------------------------
   const PERMS = {
     owner: ['*'],
-    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all'],
+    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all', 'paylater.toggle'],
     finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
     catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
     warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
@@ -492,6 +497,10 @@ async function main() {
       { key: 'notifications', value: { orders: true, bank: true, stock: true, tickets: true, daily: false } },
       { key: 'security', value: { sessionTimeoutMinutes: 30, require2fa: true, backups: 'daily' } },
       { key: 'regions', value: REGIONS.map((r) => ({ ...r })) },
+      // Pay Later by Azania Bank starts OFF for both brands (agreement with the bank still being negotiated).
+      // Owners/managers switch it on in Admin › Settings; e2e tests that need it switch it on first.
+      { key: 'payLater.mruk', value: { enabled: false, updatedBy: 'seed', at: new Date().toISOString() } },
+      { key: 'payLater.skywood', value: { enabled: false, updatedBy: 'seed', at: new Date().toISOString() } },
     ],
   });
 

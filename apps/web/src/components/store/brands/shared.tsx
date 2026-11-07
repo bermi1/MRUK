@@ -53,6 +53,8 @@ export interface HeaderProps {
   cartCount: number;
   compareCount: number;
   user: SessionUser | null;
+  /** Admin switch: false hides every Pay Later entry and monthly price. */
+  payLater: boolean;
   labels: HeaderLabels;
 }
 
@@ -210,6 +212,7 @@ export interface HeroSlideView {
 export interface HeroLabels {
   shopNow: string;
   seeDeals: string;
+  /** "or {amount} / month"; empty when Pay Later is off (no monthly chip). */
   perMonth: string;
   withAdvance: string;
   pause: string;
@@ -248,6 +251,8 @@ export interface MobileMenuProps {
   /** wa.me link for the brand's WhatsApp line. */
   whatsapp: string;
   compareCount: number;
+  /** Admin switch: false hides the Pay Later card. */
+  payLater: boolean;
   labels: {
     categories: string;
     shopAll: string;

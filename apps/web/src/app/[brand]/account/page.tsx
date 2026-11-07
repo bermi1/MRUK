@@ -13,6 +13,7 @@ import type { BrandKey } from '@/lib/types';
 import { accountData } from '@/server/account';
 import { getBrand } from '@/server/catalog';
 import { getLocale } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 import { BRAND_NAMES } from '@/server/marketing';
 import { currentCustomer } from '@/server/session';
 import '@/styles/account.css';
@@ -63,9 +64,12 @@ type Customer = NonNullable<Awaited<ReturnType<typeof currentCustomer>>>;
 async function Dashboard({ c, brandKey: key, brandName, locale, sp }: { c: Customer; brandKey: BrandKey; brandName: string; locale: Locale; sp: Search }) {
   const t = makeT(locale);
   const brand = { name: brandName };
-  const tab = parseTab(sp.tab);
-  const d = await accountData(c, key);
-  const ctx = { brand: key, brandName: brand.name, locale, t };
+  const parsed = parseTab(sp.tab);
+  const [d, payLater] = await Promise.all([accountData(c, key), payLaterOn(key)]);
+  // Pay Later switched off: the tab stays for customers who already have Pay Later orders.
+  const showPayLater = payLater || d.orders.some((o) => o.advance);
+  const tab = parsed === 'paylater' && !showPayLater ? 'overview' : parsed;
+  const ctx = { brand: key, brandName: brand.name, locale, t, payLater };
   const first = c.name.trim().split(/\s+/)[0];
   const activeCount = d.orders.filter((o) => o.active).length;
   const openTickets = d.tickets.filter((x) => x.open).length;
@@ -113,7 +117,7 @@ async function Dashboard({ c, brandKey: key, brandName, locale, sp }: { c: Custo
         </header>
 
         <nav className="acc-tabs nsb" aria-label={t('accTabsLabel')}>
-          {(Object.keys(TAB_LABEL) as AccountTab[]).map((k) => (
+          {(Object.keys(TAB_LABEL) as AccountTab[]).filter((k) => k !== 'paylater' || showPayLater).map((k) => (
             <Link key={k} href={`/${key}/account${k === 'overview' ? '' : `?tab=${k}`}`} className={tab === k ? 'on' : ''} aria-current={tab === k ? 'page' : undefined} scroll={false} data-testid={`tab-${k}`}>
               {t(TAB_LABEL[k])}
               {!!counts[k] && <span className="acc-tab-n">{counts[k]}</span>}

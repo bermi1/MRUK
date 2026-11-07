@@ -1,4 +1,10 @@
 import { expect, test } from './fixtures';
+import { setPayLater } from './paylater';
+
+// Pay Later is off by default (the bank agreement is pending): switch it on for Mr UK first.
+test.beforeAll(async ({ browser }, info) => {
+  await setPayLater(browser, info.project.use.baseURL!, { mruk: true });
+});
 
 async function toApplication(page: import('@playwright/test').Page) {
   await page.goto('/mruk/p/mruk-pump-control');

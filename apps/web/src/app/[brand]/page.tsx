@@ -8,12 +8,15 @@ import { getT } from '@/server/locale';
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { brandImage, graph, organizationLd, pageMeta, websiteLd } from '@/server/seo';
+import { payLaterOn } from '@/server/paylater';
+import { stripPayLater } from '@bt/core';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, cms, cats] = await Promise.all([getBrand(key), getCms(key), getCategories(key)]);
+  const [brand, cms, cats, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), payLaterOn(key)]);
   const title = cms.seo.title || `${brand.name} — ${brand.tagline}`;
-  const description = cms.seo.desc || `${brand.name}: ${cats.map((c) => c.name).join(', ')}. Delivered across Tanzania; pay in full or monthly.`;
+  const desc = payLater ? cms.seo.desc : stripPayLater(cms.seo.desc);
+  const description = desc || `${brand.name}: ${cats.map((c) => c.name).join(', ')}. Delivered across Tanzania.`;
   return pageMeta({ brand, path: '', title, description, images: [{ url: brandImage(brand, cms), alt: brand.name }] });
 }
 
@@ -23,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
  */
 export default async function BrandHome({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, cms, cats, products, bundles, suppliers, flash, compare, t] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getCompareIds(key), getT()]);
+  const [brand, cms, cats, products, bundles, suppliers, flash, compare, t, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getBundles(key), getSuppliers(key), getFlashDeals(key), getCompareIds(key), getT(), payLaterOn(key)]);
   const b = `/${key}`;
   const byId = (id: string) => products.find((p) => p.id === id);
   const slides: HeroSlideView[] = cms.hero
@@ -32,9 +35,10 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
       if (!p) return null;
       const price = h.price ?? p.price;
       return {
-        eyebrow: h.eyebrow,
+        // Pay Later off: drop CMS hero copy that promises it.
+        eyebrow: payLater ? h.eyebrow : stripPayLater(h.eyebrow),
         title: h.title,
-        sub: h.sub,
+        sub: payLater ? h.sub : stripPayLater(h.sub),
         img: h.img || p.img || cats.find((c) => c.id === p.cat)?.img || '',
         href: h.href || `${b}/p/${p.id}`,
         price,
@@ -59,8 +63,9 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   const heroLabels: HeroLabels = {
     shopNow: t('shopNow'),
     seeDeals: t('seeDeals'),
-    perMonth: t('orPerMonth'),
-    withAdvance: t('withAdvance'),
+    // Empty when Pay Later is off: the heroes then show the price without the monthly chip.
+    perMonth: payLater ? t('orPerMonth') : '',
+    withAdvance: payLater ? t('withAdvance') : '',
     pause: t('pause'),
     play: t('play'),
     slideN: t('slideN'),
@@ -71,7 +76,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     musicOff: t('musicOff'),
   };
   const cities = [...new Set(suppliers.map((s) => s.city))];
-  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };
+  const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, payLater, t };
 
   const ld = <JsonLd data={graph(organizationLd(brand, cms), websiteLd(brand))} />;
 

@@ -5,19 +5,20 @@ import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart } from '@/server/cart';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Cart', robots: { index: false } };
 
 export default async function CartPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [cart, t] = await Promise.all([getCart(key), getT()]);
+  const [cart, t, payLater] = await Promise.all([getCart(key), getT(), payLaterOn(key)]);
   return (
     <div className="wrap page-top">
       <h1 className="h1" style={{ marginTop: 0 }}>
         {t('cart')}
       </h1>
       <div className="two-col">
-        <CartItems cart={cart} brand={key} />
+        <CartItems cart={cart} brand={key} payLater={payLater} />
         <div className="card-soft" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="sumrow">
             <span>{t('subtotal')}</span>
@@ -47,10 +48,12 @@ export default async function CartPage({ params }: { params: Promise<{ brand: st
             <span>{t('total')}</span>
             <span data-testid="cart-total">{fmt(cart.total)}</span>
           </div>
-          <div className="sumrow monthly" style={{ fontWeight: 600 }}>
-            <span>Pay Later · {cart.months} months</span>
-            <span>{fmt(cart.total / cart.months)}/mo</span>
-          </div>
+          {payLater && (
+            <div className="sumrow monthly" style={{ fontWeight: 600 }}>
+              <span>Pay Later · {cart.months} months</span>
+              <span>{fmt(cart.total / cart.months)}/mo</span>
+            </div>
+          )}
           <DiscountField
             brand={key}
             code={cart.discountCode}

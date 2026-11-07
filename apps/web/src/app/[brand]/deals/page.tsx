@@ -8,27 +8,27 @@ import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBrand, getBundles, getFlashDeals } from '@/server/catalog';
 import { brandTitle, pageMeta } from '@/server/seo';
-
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 import { productLabel } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, bundles, flash] = await Promise.all([getBrand(key), getBundles(key), getFlashDeals(key)]);
+  const [brand, bundles, flash, payLater] = await Promise.all([getBrand(key), getBundles(key), getFlashDeals(key), payLaterOn(key)]);
   const top = Math.max(0, ...bundles.map((b) => b.save), ...flash.map((f) => f.off));
   const lead = flash.find((f) => f.img) ?? bundles.flatMap((b) => b.items).find((p) => p.img);
   return pageMeta({
     brand,
     path: '/deals',
     title: brandTitle('Deals, flash sales and bundles', brand.name),
-    description: `${brand.name} deals in Tanzania: ${flash.length} flash deals and ${bundles.length} bundles${top ? `, save up to ${top}%` : ''}. Prices in TZS, pay in full or monthly.`,
+    description: `${brand.name} deals in Tanzania: ${flash.length} flash deals and ${bundles.length} bundles${top ? `, save up to ${top}%` : ''}. Prices in TZS${payLater ? ', pay in full or monthly' : ''}.`,
     images: lead ? [{ url: lead.img, alt: productLabel(lead) }] : undefined,
   });
 }
 
 export default async function DealsPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [bundles, flash, t] = await Promise.all([getBundles(key), getFlashDeals(key), getT()]);
+  const [bundles, flash, t, payLater] = await Promise.all([getBundles(key), getFlashDeals(key), getT(), payLaterOn(key)]);
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
       <section className="deals-hero">
@@ -101,7 +101,7 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
           </div>
         </>
       )}
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />}
       <div className="grid-2" style={{ marginTop: 16 }}>
         <div style={{ borderRadius: 22, background: 'var(--surface)', padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Free delivery in Dar</div>

@@ -98,7 +98,7 @@
     P('skywood', 'washing', 'Top load', 'XQB100-1729AZ', '12kg Top Load Washing Machine', 690000, 9, ['12kg top load', 'Universal motor', '220–240V'], SW + 'skywood-washing-machine.png')
   ];
   const SUPPLIERS = [
-    { city: 'Dar es Salaam', area: 'Kariakoo', type: 'Flagship showroom and service centre', phone: '+255 700 000 301', hours: 'Mon–Sat 8:00–19:00', lat: -6.8161, lng: 39.2803, brands: ['mruk', 'skywood'] },
+    { city: 'Dar es Salaam', area: 'Kariakoo', type: 'Regional showroom and service centre', phone: '+255 700 000 301', hours: 'Mon–Sat 8:00–19:00', lat: -6.822768, lng: 39.272055, brands: ['mruk', 'skywood'] },
     { city: 'Dar es Salaam', area: 'Mikocheni', type: 'Authorised dealer', phone: '+255 700 000 302', hours: 'Mon–Sat 9:00–18:00', lat: -6.7615, lng: 39.2447, brands: ['skywood'] },
     { city: 'Dar es Salaam', area: 'Mbagala', type: 'Authorised dealer', phone: '+255 700 000 303', hours: 'Mon–Sat 8:30–18:30', lat: -6.9043, lng: 39.2755, brands: ['mruk'] },
     { city: 'Arusha', area: 'Central', type: 'Showroom and service centre', phone: '+255 700 000 304', hours: 'Mon–Sat 8:30–18:00', lat: -3.3869, lng: 36.6830, brands: ['mruk', 'skywood'] },

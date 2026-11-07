@@ -6,6 +6,7 @@ import { SafeImg } from '@/components/store/SafeImg';
 import { ProductCard } from '@/components/store/brands/ProductCard';
 import { ShopControls } from '@/components/store/ShopControls';
 import { PayLaterBanner } from '@/components/store/PayLaterBanner';
+import { payLaterOn } from '@/server/paylater';
 import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
@@ -34,14 +35,14 @@ type Q = z.infer<typeof Query>;
 export async function generateMetadata({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
   const raw = await searchParams;
-  const [brand, cats, products] = await Promise.all([getBrand(key), getCategories(key), getProducts(key)]);
+  const [brand, cats, products, payLater] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), payLaterOn(key)]);
   const cat = cats.find((c) => c.id === (Array.isArray(raw.cat) ? raw.cat[0] : raw.cat));
   const lead = products.find((p) => p.img);
   return pageMeta({
     brand,
     path: cat ? `/c/${cat.id}` : '/shop',
     title: cat ? brandTitle(`${cat.name} in Tanzania`, brand.name) : brandTitle('All products and prices in TZS', brand.name),
-    description: `All ${products.length} ${brand.name} products: ${cats.map((c) => c.name).join(', ')}. Prices in TZS, pay in full or monthly, delivered across Tanzania.`,
+    description: `All ${products.length} ${brand.name} products: ${cats.map((c) => c.name).join(', ')}. Prices in TZS${payLater ? ', pay in full or monthly' : ''}, delivered across Tanzania.`,
     images: lead ? [{ url: lead.img, alt: productLabel(lead) }] : undefined,
   });
 }
@@ -59,7 +60,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const raw = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined;
   const q: Q = Query.parse({ cat: one(raw.cat), sort: one(raw.sort), min: one(raw.min), max: one(raw.max), stock: one(raw.stock), n: one(raw.n) });
-  const [brand, cats, products, cmp, t] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getT()]);
+  const [brand, cats, products, cmp, t, payLater] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getT(), payLaterOn(key)]);
   const b = `/${key}`;
   const cat = cats.find((c) => c.id === q.cat);
   const sort: Sort = q.sort ?? 'popular';
@@ -73,7 +74,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const list = sortList(filtered, sort);
   const pages = q.n ?? 1;
   const shown = list.slice(0, pages * PAGE);
-  const perMonth = t('perMonthShort');
+  const perMonth = payLater ? t('perMonthShort') : '';
   const filterOn = lo !== undefined || hi !== undefined || !!q.stock;
 
   const href = (patch: Partial<Record<keyof Q, string | number | undefined>>) => {
@@ -93,7 +94,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
       <JsonLd data={{ '@context': 'https://schema.org', ...itemListLd(brand, cat ? cat.name : `${brand.name} products`, shown) }} />
       <header className="shop-head">
         <h1 className="shop-title">{cat ? cat.name : t('shopTitle')}</h1>
-        <p className="shop-sub">{t('shopSub', { n: filtered.length })}</p>
+        <p className="shop-sub">{t(payLater ? 'shopSub' : 'shopSubNoPl', { n: filtered.length })}</p>
       </header>
 
       {/* "Shop by category": one compact row of category shortcuts. */}
@@ -168,7 +169,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
           </Link>
         )}
       </div>
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`${b}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`${b}/pay-later`} />}
     </div>
   );
 }

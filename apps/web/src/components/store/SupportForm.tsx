@@ -6,7 +6,8 @@ import { MinusIcon, PlusIcon, SparkleIcon } from '../icons';
 
 const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Other'];
 
-export function SupportForm({ brand, brandName, whatsapp, products, prefill }: { brand: string; brandName: string; whatsapp: string; products: { id: string; label: string }[]; prefill: { name: string; phone: string } }) {
+export function SupportForm({ brand, brandName, whatsapp, products, prefill, payLater }: { brand: string; brandName: string; whatsapp: string; products: { id: string; label: string }[]; prefill: { name: string; phone: string }; payLater: boolean }) {
+  const faqs = payLater ? FAQS : FAQS.filter(([q]) => !/pay later/i.test(q));
   const [tk, setTk] = useState({ issue: 'Repair', name: prefill.name, phone: prefill.phone, order: '', productId: '', description: '' });
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState('');
@@ -142,7 +143,7 @@ export function SupportForm({ brand, brandName, whatsapp, products, prefill }: {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ fontSize: 17, fontWeight: 600 }}>Common questions</div>
-        {FAQS.map(([q, a], i) => (
+        {faqs.map(([q, a], i) => (
           <div key={q} style={{ border: '1px solid var(--border)', borderRadius: 18 }}>
             <button type="button" aria-expanded={faq === i} onClick={() => setFaq(faq === i ? -1 : i)} style={{ width: '100%', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', fontSize: 14.5, fontWeight: 600, textAlign: 'left', gap: 10 }}>
               <span>{q}</span>

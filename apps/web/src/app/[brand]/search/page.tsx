@@ -3,6 +3,7 @@ import { ProductTile } from '@/components/store/ProductTile';
 import type { BrandKey } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
 import { getBrand, getProducts, searchProducts } from '@/server/catalog';
+import { payLaterOn } from '@/server/paylater';
 import { SearchIcon } from '@/components/icons';
 
 export const metadata: Metadata = { title: 'Search', robots: { index: false, follow: true } };
@@ -10,7 +11,7 @@ export const metadata: Metadata = { title: 'Search', robots: { index: false, fol
 export default async function SearchPage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<{ q?: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
   const q = ((await searchParams).q ?? '').slice(0, 80);
-  const [brand, products, cmp] = await Promise.all([getBrand(key), getProducts(key), getCompareIds(key)]);
+  const [brand, products, cmp, payLater] = await Promise.all([getBrand(key), getProducts(key), getCompareIds(key), payLaterOn(key)]);
   const results = q ? searchProducts(products, q) : [];
   return (
     <div className="wrap page-top">
@@ -27,7 +28,7 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
       {q && results.length === 0 && <p style={{ color: 'var(--muted2)' }}>No products match. Try a model number (e.g. G3500Q) or a category like “fridge”.</p>}
       <div className="grid-5" style={{ marginTop: 20 }}>
         {results.map((p) => (
-          <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} />
+          <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} payLater={payLater} />
         ))}
       </div>
     </div>

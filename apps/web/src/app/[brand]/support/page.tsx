@@ -7,6 +7,7 @@ import { getBrand, getProducts } from '@/server/catalog';
 import { brandTitle, pageMeta } from '@/server/seo';
 
 import { currentCustomer } from '@/server/session';
+import { payLaterOn } from '@/server/paylater';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function SupportPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [brand, products, customer] = await Promise.all([getBrand(key), getProducts(key), currentCustomer()]);
+  const [brand, products, customer, payLater] = await Promise.all([getBrand(key), getProducts(key), currentCustomer(), payLaterOn(key)]);
   return (
     <div className="wrap page-top">
       <div className="support-top">
@@ -40,7 +41,7 @@ export default async function SupportPage({ params }: { params: Promise<{ brand:
           </a>
         </div>
       </div>
-      <SupportForm brand={key} brandName={brand.name} whatsapp={brand.whatsapp} products={products.map((p) => ({ id: p.id, label: `${p.model} · ${p.name}` }))} prefill={{ name: customer?.name ?? '', phone: customer ? formatTzPhone(customer.phone) : '' }} />
+      <SupportForm brand={key} brandName={brand.name} whatsapp={brand.whatsapp} products={products.map((p) => ({ id: p.id, label: `${p.model} · ${p.name}` }))} prefill={{ name: customer?.name ?? '', phone: customer ? formatTzPhone(customer.phone) : '' }} payLater={payLater} />
     </div>
   );
 }

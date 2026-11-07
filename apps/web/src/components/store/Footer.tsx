@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { MessageKey } from '@/lib/i18n';
 import { waLink } from '@/lib/format';
 import { SOCIAL_KEYS, type BrandView, type CategoryView, type SocialLinks } from '@/lib/types';
-import { CardIcon, PinIcon, RouteIcon, SocialIcon, WhatsAppIcon } from '../icons';
+import { CardIcon, PinIcon, RouteIcon, ShieldIcon, SocialIcon, WhatsAppIcon } from '../icons';
 import { Subscribe, type SubscribeLabels } from './Subscribe';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -31,11 +31,12 @@ function Social({ links, brand, className }: { links?: SocialLinks; brand: strin
   );
 }
 
-export function Footer({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
-  return brand.key === 'skywood' ? <SkywoodFooter brand={brand} cats={cats} t={t} social={social} /> : <MrukFooter brand={brand} cats={cats} t={t} social={social} />;
+/** `payLater` (admin switch) false: no Pay Later link, Azania partner mark or Pay Later payment chip. */
+export function Footer({ brand, cats, t, social, payLater }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks; payLater: boolean }) {
+  return brand.key === 'skywood' ? <SkywoodFooter brand={brand} cats={cats} t={t} social={social} payLater={payLater} /> : <MrukFooter brand={brand} cats={cats} t={t} social={social} payLater={payLater} />;
 }
 
-function Columns({ brand, cats, t, headClass }: { brand: BrandView; cats: CategoryView[]; t: T; headClass: string }) {
+function Columns({ brand, cats, t, headClass, payLater }: { brand: BrandView; cats: CategoryView[]; t: T; headClass: string; payLater: boolean }) {
   const b = `/${brand.key}`;
   return (
     <>
@@ -57,14 +58,14 @@ function Columns({ brand, cats, t, headClass }: { brand: BrandView; cats: Catego
       <nav className="foot-col" aria-label={t('footerOffers')}>
         <p className={headClass}>{t('footerOffers')}</p>
         <Link href={`${b}/deals`}>{t('dealsAndBundles')}</Link>
-        <Link href={`${b}/pay-later`}>{t('payLater')}</Link>
+        {payLater && <Link href={`${b}/pay-later`}>{t('payLater')}</Link>}
         <Link href={`${b}/suppliers`}>{t('showroomPickup')}</Link>
       </nav>
     </>
   );
 }
 
-function MrukFooter({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
+function MrukFooter({ brand, cats, t, social, payLater }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks; payLater: boolean }) {
   const b = `/${brand.key}`;
   return (
     <footer className="mu-foot">
@@ -104,18 +105,20 @@ function MrukFooter({ brand, cats, t, social }: { brand: BrandView; cats: Catego
         <div className="mu-foot-brand">
           <img src="/brand/mruk-white.png" alt={brand.name} width={58} height={40} loading="lazy" />
           <p>{brand.tagline}</p>
-          <div className="mu-foot-partner">
-            <span>{t('advancePartner')}</span>
-            <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
-          </div>
+          {payLater && (
+            <div className="mu-foot-partner">
+              <span>{t('advancePartner')}</span>
+              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
+            </div>
+          )}
           <Social links={social} brand={brand.name} className="mu" />
         </div>
-        <Columns brand={brand} cats={cats} t={t} headClass="mu-foot-h" />
+        <Columns brand={brand} cats={cats} t={t} headClass="mu-foot-h" payLater={payLater} />
         <div className="foot-col">
           <p className="mu-foot-h">{t('weAccept')}</p>
           <div className="mu-accept">
             <span>Azania Bank</span>
-            <span>{t('payLater')}</span>
+            {payLater && <span>{t('payLater')}</span>}
             <span>Visa</span>
             <span>Mastercard</span>
           </div>
@@ -133,7 +136,7 @@ function MrukFooter({ brand, cats, t, social }: { brand: BrandView; cats: Catego
   );
 }
 
-function SkywoodFooter({ brand, cats, t, social }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks }) {
+function SkywoodFooter({ brand, cats, t, social, payLater }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks; payLater: boolean }) {
   const [first, ...rest] = brand.tagline.split(/(?<=\.)\s+/);
   const b = `/${brand.key}`;
   return (
@@ -165,13 +168,23 @@ function SkywoodFooter({ brand, cats, t, social }: { brand: BrandView; cats: Cat
                 {t('trustShowroomsSub')}
               </span>
             </Link>
-            <Link href={`${b}/pay-later`} className="sw-foot-svc">
-              <CardIcon size={20} strokeWidth={1.4} />
-              <span>
-                <b>{t('payLater')}</b>
-                {t('trustAdvanceSub')}
-              </span>
-            </Link>
+            {payLater ? (
+              <Link href={`${b}/pay-later`} className="sw-foot-svc">
+                <CardIcon size={20} strokeWidth={1.4} />
+                <span>
+                  <b>{t('payLater')}</b>
+                  {t('trustAdvanceSub')}
+                </span>
+              </Link>
+            ) : (
+              <Link href={`${b}/support`} className="sw-foot-svc">
+                <ShieldIcon size={20} strokeWidth={1.4} />
+                <span>
+                  <b>{t('support')}</b>
+                  {t('trustWarranty')}
+                </span>
+              </Link>
+            )}
           </div>
         </div>
         <Subscribe brand="skywood" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
@@ -179,20 +192,22 @@ function SkywoodFooter({ brand, cats, t, social }: { brand: BrandView; cats: Cat
           <div className="sw-foot-brand">
             <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} loading="lazy" />
             <p className="sw-foot-about">{t('swIntro')}</p>
-            <div className="sw-foot-partner">
-              <span>{t('advancePartner')}</span>
-              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
-            </div>
+            {payLater && (
+              <div className="sw-foot-partner">
+                <span>{t('advancePartner')}</span>
+                <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
+              </div>
+            )}
             <Social links={social} brand={brand.name} className="sw" />
           </div>
-          <Columns brand={brand} cats={cats} t={t} headClass="sw-foot-h" />
+          <Columns brand={brand} cats={cats} t={t} headClass="sw-foot-h" payLater={payLater} />
         </div>
         <div className="sw-foot-bottom">
           <span>
             © {new Date().getFullYear()} {brand.legal}
           </span>
           <span className="sw-foot-pay" aria-label={t('weAccept')}>
-            {['Azania Bank', t('payLater'), 'Visa', 'Mastercard'].map((x) => (
+            {['Azania Bank', ...(payLater ? [t('payLater')] : []), 'Visa', 'Mastercard'].map((x) => (
               <span key={x}>{x}</span>
             ))}
           </span>

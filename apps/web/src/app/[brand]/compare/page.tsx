@@ -8,12 +8,13 @@ import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
+import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Compare products', robots: { index: false, follow: true } };
 
 export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [products, ids, cart] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key)]);
+  const [products, ids, cart, payLater] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), payLaterOn(key)]);
   const months = cart.months;
   const chosen = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
   // Prototype: with fewer than 2 picks, suggest products from the same category.
@@ -24,7 +25,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
   const minP = Math.min(...items.map((p) => p.price));
   const rows: { label: string; cells: { t: React.ReactNode; c: string; w: number }[] }[] = [
     { label: 'Price', cells: items.map((p) => ({ t: fmt(p.price), w: 600, c: p.price === minP ? 'var(--ok)' : 'var(--text)' })) },
-    { label: 'Pay Later', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) },
+    ...(payLater ? [{ label: 'Pay Later', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) }] : []),
     { label: 'Type', cells: items.map((p) => ({ t: p.sub, w: 400, c: 'var(--text)' })) },
     { label: 'Stock', cells: items.map((p) => ({ t: p.stock <= 5 ? `Only ${p.stock} left` : 'In stock', w: 400, c: p.stock <= 5 ? 'var(--warn)' : 'var(--ok)' })) },
     ...feats.map((f) => ({ label: f, cells: items.map((p) => ({ t: p.features.includes(f) ? <span role="img" aria-label="Yes" style={{ display: 'inline-flex' }}><TickIcon size={18} strokeWidth={2.4} /></span> : <span aria-label="No">—</span>, w: 600, c: p.features.includes(f) ? 'var(--ok)' : '#C8CBD8' })) })),

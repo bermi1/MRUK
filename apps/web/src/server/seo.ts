@@ -83,10 +83,10 @@ export function productTitle(p: ProductView, brandName: string): string {
   return brandTitle(head, brandName);
 }
 
-export function productDescription(p: ProductView, brandName: string): string {
+export function productDescription(p: ProductView, brandName: string, payLater: boolean): string {
   const feat = p.features.slice(0, 2).join(', ');
   const stock = p.stock > 0 ? '' : ' Currently out of stock.';
-  return clip(`${brandName} ${productLabel(p)}${feat ? `: ${feat}` : ''}. ${fmt(p.price)} or pay monthly with Pay Later. Delivery across Tanzania.${stock}`, DESC_MAX);
+  return clip(`${brandName} ${productLabel(p)}${feat ? `: ${feat}` : ''}. ${fmt(p.price)}${payLater ? ' or pay monthly with Pay Later' : ''}. Delivery across Tanzania.${stock}`, DESC_MAX);
 }
 
 // JSON-LD ------------------------------------------------------------------------

@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBrand, getCms, getProducts } from '@/server/catalog';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { brandImage, brandTitle, breadcrumbLd, faqLd, graph, pageMeta } from '@/server/seo';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 import { ArrowRightIcon } from '@/components/icons';
 
-// Another engineer is adding a per-brand Pay Later on/off switch: when it lands, return noindex here while it is off (docs/seo.md).
+// Switched off in admin (Settings › Pay Later): the page is a 404 (so it drops out of the index and the sitemap).
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
+  if (!(await payLaterOn(key))) notFound();
   const [brand, cms, t] = await Promise.all([getBrand(key), getCms(key), getT()]);
   return pageMeta({ brand, path: '/pay-later', title: brandTitle(`${t('payLaterHow')}: pay monthly`, brand.name), description: t('payLaterIntro'), images: [{ url: brandImage(brand, cms), alt: t('salaryAdvance') }] });
 }
@@ -34,6 +37,8 @@ const FAQ = [
 /** "How Pay Later works": steps, eligibility and FAQ (same content, each brand's own look). */
 export default async function PayLaterPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
+  // Switched off in admin (Settings › Pay Later): the page does not exist for this brand.
+  if (!(await payLaterOn(key))) notFound();
   const [brand, cms, products, t] = await Promise.all([getBrand(key), getCms(key), getProducts(key), getT()]);
   const example = products.find((p) => p.id === cms.hero[0]?.pid) ?? products.find((p) => p.img) ?? products[0];
   const b = `/${key}`;

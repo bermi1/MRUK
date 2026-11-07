@@ -1,0 +1,9 @@
+# Pay Later by Azania Bank: per-brand switch
+
+- **Where:** Admin › Settings › "Pay Later by Azania Bank" (owners via `settings`, store managers via the new `paylater.toggle` permission). Each change asks for confirmation and is audit-logged (`paylater.on` / `paylater.off`, entity `Setting`, id `payLater.<brand>`). The state is also shown on the owner/manager dashboard and in the Salary Advance page header.
+- **Storage:** `Setting` rows `payLater.mruk` and `payLater.skywood`, value `{ enabled, updatedBy, at }`.
+- **Default: OFF.** No row means off (existing databases), and the seed writes off for both brands, because the agreement with Azania Bank is still being negotiated. E2E specs that buy on Pay Later switch it on first through the admin UI (`e2e/paylater.ts`).
+- **Reads:** storefront reads go through the catalogue cache (`server/paylater.ts`, tag `catalog`, 60 s); a switch from admin refreshes it immediately. Purchases (`placeAdvanceOrder`, mini app) re-check the database, so a stale page can never create an advance order.
+- **When off for a brand:** no Pay Later nav/mega/drawer items, hero monthly chips, monthly prices, banners, home sections, footer partner mark or Pay Later chip, compare row, support FAQ entry or AI monthly answers; the BuyBox and checkout offer pay in full only; `/[brand]/pay-later` returns 404; CMS sentences that promise Pay Later are dropped (the announcement falls back to the delivery/warranty promise). Customers with existing Pay Later orders keep their account tab and documents, and staff keep processing existing applications.
+- **Azania mini app:** shows only the brands that have Pay Later on; with both off it shows a "coming soon" screen.
+- Screens (on vs off, 1440 and 390 px): `docs/screens/paylater-toggle/`.

@@ -12,13 +12,14 @@ import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catal
 import { JsonLd } from '@/components/seo/JsonLd';
 import { fmt } from '@/lib/format';
 import { brandTitle, breadcrumbLd, graph, itemListLd, pageMeta } from '@/server/seo';
+import { payLaterOn } from '@/server/paylater';
 
 type SP = Promise<{ sub?: string; sort?: string; view?: string }>;
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; cat: string }> }): Promise<Metadata> {
   const { brand: key, cat } = (await params) as { brand: BrandKey; cat: string };
   if (cat === 'all') return {};
-  const [brand, cats, products] = await Promise.all([getBrand(key), getCategories(key), getProducts(key)]);
+  const [brand, cats, products, payLater] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), payLaterOn(key)]);
   const c = cats.find((x) => x.id === cat);
   if (!c) notFound();
   const list = products.filter((p) => p.cat === c.id);
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
     brand,
     path: `/c/${c.id}`,
     title: brandTitle(`${c.name} in Tanzania`, brand.name),
-    description: `${brand.name} ${c.name.toLowerCase()}${c.subs.length ? ` (${c.subs.join(', ')})` : ''}: ${list.length} models${from ? ` from ${fmt(from)}` : ''}. Pay in full or monthly, delivered across Tanzania.`,
+    description: `${brand.name} ${c.name.toLowerCase()}${c.subs.length ? ` (${c.subs.join(', ')})` : ''}: ${list.length} models${from ? ` from ${fmt(from)}` : ''}. ${payLater ? 'Pay in full or monthly, delivered' : 'Delivered'} across Tanzania.`,
     images: [{ url: lead?.img || c.img || brand.heroImg, alt: c.name }],
   });
 }
@@ -37,7 +38,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   const { brand: key, cat: catId } = (await params) as { brand: BrandKey; cat: string };
   if (catId === 'all') permanentRedirect(`/${key}/shop`);
   const sp = await searchParams;
-  const [brand, cats, products, cmp, cart, t] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key), getT()]);
+  const [brand, cats, products, cmp, cart, t, payLater] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key)]);
   const cat = catId === 'all' ? null : cats.find((c) => c.id === catId);
   if (catId !== 'all' && !cat) notFound();
   const sub = sp.sub && (cat?.subs.includes(sp.sub) ?? false) ? sp.sub : 'All';
@@ -113,17 +114,17 @@ export default async function CategoryPage({ params, searchParams }: { params: P
       {view === 'grid' ? (
         <div className="grid-5" style={{ marginTop: 20 }}>
           {list.map((p) => (
-            <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} />
+            <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} payLater={payLater} />
           ))}
         </div>
       ) : (
         <div className="grid-2" style={{ marginTop: 20 }}>
           {list.map((p) => (
-            <ProductRow key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} />
+            <ProductRow key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} payLater={payLater} />
           ))}
         </div>
       )}
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />}
     </div>
   );
 }

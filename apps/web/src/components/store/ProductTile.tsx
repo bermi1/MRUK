@@ -5,8 +5,8 @@ import { AddButton, CompareToggle } from './CartButtons';
 import { PImg } from './PImg';
 import { productLabel } from '@/lib/site';
 
-/** Category grid tile (prototype: 300px tall, image cover, gradient, meta at the bottom). */
-export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductView; brand: string; inCompare: boolean; months?: number }) {
+/** Category grid tile (prototype: 300px tall, image cover, gradient, meta at the bottom). `payLater` false hides the monthly line. */
+export function ProductTile({ p, brand, inCompare, months = 12, payLater }: { p: ProductView; brand: string; inCompare: boolean; months?: number; payLater: boolean }) {
   return (
     <div className="ptile shade-tb" data-testid="product-tile">
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.price)}`} />
@@ -23,9 +23,11 @@ export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductVi
         <div className="row" style={{ alignItems: 'flex-end', marginTop: 8 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 600 }}>{fmt(p.price)}</div>
-            <div className="monthly-light" style={{ fontSize: 11.5 }}>
-              {fmt(p.price / months)}/mo
-            </div>
+            {payLater && (
+              <div className="monthly-light" style={{ fontSize: 11.5 }}>
+                {fmt(p.price / months)}/mo
+              </div>
+            )}
           </div>
           {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <span style={{ fontSize: 11, fontWeight: 600 }}>Out of stock</span>}
         </div>
@@ -34,7 +36,7 @@ export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductVi
   );
 }
 
-export function ProductRow({ p, brand, inCompare, months = 12 }: { p: ProductView; brand: string; inCompare: boolean; months?: number }) {
+export function ProductRow({ p, brand, inCompare, months = 12, payLater }: { p: ProductView; brand: string; inCompare: boolean; months?: number; payLater: boolean }) {
   return (
     <div className="lrow" style={{ gridTemplateColumns: '120px 1fr auto', borderRadius: 20, padding: '10px 16px 10px 10px', gap: 16 }}>
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.price)}`} />
@@ -49,9 +51,11 @@ export function ProductRow({ p, brand, inCompare, months = 12 }: { p: ProductVie
       </div>
       <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
         <div style={{ fontSize: 16, fontWeight: 600 }}>{fmt(p.price)}</div>
-        <div className="monthly" style={{ fontSize: 12 }}>
-          {fmt(p.price / months)}/mo
-        </div>
+        {payLater && (
+          <div className="monthly" style={{ fontSize: 12 }}>
+            {fmt(p.price / months)}/mo
+          </div>
+        )}
         {p.stock > 0 && <AddButton brand={brand} id={p.id} name={p.name} className="btn btn-primary btn-sm" label="Add" />}
       </div>
     </div>
