@@ -38,10 +38,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const tab = TABS.find((t) => t.key === sp.status) ?? TABS[0]!;
   const page = Math.max(1, Math.min(200, Number(sp.page) || 1));
   const q = (sp.q ?? '').trim().slice(0, 60);
+  // Phones are stored as +255…: accept 0754…, 255754… or +255 754… and match on the national digits.
+  const digits = q.replace(/\D/g, '').replace(/^0/, '').replace(/^255/, '');
   const where: Prisma.OrderWhereInput = {
     ...ow,
     ...(tab.statuses ? { status: { in: tab.statuses } } : {}),
-    ...(q ? { OR: [{ number: { contains: q.toUpperCase() } }, { contactName: { contains: q, mode: 'insensitive' } }, { contactPhone: { contains: q.replace(/\D/g, '') || q } }] } : {}),
+    ...(q ? { OR: [{ number: { contains: q.toUpperCase() } }, { contactName: { contains: q, mode: 'insensitive' } }, ...(digits.length >= 3 ? [{ contactPhone: { contains: digits } }] : [])] } : {}),
   };
   const [counts, total, orders] = await Promise.all([
     prisma.order.groupBy({ by: ['status'], where: ow, _count: { _all: true } }),

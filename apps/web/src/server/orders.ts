@@ -419,6 +419,7 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
   if (o.paymentMethod === 'salary_advance' && o.status === 'bank_review' && (to === 'approved' || to === 'rejected')) {
     throw new Error('Approve or reject Salary Advance orders from the Salary Advance page');
   }
+  if (to === 'bank_review' && o.paymentMethod !== 'salary_advance') throw new Error('Only Salary Advance orders go to bank review');
   await prisma.$transaction(async (tx) => {
     const r = await tx.order.updateMany({ where: { id: o.id, status: o.status }, data: { status: to, reservedUntil: null } });
     if (r.count !== 1) throw new Error('Order changed meanwhile, reload and try again');
