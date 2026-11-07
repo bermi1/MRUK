@@ -50,9 +50,11 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
         include: { order: { include: { items: true } }, schedule: { orderBy: { n: 'asc' } }, contract: true },
       })
     : null;
-  const reveal = !!a && sp.reveal === '1';
-  if (a && reveal) await audit(ctx.email, 'advance.view_pii', 'SalaryAdvanceApplication', a.id);
   const write = ctx.can('advance.write');
+  // NIDA, account number, check number and salary (encrypted at rest) are shown in full only to the
+  // roles that decide applications (Finance, Super admin); view-only roles see them masked.
+  const reveal = !!a && write && sp.reveal === '1';
+  if (a && reveal) await audit(ctx.email, 'advance.view_pii', 'SalaryAdvanceApplication', a.id);
   const paid = a ? a.schedule.filter((s) => s.paidAt) : [];
   const href = (extra: Record<string, string>) => `/admin/advance?${new URLSearchParams({ ...(view !== 'pipeline' ? { view } : {}), ...extra })}`;
   const card = (r: (typeof listRows)[number]) => (
@@ -120,11 +122,11 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
                 <Link className="ad-btn line sm" href={href({ id: a.id })}>
                   Hide details
                 </Link>
-              ) : (
+              ) : write ? (
                 <Link className="ad-btn line sm" href={href({ id: a.id, reveal: '1' })}>
                   Show full details
                 </Link>
-              )}
+              ) : null}
               <Link className="ad-btn line sm" href={href({})} aria-label="Close application">
                 Close
               </Link>
