@@ -124,6 +124,11 @@ async function syncRolePermissions() {
 
 /** `seed.ts --tokens`: refresh only the brand design tokens and role permissions (safe on a live database). */
 async function syncTokens() {
+  // Dar es Salaam regional showroom: exact map position supplied by the client (Google Maps pin).
+  await prisma.supplier.updateMany({
+    where: { city: 'Dar es Salaam', area: 'Kariakoo', NOT: { lat: -6.822768 } },
+    data: { lat: -6.822768, lng: 39.272055, type: 'Regional showroom and service centre' },
+  });
   const BT = loadHandoff();
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
