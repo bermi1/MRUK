@@ -19,6 +19,11 @@ export function paymentAllowed(method: PaymentMethod, region: string): boolean {
   return true;
 }
 
-export function paymentLabel(method: PaymentMethod): string {
-  return PAYMENT_METHOD_INFO[method].title;
+/** Ways staff record payment for a walk-in (shop) sale invoiced from the admin. Not offered at online checkout. */
+export const SHOP_PAYMENT_METHODS = ['cash', 'bank_transfer', 'card_terminal'] as const;
+export type ShopPaymentMethod = (typeof SHOP_PAYMENT_METHODS)[number];
+export const SHOP_PAYMENT_LABEL: Record<ShopPaymentMethod, string> = { cash: 'Cash (shop)', bank_transfer: 'Bank transfer', card_terminal: 'Card (shop terminal)' };
+
+export function paymentLabel(method: PaymentMethod | ShopPaymentMethod | string): string {
+  return PAYMENT_METHOD_INFO[method as PaymentMethod]?.title ?? SHOP_PAYMENT_LABEL[method as ShopPaymentMethod] ?? method;
 }
