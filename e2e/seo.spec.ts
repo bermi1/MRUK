@@ -192,6 +192,11 @@ test.describe('single-brand sites', () => {
         expect((await request.get(u, { maxRedirects: 0 })).status(), u).toBe(200);
       }
 
+      // Pay Later page is listed only while the brand's switch is on (off = 404).
+      const pl = (await request.get(`${o}/pay-later`, { headers: { 'User-Agent': GOOGLEBOT } })).status();
+      expect([200, 404]).toContain(pl);
+      expect(locs.includes(`${o}/pay-later`)).toBe(pl === 200);
+
       const llms = await request.get(`${o}/llms.txt`);
       expect(llms.status()).toBe(200);
       expect(llms.headers()['content-type']).toContain('text/markdown');
