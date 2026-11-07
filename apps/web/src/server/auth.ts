@@ -77,9 +77,11 @@ export async function staffPasswordLogin(emailInput: string, password: string): 
   }
   if (u.lockedUntil && u.lockedUntil > new Date()) throw new AuthError('Account locked after failed attempts. Try again in 15 minutes.');
   if (!verifyPassword(password, u.passwordHash)) {
-    const n = u.failedLogins + 1;
+    // A lockout that has run out starts a fresh count (one typo after the 15 minutes must not lock again).
+    const n = (u.lockedUntil && u.lockedUntil <= new Date() ? 0 : u.failedLogins) + 1;
     await prisma.staffUser.update({ where: { id: u.id }, data: { failedLogins: n, lockedUntil: n >= 5 ? new Date(Date.now() + 15 * 60_000) : null } });
     await audit(email, 'login.failed', 'StaffUser', u.id);
+    if (n >= 5) throw new AuthError('Too many failed attempts. The account is locked for 15 minutes.');
     throw fail;
   }
   await prisma.staffUser.update({ where: { id: u.id }, data: { failedLogins: 0, lockedUntil: null } });

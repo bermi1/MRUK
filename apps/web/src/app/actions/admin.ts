@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { hashPassword, prisma, type Prisma } from '@bt/db';
 import { ORDER_STATUSES, type OrderStatus } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
-import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
+import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staff2faRequired, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
 import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
 import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
@@ -738,7 +738,7 @@ export async function createStaffAction(fd: FormData): Promise<ActionResult<Msg>
     const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: role.id, brands, passwordHash: hashPassword(temp), mustChangePassword: true } });
     await audit(ctx.email, 'staff.create', 'StaffUser', u.id, { role: role.id, brands });
     revalidateAdmin();
-    return { message: `Created. Temporary password (shown once): ${temp} — they set up 2FA and choose their own password at first sign-in.` };
+    return { message: `Created. Temporary password (shown once): ${temp} — they ${staff2faRequired() ? 'set up 2FA and ' : ''}choose their own password at first sign-in.` };
   });
 }
 

@@ -6,7 +6,7 @@ import { AForm } from '@/components/admin/AForm';
 import { Forbidden, Pager, pageParam, Pill } from '@/components/admin/ui';
 import { adapterStatus } from '@/server/admin/files';
 import { TickIcon } from '@/components/icons';
-import { requireStaff } from '@/server/auth';
+import { requireStaff, staff2faRequired } from '@/server/auth';
 
 export const metadata = { title: 'Settings and users' };
 
@@ -29,7 +29,10 @@ const PERMS: [string, string][] = [
   ['cms.write', 'Publish CMS'],
   ['tickets', 'Support tickets'],
   ['tickets.write', 'Reply to tickets'],
+  ['marketing', 'Campaigns and loyalty'],
+  ['marketing.write', 'Send campaigns, adjust points'],
   ['reports', 'Reports'],
+  ['tasks.all', 'See every team\'s tasks'],
   ['settings', 'Settings and users'],
 ];
 // Each switch pauses or allows messages for one kind of routed task. Staff choose their own channels
@@ -231,7 +234,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                 <input name="sessionTimeoutMinutes" type="number" min={5} max={480} defaultValue={sec.sessionTimeoutMinutes ?? 30} required />
               </label>
               <p className="ad-muted2" style={{ fontSize: 12, margin: 0 }}>
-                Two-factor sign-in (authenticator app) is always required for every staff member.
+                {staff2faRequired()
+                  ? 'Two-factor sign-in (authenticator app) is required for every staff member.'
+                  : 'Two-factor sign-in is switched OFF on this server (STAFF_2FA_REQUIRED=false): staff sign in with email and password only. Remove the setting to require the authenticator app again.'}
               </p>
             </AForm>
             <div className="ad-stack s8" style={{ marginTop: 14, fontSize: 13.5 }}>
