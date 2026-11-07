@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { prisma, type Prisma } from '@bt/db';
 import { fmtDate, fmtTZS, formatTzPhone, paymentLabel, type PaymentMethod } from '@bt/core';
-import { invoiceStatusAction } from '@/app/actions/admin';
+import { invoiceStatusAction, sendInvoiceAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { BrandChip, Forbidden, INVOICE_PILL, Pager, pageParam, Pill } from '@/components/admin/ui';
-import { waLink } from '@/lib/format';
 import { adminFilters, orderWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
@@ -39,6 +38,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
       <section className="ad-card tight" style={{ position: 'static' }}>
         <div className="ad-between" style={{ padding: '0 4px 10px' }}>
           <h2 className="ad-h">Invoices</h2>
+          {write && (
+            <Link className="ad-btn sm" href="/admin/invoices/new">
+              + Create invoice
+            </Link>
+          )}
           <form action="/admin/invoices" role="search">
             {tab !== 'all' && <input type="hidden" name="status" value={tab} />}
             <input className="ad-input" name="q" defaultValue={q} placeholder="INV or order no." aria-label="Find invoice" style={{ width: 170, minHeight: 36, padding: '7px 10px' }} />
@@ -76,6 +80,11 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
       {inv ? (
         <div className="ad-stack s12" style={{ position: 'static' }}>
+          {sp.created === '1' && (
+            <div className="ad-msg ok" role="status" style={{ fontSize: 14 }}>
+              Invoice {inv.number} created for order {inv.order.number}. Check it below, then download or send it.
+            </div>
+          )}
           <div className="ad-row" style={{ justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <span style={{ marginRight: 'auto' }}>
               <BrandChip brand={inv.order.brandKey} />
@@ -90,9 +99,21 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                 Void
               </ActBtn>
             )}
-            <a className="ad-btn line" href={waLink(inv.order.contactPhone, `Hello ${inv.order.contactName}, this is ${inv.order.brand.name}. Your tax invoice ${inv.number} for order ${inv.order.number} is ${fmtTZS(inv.amount)}.`)} target="_blank" rel="noopener">
-              Send via WhatsApp
-            </a>
+            {inv.status !== 'void' && (
+              <>
+                <ActBtn action={sendInvoiceAction.bind(null, inv.number, 'whatsapp')} className="ad-btn line" showOk>
+                  Send by WhatsApp
+                </ActBtn>
+                <ActBtn action={sendInvoiceAction.bind(null, inv.number, 'sms')} className="ad-btn line" showOk>
+                  Send by SMS
+                </ActBtn>
+                {inv.order.contactEmail && (
+                  <ActBtn action={sendInvoiceAction.bind(null, inv.number, 'email')} className="ad-btn line" showOk>
+                    Email
+                  </ActBtn>
+                )}
+              </>
+            )}
             <a className="ad-btn" href={`/api/admin/invoices/${inv.number}`} target="_blank" rel="noopener">
               Download PDF
             </a>
