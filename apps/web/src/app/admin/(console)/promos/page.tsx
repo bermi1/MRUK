@@ -22,7 +22,7 @@ function CodeFields({ c, allowed }: { c?: Code; allowed: string[] }) {
       </label>
       <label className="ad-field">
         Discount %
-        <input name="percent" defaultValue={c?.percent ?? 10} required inputMode="numeric" />
+        <input name="percent" type="number" min={1} max={90} defaultValue={c?.percent ?? 10} required inputMode="numeric" />
       </label>
       <label className="ad-field">
         Brand
@@ -59,6 +59,8 @@ export default async function PromosPage() {
   if (!ctx.can('promos')) return <Forbidden what="promotions" />;
   const f = await adminFilters(ctx);
   const write = ctx.can('promos.write');
+  // Revenue figures are for roles with Reports (owner, manager, finance); catalogue editors see counts only.
+  const money = ctx.can('reports');
   const month = startOfMonthEAT();
   const [hotBlocks, dealBlocks, products, flash, codes, promoRev] = await Promise.all([
     prisma.cmsBlock.findMany({ where: { brandKey: { in: f.brands }, key: 'hot' } }),
@@ -66,7 +68,7 @@ export default async function PromosPage() {
     prisma.product.findMany({ where: { brandKey: { in: f.brands }, hidden: false }, select: { id: true, brandKey: true, name: true, model: true, price: true, images: true }, orderBy: { name: 'asc' } }),
     prisma.promotion.findMany({ where: { brandKey: { in: f.brands }, kind: 'flash' }, orderBy: { createdAt: 'desc' } }),
     prisma.discountCode.findMany({ where: { OR: [{ brandKey: { in: f.brands } }, ...(f.brands.length === 2 || f.allowed.length === 2 ? [{ brandKey: null }] : [])] }, orderBy: [{ active: 'desc' }, { code: 'asc' }] }),
-    prisma.order.aggregate({ where: { ...orderWhere(f), createdAt: { gte: month }, discount: { gt: 0 }, status: { notIn: ['cancelled', 'rejected'] } }, _sum: { discount: true, total: true }, _count: { _all: true } }),
+    money ? prisma.order.aggregate({ where: { ...orderWhere(f), createdAt: { gte: month }, discount: { gt: 0 }, status: { notIn: ['cancelled', 'rejected'] } }, _sum: { discount: true, total: true }, _count: { _all: true } }) : null,
   ]);
   const hot = new Set(hotBlocks.flatMap((b) => (b.json as string[]) ?? []));
   const byId = new Map(products.map((p) => [p.id, p]));
@@ -80,7 +82,7 @@ export default async function PromosPage() {
         <Kpi label="Active combos" value={combos.length} />
         <Kpi label="Hot products" value={[...hot].filter((id) => byId.has(id)).length} />
         <Kpi label="Active discount codes" value={codes.filter((c) => c.active && (!c.expiresAt || c.expiresAt > now)).length} />
-        <Kpi label={`Promo revenue, ${monthName(now)}`} value={`TZS ${((promoRev._sum.total ?? 0) / 1e6).toFixed(1)}M`} delta={`${promoRev._count._all} orders · ${fmtTZS(promoRev._sum.discount ?? 0)} discounted`} color="#5E6378" />
+        {money && <Kpi label={`Promo revenue, ${monthName(now)}`} value={`TZS ${((promoRev?._sum.total ?? 0) / 1e6).toFixed(1)}M`} delta={`${promoRev?._count._all ?? 0} orders · ${fmtTZS(promoRev?._sum.discount ?? 0)} discounted`} color="#5E6378" />}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.2fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }} className="ad-cmsgrid">
         <section className="ad-card">

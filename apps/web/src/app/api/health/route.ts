@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { discoveredPoolerHost, prisma } from '@bt/db';
+import { staff2faRequired } from '@/server/auth';
 
 /**
  * Deployment self-check. Reports which settings are present (never their values),
@@ -54,5 +55,7 @@ export async function GET() {
     database = { reachable: false, errorCode: code, hint: hints[code] ?? 'See the function logs in Vercel for details.' };
   }
   const ok = !Object.values(settings).some((v) => v.startsWith('missing') || v.startsWith('derived, but') || v.includes('WARNING') || v.includes('but')) && database.reachable === true && Number(database.products ?? 0) > 0;
-  return NextResponse.json({ ok, environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV, settings, database }, { status: ok ? 200 : 503, headers: { 'Cache-Control': 'no-store' } });
+  // Staff sign-in mode (STAFF_2FA_REQUIRED=false temporarily allows password-only sign-in).
+  const staffSignIn = staff2faRequired() ? 'password + authenticator code' : 'password only (STAFF_2FA_REQUIRED=false)';
+  return NextResponse.json({ ok, environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV, staffSignIn, staff2faRequired: staff2faRequired(), settings, database }, { status: ok ? 200 : 503, headers: { 'Cache-Control': 'no-store' } });
 }

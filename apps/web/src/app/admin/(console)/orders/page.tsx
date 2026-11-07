@@ -20,7 +20,14 @@ const TABS: { key: string; label: string; statuses?: string[] }[] = [
   { key: 'delivered', label: 'Delivered', statuses: ['delivered'] },
   { key: 'closed', label: 'Cancelled / Rejected', statuses: ['cancelled', 'rejected'] },
 ];
-const CHANNEL: Record<string, string> = { web: 'Web', app: 'App', azania: 'Azania app' };
+const CHANNEL: Record<string, string> = { web: 'Web', app: 'App', azania: 'Azania app', shop: 'Shop (walk-in)' };
+/** The forward path of an order; each step sends the customer an SMS. */
+const STEPS: { status: OrderStatus; label: string }[] = [
+  { status: 'approved', label: 'Confirmed' },
+  { status: 'packed', label: 'Packed' },
+  { status: 'out_for_delivery', label: 'Dispatched' },
+  { status: 'delivered', label: 'Delivered' },
+];
 const PAGE = 50;
 
 function actionLabel(from: string, to: OrderStatus): string {
@@ -38,10 +45,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const tab = TABS.find((t) => t.key === sp.status) ?? TABS[0]!;
   const page = Math.max(1, Math.min(200, Number(sp.page) || 1));
   const q = (sp.q ?? '').trim().slice(0, 60);
+  // Phones are stored as +255…: accept 0754…, 255754… or +255 754… and match on the national digits.
+  const digits = q.replace(/\D/g, '').replace(/^0/, '').replace(/^255/, '');
   const where: Prisma.OrderWhereInput = {
     ...ow,
     ...(tab.statuses ? { status: { in: tab.statuses } } : {}),
-    ...(q ? { OR: [{ number: { contains: q.toUpperCase() } }, { contactName: { contains: q, mode: 'insensitive' } }, { contactPhone: { contains: q.replace(/\D/g, '') || q } }] } : {}),
+    ...(q ? { OR: [{ number: { contains: q.toUpperCase() } }, { contactName: { contains: q, mode: 'insensitive' } }, ...(digits.length >= 3 ? [{ contactPhone: { contains: digits } }] : [])] } : {}),
   };
   const [counts, total, orders] = await Promise.all([
     prisma.order.groupBy({ by: ['status'], where: ow, _count: { _all: true } }),
@@ -49,7 +58,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     prisma.order.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * PAGE, take: PAGE }),
   ]);
   const countOf = (t: (typeof TABS)[number]) => counts.filter((c) => !t.statuses || t.statuses.includes(c.status)).reduce((a, c) => a + c._count._all, 0);
-  const selNo = sp.o && /^[A-Z]{2}-\d{3,8}$/.test(sp.o) ? sp.o : orders[0]?.number;
+  // Typing a full order number opens it straight away.
+  const exact = /^[A-Za-z]{2}-\d{3,8}$/.test(q) ? q.toUpperCase() : null;
+  const selNo = sp.o && /^[A-Z]{2}-\d{3,8}$/.test(sp.o) ? sp.o : exact && orders.some((r) => r.number === exact) ? exact : orders[0]?.number;
   const o = selNo
     ? await prisma.order.findFirst({
         where: { number: selNo, brandKey: { in: f.allowed } },
@@ -65,7 +76,27 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const isAdvanceReview = o?.paymentMethod === 'salary_advance' && o.status === 'bank_review';
   const nexts = o ? nextOrderStatuses(o.status as OrderStatus).filter((s) => !(isAdvanceReview && (s === 'approved' || s === 'rejected')) && !(s === 'bank_review' && o.paymentMethod !== 'salary_advance')) : [];
 
+  const queue = (s: string) => counts.find((c) => c.status === s)?._count._all ?? 0;
+  const forward = o ? nexts.find((s) => s !== 'cancelled' && s !== 'rejected' && s !== 'bank_review') : undefined;
+  const others = nexts.filter((s) => s !== forward);
+  const stepAt = o ? STEPS.findIndex((s) => s.status === o.status) : -1;
+
   return (
+    <div className="ad-stack">
+      <nav className="ad-queue" aria-label="Order queue">
+        <Link href="/admin/orders?status=approved" data-testid="queue-new" aria-current={tab.key === 'approved' ? 'true' : undefined}>
+          <b>{queue('approved')}</b> New · to pack
+        </Link>
+        <Link href="/admin/orders?status=packed" aria-current={tab.key === 'packed' ? 'true' : undefined}>
+          <b>{queue('packed')}</b> Packed · to dispatch
+        </Link>
+        <Link href="/admin/orders?status=out_for_delivery" aria-current={tab.key === 'out_for_delivery' ? 'true' : undefined}>
+          <b>{queue('out_for_delivery')}</b> Out for delivery
+        </Link>
+        <Link href="/admin/orders?status=placed" aria-current={tab.key === 'placed' ? 'true' : undefined}>
+          <b>{queue('placed')}</b> Awaiting payment
+        </Link>
+      </nav>
     <div className="ad-detail">
       <section className="ad-card tight">
         <div className="ad-between">
@@ -78,7 +109,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </nav>
           <form action="/admin/orders" className="ad-row" role="search">
             {tab.key !== 'all' && <input type="hidden" name="status" value={tab.key} />}
-            <input className="ad-input" name="q" defaultValue={q} placeholder="Order no., name or phone" aria-label="Filter orders" style={{ width: 220 }} />
+            <input className="ad-input" name="q" type="search" defaultValue={q} placeholder="Order no., name or phone" aria-label="Find order by number, name or phone" style={{ width: 'min(260px, 100%)' }} />
           </form>
         </div>
         <div className="ad-scroll">
@@ -263,19 +294,40 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               Review on Salary Advance page
             </Link>
           )}
-          {ctx.can('orders.write') && nexts.length > 0 && (
+          <ol className="ad-steps" aria-label="Order progress">
+            {STEPS.map((s, i) => (
+              <li key={s.status} className={stepAt >= i ? 'done' : ''} aria-current={stepAt === i ? 'step' : undefined}>
+                {s.label}
+              </li>
+            ))}
+          </ol>
+          {ctx.can('orders.write') && forward && (
+            <div className="ad-stack s8">
+              <ActBtn action={transitionOrderAction.bind(null, o.number, forward)} className="ad-btn block ok" showOk>
+                {actionLabel(o.status, forward)}
+              </ActBtn>
+              <small className="ad-muted2" style={{ fontSize: 12 }}>
+                {forward === 'approved' ? 'Records the payment, issues the paid invoice and texts the customer.' : 'The customer gets an SMS with the new status.'}
+              </small>
+            </div>
+          )}
+          {ctx.can('orders.write') && others.length > 0 && (
             <div className="ad-btns">
-              {nexts.map((s) => (
-                <ActBtn key={s} action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : s === 'rejected' ? `Reject order ${o.number}? Stock is returned and payments refunded.` : undefined}>
+              {others.map((s) => (
+                <ActBtn key={s} action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn line'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : s === 'rejected' ? `Reject order ${o.number}? Stock is returned and payments refunded.` : undefined}>
                   {actionLabel(o.status, s)}
                 </ActBtn>
               ))}
             </div>
           )}
+          <a className="ad-btn line" href={`/admin/orders/${o.number}/note`} target="_blank" rel="noopener">
+            Print picking and delivery note
+          </a>
         </aside>
       ) : (
         <aside className="ad-card ad-empty">Select an order to see details</aside>
       )}
+    </div>
     </div>
   );
 }

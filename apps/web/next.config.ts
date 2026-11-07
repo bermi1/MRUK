@@ -12,7 +12,7 @@ const config: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   transpilePackages: ['@bt/core', '@bt/db', '@bt/integrations'],
-  serverExternalPackages: ['@prisma/client', 'pdf-lib', 'pg'],
+  serverExternalPackages: ['@prisma/client', 'pdf-lib', 'pg', 'sharp'],
   images: {
     // Brand-site photos are resized and converted to WebP/AVIF (see src/lib/img.ts).
     remotePatterns: [

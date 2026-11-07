@@ -81,6 +81,14 @@ export async function navCounts(ctx: StaffContext, f: AdminFilters) {
   return { orders, advances, lowStock, tickets };
 }
 
+/** Orders waiting to be packed (paid or confirmed) in the staff member's brands, newest first: drives the new-order alert. */
+export async function newOrdersSnapshot(ctx: StaffContext): Promise<{ count: number; latest: string | null }> {
+  if (!ctx.can('orders')) return { count: 0, latest: null };
+  const where = { brandKey: { in: brandScope(ctx, null) }, status: 'approved' };
+  const [count, latest] = await Promise.all([prisma.order.count({ where }), prisma.order.findFirst({ where, orderBy: { createdAt: 'desc' }, select: { number: true } })]);
+  return { count, latest: latest?.number ?? null };
+}
+
 export async function branchOptions(): Promise<string[]> {
   const rows = await prisma.order.findMany({ distinct: ['branch'], select: { branch: true }, orderBy: { branch: 'asc' } });
   return rows.map((r) => r.branch).filter(Boolean);

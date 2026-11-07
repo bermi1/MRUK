@@ -22,6 +22,9 @@ export interface ProductFacts {
   listPrice?: number;
   stock: number;
   features: string[];
+  /** Staff-written description and structured specifications (Admin › Products), when present. */
+  description?: string;
+  specs?: { label: string; value: string }[];
 }
 
 /** "TZS 850,000 (flash deal, was TZS 1,000,000)" or "TZS 850,000". */
@@ -70,7 +73,7 @@ function expand(tokens: string[]): string[] {
 }
 
 function productText(p: ProductFacts): string {
-  return [p.model, p.name, p.category, p.sub, ...p.features].join(' ').toLowerCase();
+  return [p.model, p.name, p.category, p.sub, ...p.features, p.description ?? '', ...(p.specs ?? []).map((s) => `${s.label} ${s.value}`)].join(' ').toLowerCase();
 }
 
 /** Keyword retrieval with synonym expansion. Returns products with score > 0, best first. */
@@ -198,7 +201,7 @@ export function groundedPrompt(task: string, facts: { products?: ProductFacts[];
     `If the data does not answer the question, reply exactly: "${SUPPORT_FALLBACK}"`,
     'Prices are in Tanzanian shillings (TZS), no decimals. priceTZS is what the customer pays today; when listPriceTZS is present the product is on a flash deal. Plain text, no markdown, at most 110 words.',
     '',
-    `CATALOGUE: ${JSON.stringify((facts.products ?? []).map((p) => ({ model: p.model, name: p.name, type: p.sub, priceTZS: p.price, ...(p.listPrice && p.listPrice > p.price ? { listPriceTZS: p.listPrice } : {}), inStock: p.stock, features: p.features })))}`,
+    `CATALOGUE: ${JSON.stringify((facts.products ?? []).map((p) => ({ model: p.model, name: p.name, type: p.sub, priceTZS: p.price, ...(p.listPrice && p.listPrice > p.price ? { listPriceTZS: p.listPrice } : {}), inStock: p.stock, features: p.features, ...(p.description ? { description: p.description } : {}), ...(p.specs?.length ? { specs: Object.fromEntries(p.specs.map((s) => [s.label, s.value])) } : {}) })))}`,
     `POLICIES: ${JSON.stringify((facts.policies ?? []).map((f) => f.text))}`,
     '',
     `TASK: ${task}`,

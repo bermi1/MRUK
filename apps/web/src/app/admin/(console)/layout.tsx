@@ -6,7 +6,8 @@ import { TopControls } from '@/components/admin/TopControls';
 import { ICON } from '@/components/admin/ui';
 import { initials } from '@/lib/format';
 import { DotIcon } from '@/components/icons';
-import { adminFilters, branchOptions, navCounts } from '@/server/admin/context';
+import { adminFilters, branchOptions, navCounts, newOrdersSnapshot } from '@/server/admin/context';
+import { OrderAlert } from '@/components/admin/OrderAlert';
 import { bankMode } from '@/server/admin/files';
 import { requireStaff } from '@/server/auth';
 import { myOpenTaskCount } from '@/server/tasks';
@@ -37,7 +38,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   // The password page lives inside this layout, so the layout itself must allow a pending password change.
   const ctx = await requireStaff(undefined, { allowPasswordChange: true });
   const f = await adminFilters(ctx);
-  const [counts, branches, myTasks] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands)]);
+  const [counts, branches, myTasks, newOrders] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands), newOrdersSnapshot(ctx)]);
   const nav: { group?: string; href: string; label: string; d: string; perm: string; alt?: string; badge?: number }[] = [
     { group: 'MY WORK', href: '/admin', label: 'Dashboard', d: ICON.dash, perm: 'dashboard' },
     { href: '/admin/tasks', label: 'My tasks', d: ICON.task, perm: 'dashboard', badge: myTasks },
@@ -134,6 +135,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           )}
         </header>
         <main className="ad-body" id="main">
+          {!ctx.mustChangePassword && ctx.can('orders.write') && <OrderAlert initial={newOrders} />}
           {ctx.usingIssuedPassword && !ctx.mustChangePassword && (
             <div className="ad-alert warn ad-pwbanner" role="status">
               <span>You are still using the password you were given. Choose your own password to keep this account safe.</span>

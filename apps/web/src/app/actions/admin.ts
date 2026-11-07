@@ -14,13 +14,16 @@ import { z } from 'zod';
 import { hashPassword, prisma, type Prisma } from '@bt/db';
 import { ORDER_STATUSES, type OrderStatus } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
-import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
+import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staff2faRequired, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
 import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
-import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
+import { advanceLifecycle, CheckoutError, createShopSale, decideAdvance, invoiceLink, requestBankDecision, transitionOrder } from '@/server/orders';
+import { env } from '@/server/env';
+import { limit } from '@/server/ratelimit';
+import { REGIONS, SHOP_PAYMENT_METHODS } from '@bt/core';
 import { RateLimitError } from '@/server/ratelimit';
 import { setPayLater } from '@/server/paylater';
-import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue } from '@/server/admin/context';
+import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue, newOrdersSnapshot } from '@/server/admin/context';
 import { storePublicImage, storePublicMedia, UploadError } from '@/server/admin/files';
 import { assignEntityTasks, checkPhotos, checkStock, emitTaskEvent } from '@/server/tasks';
 
@@ -29,6 +32,7 @@ type Msg = { message?: string };
 function fail(e: unknown): { ok: false; error: string; field?: string } {
   unstable_rethrow(e);
   if (e instanceof AuthError || e instanceof RateLimitError || e instanceof UploadError) return { ok: false, error: e.message };
+  if (e instanceof CheckoutError) return { ok: false, error: e.message, field: e.field };
   if (e instanceof z.ZodError) {
     const i = e.issues[0];
     const field = String(i?.path[0] ?? '');
@@ -127,6 +131,11 @@ export async function setAdminFilterAction(kind: 'brand' | 'branch', value: stri
 
 // Orders ---------------------------------------------------------------------------------
 
+/** Poll for the new-order alert (read only). */
+export async function newOrdersAction(): Promise<ActionResult<{ count: number; latest: string | null }>> {
+  return run('orders', (ctx) => newOrdersSnapshot(ctx));
+}
+
 const orderNoZ = z.string().regex(/^[A-Z]{2}-\d{3,8}$/, 'Invalid order number');
 
 export async function transitionOrderAction(number: string, to: string): Promise<ActionResult<Msg>> {
@@ -220,9 +229,63 @@ export async function invoiceStatusAction(number: string, status: 'paid' | 'void
     const allowed: Record<string, string[]> = { issued: ['paid', 'void'], paid: ['void'], void: [] };
     if (!allowed[inv.status]?.includes(st)) throw new Error(`An ${inv.status} invoice cannot be marked ${st}`);
     await prisma.invoice.update({ where: { id: inv.id }, data: { status: st } });
+    // Paid by hand (cash, transfer): the order's pending payment is recorded as received too.
+    if (st === 'paid') await prisma.payment.updateMany({ where: { orderId: inv.orderId, status: 'pending' }, data: { status: 'captured', reference: `PAID-${inv.number}` } });
     await audit(ctx.email, `invoice.${st}`, 'Invoice', no, { from: inv.status, to: st });
     revalidateAdmin();
     return { message: `Invoice marked ${st}` };
+  });
+}
+
+const saleZ = z.object({
+  brand: brandZ,
+  name: textZ(120, 2),
+  phone: z.string().trim().min(9, 'Enter the customer\'s mobile number').max(20),
+  email: z.union([z.literal(''), z.string().trim().toLowerCase().email('Enter a valid email or leave it empty').max(160)]).default(''),
+  region: z.enum(REGIONS.map((r) => r.name) as [string, ...string[]], { errorMap: () => ({ message: 'Choose a region' }) }),
+  address: textZ(240).default(''),
+  lines: z.array(z.object({ productId: idZ, qty: intZ(1, 1000) })).min(1, 'Add at least one item').max(30, 'At most 30 lines'),
+  discount: intZ(0, 500_000_000).default(0),
+  deliveryFee: intZ(0, 5_000_000).default(0),
+  method: z.enum(SHOP_PAYMENT_METHODS, { errorMap: () => ({ message: 'Choose how the customer pays' }) }),
+  paid: z.boolean(),
+  collected: z.boolean(),
+});
+
+/** Admin › Invoices › Create invoice: a walk-in or phone sale with its tax invoice. */
+export async function createInvoiceAction(input: unknown): Promise<ActionResult<Msg & { invoice?: string; order?: string }>> {
+  return run('invoices.write', async (ctx) => {
+    const p = saleZ.parse(input);
+    assertBrand(ctx, p.brand);
+    const r = await createShopSale(p, ctx.name);
+    await audit(ctx.email, 'invoice.create', 'Invoice', r.invoice, { order: r.number, brand: p.brand, total: r.total, paid: p.paid, collected: p.collected, lines: p.lines.length });
+    revalidateAdmin();
+    revalidateStore(); // stock changed
+    return { message: `Invoice ${r.invoice} created for order ${r.number}`, invoice: r.invoice, order: r.number };
+  });
+}
+
+/** Send the customer a link to their invoice PDF (mock adapters until real credentials are set). */
+export async function sendInvoiceAction(number: string, channel: string): Promise<ActionResult<Msg>> {
+  return run('invoices', async (ctx) => {
+    const no = z.string().regex(/^INV-\d{4}-\d{3,8}$/).parse(number);
+    const ch = z.enum(['sms', 'whatsapp', 'email']).parse(channel);
+    const inv = await prisma.invoice.findUnique({ where: { number: no }, include: { order: { select: { number: true, brandKey: true, contactPhone: true, contactEmail: true, contactName: true } } } });
+    if (!inv) throw new Error('Invoice not found');
+    assertBrand(ctx, inv.order.brandKey);
+    if (inv.status === 'void') throw new Error('A void invoice cannot be sent');
+    await limit('invoice-send', 30, 3600, ctx.id);
+    const brand = inv.order.brandKey === 'skywood' ? 'Skywood' : 'Mr UK';
+    const link = invoiceLink(inv.order.number, env.APP_URL);
+    const text = `${brand}: your tax invoice ${inv.number} for order ${inv.order.number}, ${inv.amount.toLocaleString('en-US')} TZS (${inv.status === 'paid' ? 'paid' : 'to pay'}). Download: ${link}`;
+    if (ch === 'sms') await integrations.sms.send(inv.order.contactPhone, text);
+    else if (ch === 'whatsapp') await integrations.whatsapp.send(inv.order.contactPhone, text);
+    else {
+      if (!inv.order.contactEmail) throw new Error('This customer has no email address. Send it by SMS or WhatsApp.');
+      await integrations.email.send(inv.order.contactEmail, `${brand} tax invoice ${inv.number}`, `Hello ${inv.order.contactName},\n\n${text}\n`);
+    }
+    await audit(ctx.email, 'invoice.send', 'Invoice', no, { channel: ch });
+    return { message: `Invoice link sent by ${ch === 'sms' ? 'SMS' : ch === 'whatsapp' ? 'WhatsApp' : 'email'}` };
   });
 }
 
@@ -269,68 +332,6 @@ export async function uploadProductPhotoAction(id: string, fd: FormData): Promis
     await checkPhotos(p.brandKey);
     revalidateStore();
     return { message: 'Photo uploaded', url };
-  });
-}
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 50);
-}
-
-export async function createProductAction(fd: FormData): Promise<ActionResult<Msg & { id?: string }>> {
-  return run('products.write', async (ctx) => {
-    const f = z
-      .object({
-        brand: brandZ,
-        category: z.string().regex(/^[a-z0-9-]{1,40}$/, 'Choose a category'),
-        sub: textZ(60, 1),
-        model: textZ(40, 2),
-        name: textZ(120, 2),
-        price: z.string().transform((s) => s.replace(/[,\s]/g, '')).pipe(intZ(1_000, 500_000_000)),
-        stock: intZ(0, 100_000),
-        features: textZ(600),
-      })
-      .parse(fields(fd));
-    assertBrand(ctx, f.brand);
-    const cat = await prisma.category.findUnique({ where: { brandKey_slug: { brandKey: f.brand, slug: f.category } } });
-    if (!cat) throw new Error('Choose a category');
-    if (!cat.subs.includes(f.sub)) throw new Error('Choose a sub-category from the list');
-    const base = `${f.brand}-${slugify(f.model) || 'product'}`;
-    let id = base;
-    for (let i = 2; await prisma.product.findUnique({ where: { id }, select: { id: true } }); i++) id = `${base}-${i}`;
-    const features = f.features
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean)
-      .slice(0, 8)
-      .map((x) => x.slice(0, 80));
-    const photo = fd.get('photo');
-    const images = photo instanceof File && photo.size > 0 ? [await storePublicImage(photo, `products/${id}`)] : [];
-    await prisma.product.create({
-      data: {
-        id,
-        brandKey: f.brand,
-        categoryId: cat.id,
-        sub: f.sub,
-        model: f.model,
-        name: f.name,
-        price: f.price,
-        stock: f.stock,
-        features: features.length ? features : ['New arrival'],
-        images,
-        tag: 'New',
-        reviews: 0,
-        embedding: { create: { text: [f.model, f.name, f.sub, ...features].join(' | ') } },
-      },
-    });
-    await audit(ctx.email, 'product.create', 'Product', id, { brand: f.brand, category: f.category, price: f.price, stock: f.stock });
-    await checkStock([id]);
-    await checkPhotos(f.brand);
-    revalidateStore();
-    return { message: `Published ${f.name} to the ${f.brand === 'mruk' ? 'Mr UK' : 'Skywood'} store`, id };
   });
 }
 
@@ -596,8 +597,8 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       .object({
         id: z.string().regex(/^[a-z0-9]{0,40}$/).optional(),
         code: z.string().trim().toUpperCase().pipe(z.string().regex(/^[A-Z0-9]{3,20}$/, 'Codes are 3–20 letters or digits')),
-        percent: intZ(0, 90),
-        brand: z.enum(['both', 'mruk', 'skywood']),
+        percent: z.coerce.number({ invalid_type_error: 'Enter a number' }).int('Whole numbers only').min(1, 'Discount must be at least 1%').max(90, 'Discount can be at most 90%'),
+        brand: z.enum(['both', 'mruk', 'skywood'], { errorMap: () => ({ message: 'Choose a brand or both' }) }),
         minSubtotal: z.string().optional(),
         maxUses: z.string().optional(),
         expiresAt: z.string().optional(),
@@ -606,11 +607,11 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       .parse(fields(fd));
     const brandKey = f.brand === 'both' ? null : f.brand;
     assertCodeScope(ctx, brandKey);
-    const minSubtotal = f.minSubtotal ? intZ(0, 500_000_000).parse(f.minSubtotal.replace(/[,\s]/g, '')) : null;
-    const maxUses = f.maxUses ? intZ(1, 1_000_000).parse(f.maxUses) : null;
+    const minSubtotal = f.minSubtotal?.trim() ? intZ(0, 500_000_000).parse(f.minSubtotal.replace(/[,\s]/g, '')) : null;
+    const maxUses = f.maxUses?.trim() ? intZ(1, 1_000_000).parse(f.maxUses.replace(/[,\s]/g, '')) : null;
     let expiresAt: Date | null = null;
     if (f.expiresAt) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(f.expiresAt)) throw new Error('Choose a valid end date');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(f.expiresAt) || Number.isNaN(Date.parse(`${f.expiresAt}T00:00:00Z`))) throw new Error('Choose a valid end date');
       expiresAt = new Date(`${f.expiresAt}T20:59:59Z`); // 23:59 EAT
     }
     const data = { code: f.code, percent: f.percent, brandKey, minSubtotal, maxUses, expiresAt, active: checkbox(f.active) };
@@ -618,9 +619,12 @@ export async function saveDiscountAction(fd: FormData): Promise<ActionResult<Msg
       const cur = await prisma.discountCode.findUnique({ where: { id: f.id } });
       if (!cur) throw new Error('Code not found');
       assertCodeScope(ctx, cur.brandKey);
+      if (maxUses !== null && maxUses < cur.uses) throw new Error(`This code has already been used ${cur.uses} times: the limit cannot be lower`);
+      if (expiresAt && expiresAt < new Date() && cur.expiresAt?.getTime() !== expiresAt.getTime()) throw new Error('The end date is in the past');
       await prisma.discountCode.update({ where: { id: cur.id }, data });
       await audit(ctx.email, 'discount.update', 'DiscountCode', cur.id, { ...data, expiresAt: expiresAt?.toISOString() ?? null });
     } else {
+      if (expiresAt && expiresAt < new Date()) throw new Error('The end date is in the past');
       const c = await prisma.discountCode.create({ data });
       await audit(ctx.email, 'discount.create', 'DiscountCode', c.id, { ...data, expiresAt: expiresAt?.toISOString() ?? null });
     }
@@ -739,7 +743,7 @@ export async function createStaffAction(fd: FormData): Promise<ActionResult<Msg>
     const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: role.id, brands, passwordHash: hashPassword(temp), mustChangePassword: true } });
     await audit(ctx.email, 'staff.create', 'StaffUser', u.id, { role: role.id, brands });
     revalidateAdmin();
-    return { message: `Created. Temporary password (shown once): ${temp} — they set up 2FA and choose their own password at first sign-in.` };
+    return { message: `Created. Temporary password (shown once): ${temp} — they ${staff2faRequired() ? 'set up 2FA and ' : ''}choose their own password at first sign-in.` };
   });
 }
 

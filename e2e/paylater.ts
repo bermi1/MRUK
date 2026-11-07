@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { authenticator } from 'otplib';
 import type { Browser, Page } from '@playwright/test';
 import { expect } from './fixtures';
+import { staffSignIn } from './staff';
 
 /**
  * Pay Later by Azania Bank is OFF by default (seed and existing databases). Specs that exercise it
@@ -11,7 +11,6 @@ export type PlBrand = 'mruk' | 'skywood';
 
 export const DB_URL = process.env.DATABASE_URL ?? 'postgresql://bt:bt@localhost:5432/bt_commerce';
 const OWNER = 'bernard@bermitechs.com';
-const PASSWORD = process.env.SEED_STAFF_PASSWORD ?? 'ChangeMe-2026!';
 
 export async function payLaterInDb(): Promise<Record<PlBrand, boolean>> {
   const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
@@ -24,19 +23,9 @@ export async function payLaterInDb(): Promise<Record<PlBrand, boolean>> {
   }
 }
 
-/** Fresh owner sign-in (2FA re-enrolled, sign-in rate limits cleared). */
+/** Fresh owner sign-in (2FA re-enrolled when the server requires it, sign-in rate limits cleared). */
 export async function signInOwner(page: Page) {
-  const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
-  await db.staffUser.update({ where: { email: OWNER }, data: { totpEnabled: false, totpSecretEnc: null, failedLogins: 0, lockedUntil: null } });
-  await db.rateLimit.deleteMany({});
-  await db.$disconnect();
-  await page.goto('/admin/login');
-  await page.fill('input[name=email]', OWNER);
-  await page.fill('input[name=password]', PASSWORD);
-  await page.getByRole('button', { name: 'Continue' }).click();
-  const secret = (await page.getByTestId('totp-secret').textContent())!.trim();
-  await page.fill('input[name=code]', authenticator.generate(secret));
-  await page.getByRole('button', { name: /verify/i }).click();
+  await staffSignIn(page, OWNER);
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 }
 

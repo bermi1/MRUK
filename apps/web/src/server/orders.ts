@@ -97,6 +97,15 @@ async function reserveStock(tx: Prisma.TransactionClient, lines: { productId: st
   stockChanged();
 }
 
+/**
+ * Count one use of a discount code for a placed order, atomically: two shoppers cannot both take the
+ * last use of a code with a limit, and a code paused meanwhile is refused.
+ */
+async function countCodeUse(tx: Prisma.TransactionClient, code: string) {
+  const n = await tx.$executeRaw`UPDATE "DiscountCode" SET "uses" = "uses" + 1 WHERE "code" = ${code} AND "active" = true AND ("maxUses" IS NULL OR "uses" < "maxUses") AND ("expiresAt" IS NULL OR "expiresAt" > now())`;
+  if (n !== 1) throw new CheckoutError(`Discount code ${code} is no longer available. Remove it from your cart and try again.`, 'discount');
+}
+
 /** Shown stock comes from the catalogue cache; refresh it when stock moves. */
 function stockChanged() {
   try {
@@ -165,12 +174,7 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
         payments: { create: { method: input.method, amount: cart.total, status: 'pending' } },
       },
     });
-    if (cart.discountCode && !cart.discountError) {
-      // Count the use atomically so two shoppers can't both take the last use of a capped code.
-      const code = await tx.discountCode.findUnique({ where: { code: cart.discountCode }, select: { maxUses: true } });
-      const used = await tx.discountCode.updateMany({ where: { code: cart.discountCode, active: true, ...(code?.maxUses != null ? { uses: { lt: code.maxUses } } : {}) }, data: { uses: { increment: 1 } } });
-      if (used.count !== 1) throw new CheckoutError('This promo code has just been fully used. Remove it to continue.', 'discount');
-    }
+    if (cart.discountCode && !cart.discountError) await countCodeUse(tx, cart.discountCode);
     if (input.method === 'pay_on_delivery') await issueInvoice(tx, o.id, o.total, 'issued');
     return o;
   });
@@ -280,7 +284,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
         payments: { create: { method: 'salary_advance', amount: total, status: 'pending' } },
       },
     });
-    if (discountCode) await tx.discountCode.update({ where: { code: discountCode }, data: { uses: { increment: 1 } } });
+    if (discountCode) await countCodeUse(tx, discountCode);
     const a = await tx.salaryAdvanceApplication.create({
       data: {
         orderId: o.id,
@@ -428,6 +432,7 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
   if (o.paymentMethod === 'salary_advance' && o.status === 'bank_review' && (to === 'approved' || to === 'rejected')) {
     throw new Error('Approve or reject Salary Advance orders from the Salary Advance page');
   }
+  if (to === 'bank_review' && o.paymentMethod !== 'salary_advance') throw new Error('Only Salary Advance orders go to bank review');
   await prisma.$transaction(async (tx) => {
     const r = await tx.order.updateMany({ where: { id: o.id, status: o.status }, data: { status: to, reservedUntil: null } });
     if (r.count !== 1) throw new Error('Order changed meanwhile, reload and try again');
@@ -436,6 +441,11 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       await restock(tx, o.id);
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'captured' }, data: { status: 'refunded' } });
       await tx.invoice.updateMany({ where: { orderId: o.id }, data: { status: 'void' } });
+    }
+    if (to === 'approved' && o.status === 'placed') {
+      // Staff confirmed the payment (e.g. seen on the bank statement): record it and issue the paid invoice.
+      await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', reference: 'STAFF-CONFIRMED' } });
+      await issueInvoice(tx, o.id, o.total, 'paid');
     }
     if (to === 'delivered' && o.paymentMethod === 'pay_on_delivery') {
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', reference: 'POD-CASH' } });
@@ -455,6 +465,7 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
     console.error('[loyalty]', e instanceof Error ? e.message : 'unknown error');
   }
   const msg: Partial<Record<OrderStatus, string>> = {
+    ...(o.status === 'placed' ? { approved: `is confirmed: payment of ${fmtTZS(o.total)} received. We are preparing it` } : {}),
     packed: 'is packed at our warehouse',
     out_for_delivery: 'is out for delivery. Our team will call before arrival',
     delivered: 'has been delivered. Thank you for shopping with us',
@@ -553,4 +564,90 @@ export async function invoiceFile(invoiceNo: string) {
     paymentMethod: paymentLabel(o.paymentMethod as PaymentMethod),
   });
   return { data: pdf, contentType: 'application/pdf', order: o };
+}
+
+// Walk-in / manual sales (Admin › Invoices › Create invoice) -----------------------------------------
+
+export interface ShopSaleInput {
+  brand: BrandKey;
+  name: string;
+  phone: string;
+  email: string;
+  region: string;
+  address: string;
+  lines: { productId: string; qty: number }[];
+  discount: number;
+  deliveryFee: number;
+  method: 'cash' | 'bank_transfer' | 'card_terminal';
+  paid: boolean;
+  /** true: the customer took the goods in the shop; false: deliver (goes to the warehouse queue). */
+  collected: boolean;
+}
+
+/**
+ * Record a sale made in the shop or by phone: an order (channel "shop") with catalogue prices, stock taken
+ * off at once, the payment, and its tax invoice (paid or issued). Returns the order and invoice numbers.
+ */
+export async function createShopSale(input: ShopSaleInput, actor: string) {
+  const phone = normalizeTzPhone(input.phone);
+  if (!phone) throw new CheckoutError('Enter a valid Tanzanian mobile number, e.g. 0754 000 214', 'phone');
+  const qty = new Map<string, number>();
+  for (const l of input.lines) qty.set(l.productId, (qty.get(l.productId) ?? 0) + l.qty);
+  if (!qty.size) throw new CheckoutError('Add at least one item', 'lines');
+  const products = await prisma.product.findMany({ where: { id: { in: [...qty.keys()] }, brandKey: input.brand } });
+  if (products.length !== qty.size) throw new CheckoutError('An item is not in this brand\'s catalogue', 'lines');
+  const lines = products.map((p) => ({ productId: p.id, name: p.name, model: p.model, price: p.price, qty: qty.get(p.id)! }));
+  const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
+  if (input.discount > subtotal) throw new CheckoutError('The discount cannot be more than the items', 'discount');
+  const total = subtotal - input.discount + input.deliveryFee;
+  const status: OrderStatus = input.collected ? 'delivered' : 'approved';
+  const customer = await prisma.customer.findUnique({ where: { phone }, select: { id: true, deletedAt: true } });
+  const result = await prisma.$transaction(async (tx) => {
+    for (const l of lines) {
+      const r = await tx.product.updateMany({ where: { id: l.productId, stock: { gte: l.qty } }, data: { stock: { decrement: l.qty } } });
+      if (r.count !== 1) throw new CheckoutError(`Only ${products.find((p) => p.id === l.productId)?.stock ?? 0} of ${l.name} in stock`, 'lines');
+    }
+    const seq = await nextNumber(tx, `order:${input.brand}`, input.brand === 'mruk' ? 10_500 : 20_400);
+    const o = await tx.order.create({
+      data: {
+        number: orderNumber(input.brand, seq),
+        brandKey: input.brand,
+        customerId: customer && !customer.deletedAt ? customer.id : null,
+        contactName: input.name,
+        contactPhone: phone,
+        contactEmail: input.email,
+        region: input.region,
+        addressLine: input.address,
+        branch: input.region,
+        channel: 'shop',
+        paymentMethod: input.method,
+        status,
+        subtotal,
+        discount: input.discount,
+        deliveryFee: input.deliveryFee,
+        total,
+        items: { create: lines.map((l) => ({ productId: l.productId, name: l.name, model: l.model, price: l.price, qty: l.qty })) },
+        events: { create: [{ status: 'placed', note: `Shop sale recorded by ${actor}`, actor }, { status, note: input.collected ? 'Collected by the customer in the shop' : 'To deliver', actor }] },
+        payments: { create: { method: input.method, amount: total, status: input.paid ? 'captured' : 'pending', reference: input.paid ? `SHOP-${seq}` : '' } },
+      },
+    });
+    const inv = await issueInvoice(tx, o.id, total, input.paid ? 'paid' : 'issued');
+    return { order: o, invoice: inv };
+  });
+  stockChanged();
+  await checkStock(lines.map((l) => l.productId));
+  if (status === 'approved') await emitTaskEvent({ type: 'order.placed', brand: input.brand, number: result.order.number, status, method: input.method as unknown as PaymentMethod }, actor);
+  if (status === 'delivered' && result.order.customerId) {
+    try {
+      await awardOrderPoints(result.order.id);
+    } catch (e) {
+      console.error('[loyalty]', e instanceof Error ? e.message : 'unknown error');
+    }
+  }
+  return { number: result.order.number, invoice: result.invoice.number, total };
+}
+
+/** Public link to an order's invoice PDF (signed; no login needed), for SMS / WhatsApp / email. */
+export function invoiceLink(orderNumber: string, appUrl: string): string {
+  return `${appUrl.replace(/\/$/, '')}/api/orders/${orderNumber}/invoice?t=${confirmationToken(orderNumber)}`;
 }

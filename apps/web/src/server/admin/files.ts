@@ -1,6 +1,7 @@
 import 'server-only';
 import { env } from '../env';
 import { integrations } from '../integrations';
+import { ImageConvertError, toWebp } from '../images';
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -42,7 +43,7 @@ export async function storePublicMedia(file: unknown, prefix: string, kind: 'vid
 }
 
 /**
- * Validate and store a public image. `prefix` is e.g. "products/mruk-uk-g3500q".
+ * Validate and store a public image, converted to WebP. `prefix` is e.g. "products/mruk-uk-g3500q".
  * Returns the public URL served by /api/files.
  */
 export async function storePublicImage(file: unknown, prefix: string): Promise<string> {
@@ -52,8 +53,15 @@ export async function storePublicImage(file: unknown, prefix: string): Promise<s
   const kind = sniffImage(bytes);
   if (!kind) throw new UploadError('Only JPG, PNG or WebP images are accepted');
   if (!/^[a-z0-9][a-z0-9/_-]{0,120}$/.test(prefix)) throw new UploadError('Invalid upload target');
-  const key = `public/${prefix}-${Date.now().toString(36)}.${kind.ext}`;
-  await integrations.storage.put(key, bytes, kind.type);
+  // Every admin image is stored as WebP (rotated, metadata stripped, max 1600 px). Older JPG/PNG keys keep working.
+  let webp: Uint8Array;
+  try {
+    webp = await toWebp(bytes);
+  } catch (e) {
+    throw new UploadError(e instanceof ImageConvertError ? e.message : 'This image could not be processed');
+  }
+  const key = `public/${prefix}-${Date.now().toString(36)}.webp`;
+  await integrations.storage.put(key, webp, 'image/webp');
   return `/api/files/${key}`;
 }
 

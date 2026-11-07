@@ -61,6 +61,10 @@ model Product {
   price      Int
   stock      Int
   features   String[]
+  /// Plain-text description (Admin › Products); feeds AI compare with the specs.
+  description String  @default("")
+  /// Structured specifications: [{ "label": "Capacity", "value": "350 L" }]
+  specs      Json     @default("[]")
   images     String[]
   tag        String   @default("")
   hidden     Boolean  @default(false)

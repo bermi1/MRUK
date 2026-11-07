@@ -1,22 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { authenticator } from 'otplib';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-
-const PASSWORD = process.env.SEED_STAFF_PASSWORD ?? 'ChangeMe-2026!';
-const DB_URL = process.env.DATABASE_URL ?? 'postgresql://bt:bt@localhost:5432/bt_commerce';
+import { staffSignIn } from './staff';
 
 async function signIn(page: Page, email: string) {
-  const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
-  await db.staffUser.update({ where: { email }, data: { totpEnabled: false, totpSecretEnc: null, failedLogins: 0, lockedUntil: null } });
-  await db.$disconnect();
-  await page.goto('/admin/login');
-  await page.fill('input[name=email]', email);
-  await page.fill('input[name=password]', PASSWORD);
-  await page.getByRole('button', { name: 'Continue' }).click();
-  const secret = (await page.getByTestId('totp-secret').textContent())!.trim();
-  await page.fill('input[name=code]', authenticator.generate(secret));
-  await page.getByRole('button', { name: /verify/i }).click();
+  await staffSignIn(page, email);
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 }
 

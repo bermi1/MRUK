@@ -4,7 +4,7 @@ import { saveMyNotificationsAction } from '@/app/actions/tasks';
 import { AForm } from '@/components/admin/AForm';
 import { PasswordForm } from '@/components/admin/PasswordForm';
 import { Pill } from '@/components/admin/ui';
-import { requireStaff } from '@/server/auth';
+import { requireStaff, staff2faRequired } from '@/server/auth';
 
 export const metadata = { title: 'My account' };
 
@@ -55,7 +55,7 @@ export default async function AccountPage() {
         </div>
         <div className="ad-kv">
           <span>Two-factor sign-in</span>
-          <span>{u.totpEnabled ? <Pill cls="pill-green">On</Pill> : <Pill cls="pill-amber">Not set up</Pill>}</span>
+          <span>{!staff2faRequired() ? <Pill cls="pill-amber">Not required on this server</Pill> : u.totpEnabled ? <Pill cls="pill-green">On</Pill> : <Pill cls="pill-amber">Not set up</Pill>}</span>
         </div>
         <div className="ad-kv">
           <span>Password last changed</span>

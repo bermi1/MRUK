@@ -75,6 +75,8 @@ export function toView(p: DbProduct): ProductView {
     off: 0,
     stock: p.stock,
     features: p.features,
+    description: p.description,
+    specs: Array.isArray(p.specs) ? (p.specs as { label: string; value: string }[]) : [],
     img: p.images[0] ?? '',
     images: p.images,
     tag: p.tag,
@@ -194,7 +196,7 @@ export function searchProducts(products: ProductView[], q: string): ProductView[
 }
 
 export function toFacts(p: ProductView): CompareFacts {
-  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features, rating: p.rating, reviews: p.reviews };
+  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features, description: p.description, specs: p.specs, rating: p.rating, reviews: p.reviews };
 }
 
 // CMS --------------------------------------------------------------------------
