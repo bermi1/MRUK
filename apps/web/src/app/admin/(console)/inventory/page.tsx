@@ -6,6 +6,10 @@ import { AForm } from '@/components/admin/AForm';
 import { BrandChip, Forbidden, Kpi, Pill, Thumb } from '@/components/admin/ui';
 import { adminFilters, LOW_STOCK, REORDER_STOCK } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
+import { releaseExpiredReservations } from '@/server/orders';
+
+/** Order statuses that hold stock for a sale that is not complete yet. */
+const RESERVING_STATUSES = ['placed', 'bank_review'];
 
 export const metadata = { title: 'Inventory' };
 
@@ -21,7 +25,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   const f = await adminFilters(ctx);
   const show = sp.show === 'low' ? 'low' : 'all';
+  // Unpaid orders past their 30-minute hold give their stock back before we count.
+  await releaseExpiredReservations();
   const all = await prisma.product.findMany({ where: { brandKey: { in: f.brands } }, orderBy: [{ stock: 'asc' }, { name: 'asc' }], select: { id: true, brandKey: true, model: true, name: true, price: true, stock: true, images: true, hidden: true } });
+  // Product.stock is what can still be sold. Units held for unpaid orders (awaiting payment, or a
+  // Salary Advance waiting for the bank) were already taken off it and come back if the order is not completed.
+  const held = await prisma.orderItem.groupBy({ by: ['productId'], where: { productId: { in: all.map((p) => p.id) }, order: { status: { in: RESERVING_STATUSES } } }, _sum: { qty: true } });
+  const reservedOf = new Map(held.map((h) => [h.productId, h._sum.qty ?? 0]));
+  const reservedUnits = held.reduce((a, h) => a + (h._sum.qty ?? 0), 0);
   const rows = show === 'low' ? all.filter((p) => p.stock <= LOW_STOCK) : all;
   const units = all.reduce((a, p) => a + p.stock, 0);
   const value = all.reduce((a, p) => a + p.stock * p.price, 0);
@@ -31,7 +42,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <div className="ad-stack">
       <div className="ad-grid4">
         <Kpi label="Total SKUs" value={all.length} />
-        <Kpi label="Units on hand" value={units.toLocaleString('en-US')} />
+        <Kpi label="Units available" value={units.toLocaleString('en-US')} delta={`${reservedUnits.toLocaleString('en-US')} reserved for unpaid orders`} color="#8A8EA3" />
         <Kpi label="Stock value (retail)" value={`TZS ${(value / 1e6).toFixed(1)}M`} />
         <Kpi label="Low or reorder" value={<span style={{ color: '#B4462E' }}>{need}</span>} delta={`Low ≤ ${LOW_STOCK} · Reorder ≤ ${REORDER_STOCK}`} color="#8A8EA3" />
       </div>
@@ -39,7 +50,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <div className="ad-between">
           <div>
             <h2 className="ad-h">Stock by SKU</h2>
-            <p className="ad-sub">Stock is reserved when an order is placed and returned on cancel or timeout. Per-branch stock is not tracked yet.</p>
+            <p className="ad-sub">Available = can still be sold. Reserved = held for unpaid orders (awaiting payment, or Pay Later waiting for Azania Bank); it returns to available if the order is cancelled or not paid in 30 minutes. Quick restock adds to available. Per-branch stock is not tracked yet.</p>
           </div>
           <nav className="ad-tabs" aria-label="Stock filter">
             <Link className="ad-tab" href="/admin/inventory" aria-current={show === 'all' ? 'true' : undefined}>
@@ -57,7 +68,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 <th>Product</th>
                 <th>SKU</th>
                 <th className="r">Price</th>
-                <th className="c">On hand</th>
+                <th className="c">Available</th>
+                <th className="c">Reserved</th>
                 <th className="r">Value</th>
                 <th>Status</th>
                 <th>Quick restock</th>
@@ -67,7 +79,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               {rows.map((p) => {
                 const l = level(p.stock);
                 return (
-                  <tr key={p.id}>
+                  <tr key={p.id} data-product={p.id}>
                     <td>
                       <div className="ad-row">
                         <Thumb src={p.images[0]} model={p.model} />
@@ -84,8 +96,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                       {p.model}
                     </td>
                     <td className="r">{fmtTZS(p.price)}</td>
-                    <td className="c" style={{ fontWeight: 600 }}>
+                    <td className="c" style={{ fontWeight: 600 }} data-testid="stock-available">
                       {p.stock}
+                    </td>
+                    <td className="c ad-muted2" data-testid="stock-reserved">
+                      {reservedOf.get(p.id) ?? 0}
                     </td>
                     <td className="r ad-muted2">{fmtTZS(p.stock * p.price)}</td>
                     <td>
@@ -101,7 +116,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               })}
               {!rows.length && (
                 <tr>
-                  <td colSpan={7} className="ad-empty">
+                  <td colSpan={8} className="ad-empty">
                     All stock is healthy
                   </td>
                 </tr>

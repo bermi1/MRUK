@@ -83,7 +83,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                 <th>Model</th>
                 <th>Product</th>
                 <th>Price (TZS)</th>
-                <th className="c">Stock</th>
+                <th className="c" title="Units that can still be sold (unpaid orders already hold theirs)">Available</th>
                 <th>Status</th>
                 <th />
               </tr>
@@ -128,7 +128,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           </table>
         </div>
         {!write && <p className="ad-muted2" style={{ fontSize: 12.5 }}>Read-only: your role cannot edit products.</p>}
-        {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or stock and press Enter (or leave the field) to publish. Photos: JPG, PNG or WebP up to 5 MB.</p>}
+        {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or available stock (sets the exact number; use Inventory to add a delivery) and press Enter (or leave the field) to publish. Photos: JPG, PNG or WebP up to 5 MB.</p>}
       </section>
       {write && (
         <aside className="ad-card ad-stack s12">
