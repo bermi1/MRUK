@@ -23,6 +23,10 @@ const config: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   experimental: { serverActions: { bodySizeLimit: '30mb' } },
+  // Crawlers that get fully rendered <head> metadata (no streamed metadata) and a real 404 status:
+  // Next's default list plus Googlebot and the AI crawlers we allow in robots.txt (docs/seo.md).
+  htmlLimitedBots:
+    /Googlebot|Google-InspectionTool|Storebot-Google|[\w-]+-Google|Google-[\w-]+|Chrome-Lighthouse|Slurp|DuckDuckBot|baiduspider|yandex|sogou|bitlybot|tumblr|vkShare|quora link preview|redditbot|ia_archiver|Bingbot|BingPreview|applebot|facebookexternalhit|facebookcatalog|Twitterbot|LinkedInBot|Slackbot|Discordbot|WhatsApp|SkypeUriPreview|Yeti|googleweblight|GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|CCBot|Amazonbot|meta-externalagent|DuckAssistBot|MistralAI-User/i,
   async headers() {
     return [
       {

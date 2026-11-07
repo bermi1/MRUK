@@ -1,14 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { HOST_BRAND } from '@/lib/site';
 
 /**
  * 1. Brand by host: shop.mruk.co.tz → /mruk/*, shop.skywood.co.tz → /skywood/*.
  * 2. Strict Content-Security-Policy with a per-request nonce.
  * 3. Cheap gate for /admin (real session checks run on the server).
  */
-const HOST_BRAND: Record<string, string> = {
-  'shop.mruk.co.tz': 'mruk',
-  'shop.skywood.co.tz': 'skywood',
-};
 
 /**
  * Single-brand deployments: the Mr UK and Skywood sites are separate Vercel projects
@@ -19,7 +16,9 @@ const HOST_BRAND: Record<string, string> = {
 const STORE_BRAND = process.env.STORE_BRAND === 'mruk' || process.env.STORE_BRAND === 'skywood' ? process.env.STORE_BRAND : undefined;
 const OTHER_BRAND = STORE_BRAND === 'mruk' ? 'skywood' : STORE_BRAND === 'skywood' ? 'mruk' : undefined;
 
-const PASS_THROUGH = /^\/(mruk|skywood|admin|azania|api|_next|brand|img|icons|sw\.js|manifest\.webmanifest|favicon|robots\.txt|sitemap\.xml|offline)/;
+// Served from the site root in every mode (not rewritten under /<brand>): includes the SEO files
+// (robots.txt, sitemap.xml, llms.txt, llms-full.txt) and the shared privacy notice.
+const PASS_THROUGH = /^\/(mruk|skywood|admin|azania|api|_next|brand|img|icons|sw\.js|manifest\.webmanifest|favicon|robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt|privacy|offline)/;
 
 function csp(nonce: string, dev: boolean) {
   return [
@@ -47,7 +46,8 @@ export function middleware(req: NextRequest) {
 
   if (OTHER_BRAND && (url.pathname === `/${OTHER_BRAND}` || url.pathname.startsWith(`/${OTHER_BRAND}/`))) {
     const other = process.env.OTHER_STORE_URL;
-    if (other) return NextResponse.redirect(new URL(url.pathname + url.search, other), 308);
+    // The sister site is single-brand too: land on its canonical, prefix-less URL in one hop.
+    if (other) return NextResponse.redirect(new URL((url.pathname.slice(OTHER_BRAND.length + 1) || '/') + url.search, other), 308);
     url.pathname = `/${STORE_BRAND}`;
     return NextResponse.redirect(url, 307);
   }
