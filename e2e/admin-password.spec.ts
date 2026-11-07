@@ -1,29 +1,20 @@
 import { PrismaClient } from '@prisma/client';
-import { authenticator } from 'otplib';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { resetStaff, staffSignIn } from './staff';
 
 const OWNER = 'bernard@bermitechs.com';
 const PASSWORD = process.env.SEED_STAFF_PASSWORD ?? 'ChangeMe-2026!';
 const DB_URL = process.env.DATABASE_URL ?? 'postgresql://bt:bt@localhost:5432/bt_commerce';
 
-/** Password step, then first-time 2FA enrolment (or a code when a secret is known). Returns the TOTP secret. */
+/** Password step, then first-time 2FA enrolment (or a code when a secret is known) when the server requires 2FA. */
 async function signIn(page: Page, email: string, password: string, secret?: string): Promise<string> {
-  await page.goto('/admin/login');
-  await page.fill('input[name=email]', email);
-  await page.fill('input[name=password]', password);
-  await page.getByRole('button', { name: 'Continue' }).click();
-  if (!secret) secret = (await page.getByTestId('totp-secret').textContent())!.trim();
-  else await expect(page.getByText('Enter your 6-digit code')).toBeVisible();
-  await page.fill('input[name=code]', authenticator.generate(secret));
-  await page.getByRole('button', { name: /verify|sign in/i }).click();
-  await page.waitForURL((u) => !u.pathname.startsWith('/admin/login'));
-  return secret;
+  return staffSignIn(page, email, { password, secret });
 }
 
 test('invited staff must replace the temporary password, and can change it again later', async ({ page, browser, baseURL }) => {
   const db = new PrismaClient({ datasources: { db: { url: DB_URL } } });
-  await db.staffUser.update({ where: { email: OWNER }, data: { totpEnabled: false, totpSecretEnc: null, failedLogins: 0, lockedUntil: null } });
+  await resetStaff(OWNER);
   const email = `pw-${Date.now().toString(36)}@mruk.co.tz`;
 
   try {
