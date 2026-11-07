@@ -3,7 +3,7 @@ import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { addBundleAction, addToCartAction, clearCompareAction, restartCompareAction, toggleCompareAction } from '@/app/actions/store';
 import { useMessages } from './Messages';
-import { PlusIcon, TickIcon } from '../icons';
+import { CompareIcon, PlusIcon, TickIcon } from '../icons';
 import { useToast } from './Toast';
 
 function stop(e: React.MouseEvent) {
@@ -73,7 +73,7 @@ export function CompareToggle({ brand, id, name = '', on, long = false, classNam
         });
       }}
     >
-      {shown ? <TickIcon size={14} strokeWidth={2.4} /> : <PlusIcon size={14} strokeWidth={2.2} />}
+      {shown ? <TickIcon size={14} strokeWidth={2.4} /> : <CompareIcon size={14} />}
       <span className="cmp-l">{label}</span>
     </button>
   );

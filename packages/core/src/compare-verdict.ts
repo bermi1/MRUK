@@ -50,7 +50,7 @@ const NEEDS: { re: RegExp; en: string; sw: string }[] = [
   { re: /large|capacity|litre|liter|\d+\s?l\b|multi-door|double door|french|side by side|family|xl\b/i, en: 'a big family or storing more', sw: 'familia kubwa au kuhifadhi zaidi' },
   { re: /commercial|business|shop|heavy duty|industrial/i, en: 'a shop or business use', sw: 'duka au matumizi ya biashara' },
   { re: /quiet|silent|low noise|whisper/i, en: 'quiet rooms', sw: 'vyumba vyenye utulivu' },
-  { re: /no-frost|no frost|frost free|defrost/i, en: 'less upkeep (no manual defrosting)', sw: 'matunzo kidogo (bila kuyeyusha barafu)' },
+  { re: /no[- ]?frost|frost[- ]free|auto(matic)?[- ]defrost/i, en: 'less upkeep (no manual defrosting)', sw: 'matunzo kidogo (bila kuyeyusha barafu)' },
   { re: /dispenser|water/i, en: 'cold water on tap', sw: 'maji baridi muda wote' },
   { re: /bluetooth|usb|aux|wireless|fm|radio|karaoke|mic/i, en: 'playing music from phones and radio', sw: 'kucheza muziki kutoka simu na redio' },
   { re: /compact|portable|single door|mini|small|slim/i, en: 'small spaces', sw: 'nafasi ndogo' },
@@ -142,7 +142,8 @@ export function buildVerdict(items: CompareFacts[], opts: { lang?: Lang; months?
     const otherFeats = new Set(others.flatMap((o) => o.features.map(norm)));
     const mine = new Set(p.features.map(norm));
     const unique = p.features.filter((f) => !otherFeats.has(norm(f)));
-    const missing = [...new Set(others.flatMap((o) => o.features))].filter((f) => !mine.has(norm(f)));
+    // "Does not list" only against the same kind of product (a hood is not missing a hob's burners).
+    const missing = [...new Set(others.filter((o) => o.sub === p.sub).flatMap((o) => o.features))].filter((f) => !mine.has(norm(f)));
     const pros: string[] = [];
     const cons: string[] = [];
     if (unique.length && others.length) pros.push(t.onlyHas(list(unique)));

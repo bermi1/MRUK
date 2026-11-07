@@ -73,6 +73,15 @@ describe('compare verdict', () => {
     expect(() => buildVerdict([])).toThrow();
   });
 
+  it('only flags missing features against the same type, and does not read "defrost" as no-frost', () => {
+    const hood = F('R10', 'Range Hood', 450_000, ['Touch panel'], { sub: 'Hoods' });
+    const oven = F('EM19', 'Oven', 1_100_000, ['Air fry and defrost'], { sub: 'Ovens' });
+    const v = buildVerdict([hood, oven]);
+    expect(v.products.every((p) => !p.cons.some((c) => c.startsWith('Does not list')))).toBe(true);
+    expect(v.needs.some((n) => /defrost/.test(n.need))).toBe(false);
+    expect(buildVerdict([F('A', 'A', 1, ['No-frost']), F('B', 'B', 2, ['Single door'])]).needs.some((n) => /defrost/.test(n.need))).toBe(true);
+  });
+
   it('builds a grounded LLM prompt and rejects LLM output naming unknown products', () => {
     const ref = buildVerdict([big, mid], { lang: 'sw' });
     const p = verdictPrompt([big, mid], ref, { lang: 'sw', months: 12, payLater: false });
