@@ -9,8 +9,11 @@ import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { fmt } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
-import { getCategories, getProducts, photoFirst } from '@/server/catalog';
+import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catalog';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { brandTitle, itemListLd, pageMeta } from '@/server/seo';
 import { getT } from '@/server/locale';
+import { productLabel } from '@/lib/site';
 
 const PAGE = 24;
 const SORTS = ['popular', 'low', 'high', 'new'] as const;
@@ -27,9 +30,20 @@ const Query = z.object({
 });
 type Q = z.infer<typeof Query>;
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT();
-  return { title: t('shopTitle') };
+/** Canonical is the unfiltered list; "?cat=x" is the same list as the category page, so it points there. */
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }): Promise<Metadata> {
+  const { brand: key } = (await params) as { brand: BrandKey };
+  const raw = await searchParams;
+  const [brand, cats, products] = await Promise.all([getBrand(key), getCategories(key), getProducts(key)]);
+  const cat = cats.find((c) => c.id === (Array.isArray(raw.cat) ? raw.cat[0] : raw.cat));
+  const lead = products.find((p) => p.img);
+  return pageMeta({
+    brand,
+    path: cat ? `/c/${cat.id}` : '/shop',
+    title: cat ? brandTitle(`${cat.name} in Tanzania`, brand.name) : brandTitle('All products and prices in TZS', brand.name),
+    description: `All ${products.length} ${brand.name} products: ${cats.map((c) => c.name).join(', ')}. Prices in TZS, pay in full or monthly, delivered across Tanzania.`,
+    images: lead ? [{ url: lead.img, alt: productLabel(lead) }] : undefined,
+  });
 }
 
 function sortList(list: ProductView[], sort: Sort): ProductView[] {
@@ -45,7 +59,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const raw = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || undefined;
   const q: Q = Query.parse({ cat: one(raw.cat), sort: one(raw.sort), min: one(raw.min), max: one(raw.max), stock: one(raw.stock), n: one(raw.n) });
-  const [cats, products, cmp, t] = await Promise.all([getCategories(key), getProducts(key), getCompareIds(key), getT()]);
+  const [brand, cats, products, cmp, t] = await Promise.all([getBrand(key), getCategories(key), getProducts(key), getCompareIds(key), getT()]);
   const b = `/${key}`;
   const cat = cats.find((c) => c.id === q.cat);
   const sort: Sort = q.sort ?? 'popular';
@@ -76,6 +90,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
 
   return (
     <div className={`wrap shop shop-${key}`}>
+      <JsonLd data={{ '@context': 'https://schema.org', ...itemListLd(brand, cat ? cat.name : `${brand.name} products`, shown) }} />
       <header className="shop-head">
         <h1 className="shop-title">{cat ? cat.name : t('shopTitle')}</h1>
         <p className="shop-sub">{t('shopSub', { n: filtered.length })}</p>

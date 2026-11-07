@@ -5,6 +5,10 @@ import type { ProductView } from '@/lib/types';
 import { getAllProducts, getBrand, getBundles, getCategories, getCms, getSuppliers } from '@/server/catalog';
 import '@/styles/landing.css';
 import { ArrowRightIcon } from '@/components/icons';
+import type { Metadata } from 'next';
+
+/** Shared landing page (combined site only: single-brand sites rewrite "/" to the brand home). */
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 const BRAND_COLOR = { mruk: '#1D2366', skywood: '#8A6A2F' } as const;
 

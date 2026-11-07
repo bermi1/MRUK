@@ -2,13 +2,14 @@
 import { useState } from 'react';
 import { PImg } from './PImg';
 import { img } from '@/lib/img';
+import { productLabel } from '@/lib/site';
 
 export function Gallery({ images, name, model, sub, badge }: { images: string[]; name: string; model: string; sub: string; badge: string }) {
   const [i, setI] = useState(0);
   return (
     <div>
       <div className="pdp-media">
-        <PImg src={images[i] ?? ''} alt={name} model={model} sub={sub} size="xl" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
+        <PImg src={images[i] ?? ''} alt={i === 0 ? productLabel({ model, name }) : `${productLabel({ model, name })}, photo ${i + 1}`} model={model} sub={sub} size="xl" style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
         <span className="pdp-badge">{badge}</span>
       </div>
       {images.length > 1 && (

@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: 'Privacy notice' };
+export const metadata: Metadata = {
+  title: 'Privacy notice · Mr UK and Skywood',
+  description: 'How MR UK Corporation Ltd and Skywood Tanzania collect, use and keep personal data under the Tanzania Personal Data Protection Act, 2022.',
+  alternates: { canonical: '/privacy' },
+};
 
 export default function Privacy() {
   return (

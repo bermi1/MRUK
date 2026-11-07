@@ -5,6 +5,17 @@ import type { BrandKey } from '@/lib/types';
 import { getCompareIds } from '@/server/cart';
 import { getBrand, getBundles, getCategories, getCms, getFlashDeals, getProducts, getSuppliers } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import type { Metadata } from 'next';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { brandImage, graph, organizationLd, pageMeta, websiteLd } from '@/server/seo';
+
+export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
+  const { brand: key } = (await params) as { brand: BrandKey };
+  const [brand, cms, cats] = await Promise.all([getBrand(key), getCms(key), getCategories(key)]);
+  const title = cms.seo.title || `${brand.name} — ${brand.tagline}`;
+  const description = cms.seo.desc || `${brand.name}: ${cats.map((c) => c.name).join(', ')}. Delivered across Tanzania; pay in full or monthly.`;
+  return pageMeta({ brand, path: '', title, description, images: [{ url: brandImage(brand, cms), alt: brand.name }] });
+}
 
 /**
  * Brand home. Same data for both brands (CMS hero slides, catalogue, bundles, flash deals,
@@ -62,10 +73,22 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   const cities = [...new Set(suppliers.map((s) => s.city))];
   const common = { brand, slides, heroLabels, cats, products, bundles, supplierCount: suppliers.length, cities, compare, t };
 
+  const ld = <JsonLd data={graph(organizationLd(brand, cms), websiteLd(brand))} />;
+
   if (key === 'skywood') {
     const heroIds = new Set(cms.hero.map((h) => h.pid));
     const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
-    return <SkywoodHome {...common} flash={flash} focus={focus} />;
+    return (
+      <>
+        {ld}
+        <SkywoodHome {...common} flash={flash} focus={focus} />
+      </>
+    );
   }
-  return <MrukHome {...common} flash={flash} />;
+  return (
+    <>
+      {ld}
+      <MrukHome {...common} flash={flash} />
+    </>
+  );
 }

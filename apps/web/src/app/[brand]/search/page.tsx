@@ -5,7 +5,7 @@ import { getCompareIds } from '@/server/cart';
 import { getBrand, getProducts, searchProducts } from '@/server/catalog';
 import { SearchIcon } from '@/components/icons';
 
-export const metadata: Metadata = { title: 'Search', robots: { index: false } };
+export const metadata: Metadata = { title: 'Search', robots: { index: false, follow: true } };
 
 export default async function SearchPage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<{ q?: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };

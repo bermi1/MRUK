@@ -6,10 +6,25 @@ import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { PImg } from '@/components/store/PImg';
 import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
-import { getBundles, getFlashDeals } from '@/server/catalog';
-import { getT } from '@/server/locale';
+import { getBrand, getBundles, getFlashDeals } from '@/server/catalog';
+import { brandTitle, pageMeta } from '@/server/seo';
 
-export const metadata: Metadata = { title: 'Deals and bundles' };
+import { getT } from '@/server/locale';
+import { productLabel } from '@/lib/site';
+
+export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
+  const { brand: key } = (await params) as { brand: BrandKey };
+  const [brand, bundles, flash] = await Promise.all([getBrand(key), getBundles(key), getFlashDeals(key)]);
+  const top = Math.max(0, ...bundles.map((b) => b.save), ...flash.map((f) => f.off));
+  const lead = flash.find((f) => f.img) ?? bundles.flatMap((b) => b.items).find((p) => p.img);
+  return pageMeta({
+    brand,
+    path: '/deals',
+    title: brandTitle('Deals, flash sales and bundles', brand.name),
+    description: `${brand.name} deals in Tanzania: ${flash.length} flash deals and ${bundles.length} bundles${top ? `, save up to ${top}%` : ''}. Prices in TZS, pay in full or monthly.`,
+    images: lead ? [{ url: lead.img, alt: productLabel(lead) }] : undefined,
+  });
+}
 
 export default async function DealsPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };

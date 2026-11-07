@@ -2,13 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
-import { getCms, getProducts } from '@/server/catalog';
+import { getBrand, getCms, getProducts } from '@/server/catalog';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { brandImage, brandTitle, breadcrumbLd, faqLd, graph, pageMeta } from '@/server/seo';
 import { getT } from '@/server/locale';
 import { ArrowRightIcon } from '@/components/icons';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT();
-  return { title: t('payLaterHow'), description: t('payLaterIntro') };
+// Another engineer is adding a per-brand Pay Later on/off switch: when it lands, return noindex here while it is off (docs/seo.md).
+export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
+  const { brand: key } = (await params) as { brand: BrandKey };
+  const [brand, cms, t] = await Promise.all([getBrand(key), getCms(key), getT()]);
+  return pageMeta({ brand, path: '/pay-later', title: brandTitle(`${t('payLaterHow')}: pay monthly`, brand.name), description: t('payLaterIntro'), images: [{ url: brandImage(brand, cms), alt: t('salaryAdvance') }] });
 }
 
 const STEPS = [
@@ -30,11 +34,12 @@ const FAQ = [
 /** "How Pay Later works": steps, eligibility and FAQ (same content, each brand's own look). */
 export default async function PayLaterPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [cms, products, t] = await Promise.all([getCms(key), getProducts(key), getT()]);
+  const [brand, cms, products, t] = await Promise.all([getBrand(key), getCms(key), getProducts(key), getT()]);
   const example = products.find((p) => p.id === cms.hero[0]?.pid) ?? products.find((p) => p.img) ?? products[0];
   const b = `/${key}`;
   return (
     <div className="pl">
+      <JsonLd data={graph(faqLd(FAQ.map(([q, a]) => ({ q: t(q), a: t(a) }))), breadcrumbLd(brand, [{ name: t('payLaterHow'), path: '/pay-later' }]))} />
       <section className="pl-hero">
         <div className="wrap pl-hero-in">
           <div>

@@ -8,28 +8,25 @@ import { fmt, stockLabel } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getFlashDeals, getProduct, getProducts, getSuppliers } from '@/server/catalog';
-import { env } from '@/server/env';
 import { getT } from '@/server/locale';
+import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
+import { productLabel, publicUrl } from '@/lib/site';
+import { breadcrumbLd, graph, pageMeta, productDescription, productLd, productTitle } from '@/server/seo';
 
-function abs(url: string) {
-  return url.startsWith('http') ? url : `${env.APP_URL}${url}`;
-}
-
-/** Server-side OG/Twitter meta: image, name, price and monthly price (README). */
+/** Server-side title, description, canonical and OG/Twitter card (image, model, name, price in TZS). */
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; id: string }> }): Promise<Metadata> {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, p] = await Promise.all([getBrand(key), getProduct(key, id)]);
-  const title = `${p.name} (${p.model}) — ${fmt(p.price)}`;
-  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Pay Later by Azania Bank. ${p.features.join(' · ')}.`;
-  const images = p.img ? [{ url: abs(p.img), alt: p.name }] : undefined;
-  return {
-    title: p.name,
-    description,
-    alternates: { canonical: `/${key}/p/${p.id}` },
-    openGraph: { type: 'website', title, description, siteName: brand.name, url: `/${key}/p/${p.id}`, images },
-    twitter: { card: 'summary_large_image', title, description, images: images?.map((i) => i.url) },
-    other: { 'product:price:amount': String(p.price), 'product:price:currency': 'TZS' },
-  };
+  const [brand, base, flash] = await Promise.all([getBrand(key), getProduct(key, id), getFlashDeals(key)]);
+  const deal = flash.find((f) => f.id === base.id);
+  const p = deal ? { ...base, price: deal.dealPrice } : base;
+  return pageMeta({
+    brand,
+    path: `/p/${p.id}`,
+    title: productTitle(p, brand.name),
+    description: productDescription(p, brand.name),
+    images: p.images.slice(0, 4).map((src) => ({ url: src, alt: productLabel(p) })),
+    ogType: 'product',
+  });
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
@@ -38,20 +35,17 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
   const deal = flash.find((f) => f.id === base.id);
   const p = deal ? { ...base, price: deal.dealPrice } : base;
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: p.name,
-    sku: p.model,
-    brand: { '@type': 'Brand', name: brand.name },
-    image: p.img ? [abs(p.img)] : undefined,
-    description: p.features.join(', '),
-    aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.reviews },
-    offers: { '@type': 'Offer', priceCurrency: 'TZS', price: p.price, availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' },
-  };
+  const jsonLd = graph(
+    productLd(brand, p, deal ? { price: deal.dealPrice, endsAt: deal.dealEndsAt } : null),
+    breadcrumbLd(brand, [
+      { name: p.catName, path: `/c/${p.cat}` },
+      { name: productLabel(p), path: `/p/${p.id}` },
+    ]),
+  );
   return (
     <div className="wrap" style={{ paddingTop: 24 }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <JsonLd data={jsonLd} />
+      <OgProduct price={p.price} availability={p.stock > 0 ? 'in stock' : 'out of stock'} brand={brand.name} />
       <nav aria-label="Breadcrumb" style={{ fontSize: 13, color: 'var(--muted)' }}>
         <Link href={`/${key}`}>Home</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
@@ -92,7 +86,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           <BuyBox
             brand={key}
             product={{ id: p.id, name: p.name, model: p.model, price: p.price, stock: p.stock, img: p.img, features: p.features }}
-            share={{ url: `https://${brand.domain}/p/${p.id}`, domain: brand.domain, brandName: brand.name }}
+            share={{ url: publicUrl(key, `/p/${p.id}`), domain: brand.domain, brandName: brand.name }}
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
             labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: t('salaryAdvance'), salaryAdvanceSub: t('salaryAdvanceSub'), addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: t('buyWithAdvance'), share: t('share') }}

@@ -19,12 +19,14 @@ import { getCartCount, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getCms, getProducts, isBrandKey, photoFirst } from '@/server/catalog';
 import { getLocale, getT } from '@/server/locale';
 import { currentCustomer } from '@/server/session';
+import { brandImage, clip, DESC_MAX } from '@/server/seo';
+import { absUrl } from '@/lib/site';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand } = await params;
   if (!isBrandKey(brand)) return {};
   const [b, cms] = await Promise.all([getBrand(brand), getCms(brand)]);
-  const img = cms.seo.img || b.heroImg;
+  const img = brandImage(b, cms);
   const sky = brand === 'skywood';
   return {
     title: { default: cms.seo.title || b.name, template: `%s · ${b.name}` },
@@ -35,9 +37,10 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
       : { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
     manifest: sky ? '/icons/skywood.webmanifest' : '/manifest.webmanifest',
     appleWebApp: { capable: true, title: b.name, statusBarStyle: 'default' },
-    description: cms.seo.desc,
-    openGraph: { title: cms.seo.title, description: cms.seo.desc, siteName: b.name, images: img ? [{ url: img }] : undefined, url: `/${brand}` },
-    twitter: { card: 'summary_large_image', title: cms.seo.title, description: cms.seo.desc, images: img ? [img] : undefined },
+    description: clip(cms.seo.desc || b.tagline, DESC_MAX),
+    // Defaults for pages without their own; each indexable page sets canonical + OG via pageMeta().
+    openGraph: { type: 'website', title: cms.seo.title || b.name, description: cms.seo.desc, siteName: b.name, locale: 'en_TZ', images: img ? [{ url: absUrl(img) }] : undefined },
+    twitter: { card: 'summary_large_image', title: cms.seo.title || b.name, description: cms.seo.desc, images: img ? [absUrl(img)] : undefined },
   };
 }
 
@@ -53,7 +56,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const locale = await getLocale();
   // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
   const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
-  const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/${otherKey}`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
+  const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
   const mega: Record<string, MegaProduct[]> = Object.fromEntries(
     cats.map((c) => [c.id, photoFirst(products.filter((p) => p.cat === c.id)).slice(0, 4).map((p) => ({ id: p.id, model: p.model, name: p.name, sub: p.sub, price: p.price, img: p.img }))]),
   );

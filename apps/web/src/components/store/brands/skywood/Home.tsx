@@ -17,6 +17,7 @@ import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { SkywoodHero } from './Hero';
+import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
 
@@ -218,7 +219,7 @@ export function SkywoodHome(props: {
             <div className="sw-story-media">
               <span className="sw-story-arch" aria-hidden="true" />
               <span className="sw-story-light" aria-hidden="true" />
-              <PImg src={focus.img} alt={focus.name} model={focus.model} sub={focus.sub} size="lg" />
+              <PImg src={focus.img} alt={productLabel(focus)} model={focus.model} sub={focus.sub} size="lg" />
             </div>
             <div className="sw-story-copy">
               <p className="sw-eyebrow">
@@ -258,7 +259,7 @@ export function SkywoodHome(props: {
                 <div className={`sw-set-stack n${Math.min(d.items.length, 3)}`}>
                   {d.items.slice(0, 3).map((p, k) => (
                     <span key={p.id} className="sw-set-piece" style={{ ['--k' as string]: k }}>
-                      <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="sm" />
+                      <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="sm" />
                     </span>
                   ))}
                   <span className="sw-set-save">{t('saveN', { n: d.save })}</span>

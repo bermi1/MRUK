@@ -9,14 +9,28 @@ import { getT } from '@/server/locale';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catalog';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { fmt } from '@/lib/format';
+import { brandTitle, breadcrumbLd, graph, itemListLd, pageMeta } from '@/server/seo';
 
 type SP = Promise<{ sub?: string; sort?: string; view?: string }>;
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; cat: string }> }): Promise<Metadata> {
-  const { brand, cat } = await params;
-  const cats = await getCategories(brand as BrandKey);
+  const { brand: key, cat } = (await params) as { brand: BrandKey; cat: string };
+  if (cat === 'all') return {};
+  const [brand, cats, products] = await Promise.all([getBrand(key), getCategories(key), getProducts(key)]);
   const c = cats.find((x) => x.id === cat);
-  return { title: c ? c.name : 'All products', description: c ? `${c.name}: ${c.subs.join(', ')}. Pay in full or monthly with Pay Later by Azania Bank.` : undefined };
+  if (!c) notFound();
+  const list = products.filter((p) => p.cat === c.id);
+  const from = list.length ? Math.min(...list.map((p) => p.price)) : 0;
+  const lead = photoFirst(list)[0];
+  return pageMeta({
+    brand,
+    path: `/c/${c.id}`,
+    title: brandTitle(`${c.name} in Tanzania`, brand.name),
+    description: `${brand.name} ${c.name.toLowerCase()}${c.subs.length ? ` (${c.subs.join(', ')})` : ''}: ${list.length} models${from ? ` from ${fmt(from)}` : ''}. Pay in full or monthly, delivered across Tanzania.`,
+    images: [{ url: lead?.img || c.img || brand.heroImg, alt: c.name }],
+  });
 }
 
 export default async function CategoryPage({ params, searchParams }: { params: Promise<{ brand: string; cat: string }>; searchParams: SP }) {
@@ -42,6 +56,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
 
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
+      {cat && <JsonLd data={graph(breadcrumbLd(brand, [{ name: cat.name, path: `/c/${cat.id}` }]), itemListLd(brand, cat.name, list))} />}
       <div className="cathero">
         <div style={{ padding: '30px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
           <nav aria-label="Breadcrumb" style={{ fontSize: 13, opacity: 0.7 }}>

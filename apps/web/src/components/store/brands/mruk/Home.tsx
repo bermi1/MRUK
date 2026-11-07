@@ -16,6 +16,7 @@ import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { ArrowRightIcon, BoltIcon, Stars } from '../../../icons';
 import { MrukHero } from './Hero';
+import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
 
@@ -208,7 +209,7 @@ export function MrukHome(props: {
                             +
                           </span>
                         )}
-                        <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="sm" />
+                        <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="sm" />
                       </span>
                     ))}
                   </div>

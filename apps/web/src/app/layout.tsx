@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { getLocale } from '@/server/locale';
 import { env } from '@/server/env';
+import { noIndexSite } from '@/lib/site';
 import '@/styles/globals.css';
 import { SwRegister } from '@/components/SwRegister';
 
@@ -22,6 +23,8 @@ export const metadata: Metadata = {
   icons: { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
   openGraph: { type: 'website', siteName: 'Mr UK and Skywood', title: 'Mr UK and Skywood — Shop online, pay monthly', description: 'Appliances and electronics with Pay Later by Azania Bank.' },
   twitter: { card: 'summary_large_image' },
+  // Vercel previews / SEO_NOINDEX sites stay out of search results (lib/site.ts).
+  ...(noIndexSite() ? { robots: { index: false, follow: false } } : {}),
 };
 
 export const viewport: Viewport = { themeColor: '#1D2366', width: 'device-width', initialScale: 1, viewportFit: 'cover' };

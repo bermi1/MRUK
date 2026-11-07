@@ -4,9 +4,15 @@ import { SupportForm } from '@/components/store/SupportForm';
 import { formatTzPhone, waLink } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBrand, getProducts } from '@/server/catalog';
+import { brandTitle, pageMeta } from '@/server/seo';
+
 import { currentCustomer } from '@/server/session';
 
-export const metadata: Metadata = { title: 'Support' };
+export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
+  const { brand: key } = (await params) as { brand: BrandKey };
+  const brand = await getBrand(key);
+  return pageMeta({ brand, path: '/support', title: brandTitle('Customer support and warranty help', brand.name), description: `Help with a ${brand.name} order, delivery, warranty or Pay Later: chat on WhatsApp, email ${brand.supportEmail} or open a support ticket.` });
+}
 
 export default async function SupportPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };

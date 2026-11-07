@@ -9,7 +9,7 @@ import type { BrandKey, ProductView } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
 
-export const metadata: Metadata = { title: 'Compare products' };
+export const metadata: Metadata = { title: 'Compare products', robots: { index: false, follow: true } };
 
 export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };

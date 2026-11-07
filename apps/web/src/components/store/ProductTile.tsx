@@ -3,13 +3,14 @@ import type { ProductView } from '@/lib/types';
 import { fmt } from '@/lib/format';
 import { AddButton, CompareToggle } from './CartButtons';
 import { PImg } from './PImg';
+import { productLabel } from '@/lib/site';
 
 /** Category grid tile (prototype: 300px tall, image cover, gradient, meta at the bottom). */
 export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductView; brand: string; inCompare: boolean; months?: number }) {
   return (
     <div className="ptile shade-tb" data-testid="product-tile">
       <Link href={`/${brand}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.price)}`} />
-      <PImg src={p.img} alt={p.name} model={p.model} sub={p.sub} size="lg" />
+      <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="lg" />
       <div className="tags">
         <span className="glass">{p.sub.toUpperCase()}</span>
         <CompareToggle brand={brand} id={p.id} on={inCompare} />
