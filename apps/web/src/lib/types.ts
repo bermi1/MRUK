@@ -42,6 +42,8 @@ export interface ProductView {
   price: number;
   stock: number;
   features: string[];
+  description?: string;
+  specs?: { label: string; value: string }[];
   img: string;
   images: string[];
   tag: string;

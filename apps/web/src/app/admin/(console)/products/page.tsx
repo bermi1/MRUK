@@ -3,9 +3,8 @@ import { prisma } from '@bt/db';
 import { toggleProductHiddenAction, updateProductFieldAction, uploadProductPhotoAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { InlineNumber } from '@/components/admin/InlineNumber';
-import { NewProductForm } from '@/components/admin/NewProductForm';
 import { PhotoUpload } from '@/components/admin/PhotoUpload';
-import { BrandChip, BrandMark, Forbidden, Thumb } from '@/components/admin/ui';
+import { BrandMark, Forbidden, Thumb } from '@/components/admin/ui';
 import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
@@ -31,7 +30,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const write = ctx.can('products.write');
 
   return (
-    <div className={write ? 'ad-detail' : 'ad-detail single'}>
+    <div className="ad-stack">
       <section className="ad-card">
         <div className="ad-between">
           <BrandMark brand={brand}>
@@ -50,6 +49,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <a className="ad-btn line sm" href={`/${brand}`} target="_blank" rel="noopener">
               View live store
             </a>
+            {write && (
+              <Link className="ad-btn sm" href={`/admin/products/new?b=${brand}`}>
+                + Add product
+              </Link>
+            )}
           </div>
         </div>
         <form action="/admin/products" className="ad-row" style={{ marginTop: 12, flexWrap: 'wrap' }} role="search">
@@ -114,7 +118,16 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       <span className={`ad-pill ${p.hidden ? 'pill-grey' : 'pill-green'}`}>{p.hidden ? 'Hidden' : 'Live'}</span>
                     )}
                   </td>
-                  <td className="r">{write && <PhotoUpload action={uploadProductPhotoAction.bind(null, p.id)} name={p.name} />}</td>
+                  <td className="r">
+                    {write && (
+                      <span className="ad-row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
+                        <PhotoUpload action={uploadProductPhotoAction.bind(null, p.id)} name={p.name} />
+                        <Link className="ad-btn line sm" href={`/admin/products/${p.id}`} aria-label={`Edit ${p.name}`}>
+                          Edit
+                        </Link>
+                      </span>
+                    )}
+                  </td>
                 </tr>
               ))}
               {!products.length && (
@@ -130,14 +143,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         {!write && <p className="ad-muted2" style={{ fontSize: 12.5 }}>Read-only: your role cannot edit products.</p>}
         {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or available stock (sets the exact number; use Inventory to add a delivery) and press Enter (or leave the field) to publish. Photos: JPG, PNG or WebP up to 5 MB.</p>}
       </section>
-      {write && (
-        <aside className="ad-card ad-stack s12">
-          <h2 className="ad-h">
-            Add a product <BrandChip brand={brand} />
-          </h2>
-          <NewProductForm brand={brand} brandName={BRAND_NAME[brand]!} cats={cats.map((c) => ({ slug: c.slug, name: c.name, subs: c.subs }))} />
-        </aside>
-      )}
     </div>
   );
 }
