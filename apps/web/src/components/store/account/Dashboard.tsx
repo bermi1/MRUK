@@ -10,7 +10,8 @@ import type { AccountData, OrderCard } from '@/server/account';
 import { fmtDay, type T } from './util';
 
 /** Server-rendered panels of the customer dashboard. Client widgets live in AccountPanel.tsx. */
-type Ctx = { brand: BrandKey; brandName: string; locale: Locale; t: T };
+/** `payLater`: the brand's admin switch. Off, customers with Pay Later orders still see and manage them. */
+type Ctx = { brand: BrandKey; brandName: string; locale: Locale; t: T; payLater: boolean };
 
 const k = (s: string) => s as MessageKey;
 const href = (brand: string, tab: string, extra = '') => `/${brand}/account?tab=${tab}${extra}`;
@@ -276,6 +277,7 @@ export function OverviewPanel({ d, ctx }: { d: AccountData; ctx: Ctx }) {
   const active = d.orders.filter((o) => o.active);
   const recent = d.orders.filter((o) => !o.active).slice(0, active.length > 1 ? 2 : 4);
   const adv = currentAdvance(d);
+  const showPl = ctx.payLater || !!adv;
   const open = d.tickets.filter((x) => x.open);
   return (
     <div className="acc-ov">
@@ -321,18 +323,20 @@ export function OverviewPanel({ d, ctx }: { d: AccountData; ctx: Ctx }) {
         )}
       </Card>
       <div className="acc-ov-side">
-        <Card title={t('accPayLater')} className="acc-card-pl" testId="overview-paylater" action={adv ? <More to={href(brand, 'paylater')} label={t('accSeeAll')} /> : undefined}>
-          {adv ? (
-            <PayLaterSummary o={adv} ctx={ctx} compact />
-          ) : (
-            <Empty icon={<CardIcon size={22} />} text={t('accPayLaterEmpty')}>
-              <Link href={`/${brand}/pay-later`} className="acc-more">
-                {t('accPayLaterHow')}
-                <ArrowRightIcon size={14} />
-              </Link>
-            </Empty>
-          )}
-        </Card>
+        {showPl && (
+          <Card title={t('accPayLater')} className="acc-card-pl" testId="overview-paylater" action={adv ? <More to={href(brand, 'paylater')} label={t('accSeeAll')} /> : undefined}>
+            {adv ? (
+              <PayLaterSummary o={adv} ctx={ctx} compact />
+            ) : (
+              <Empty icon={<CardIcon size={22} />} text={t('accPayLaterEmpty')}>
+                <Link href={`/${brand}/pay-later`} className="acc-more">
+                  {t('accPayLaterHow')}
+                  <ArrowRightIcon size={14} />
+                </Link>
+              </Empty>
+            )}
+          </Card>
+        )}
         <Card title={t('rewards')} testId="overview-rewards" action={<More to={href(brand, 'rewards')} label={t('accSeeAll')} />}>
           <LoyaltyBand d={d} ctx={ctx} />
           <Ledger d={d} ctx={ctx} limit={3} />

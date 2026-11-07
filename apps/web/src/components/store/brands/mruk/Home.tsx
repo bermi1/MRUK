@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { BrandView, CategoryView, ProductView } from '@/lib/types';
 import type { MessageKey } from '@/lib/i18n';
-import { REVIEWS } from '@/lib/content';
+import { reviewsFor } from '@/lib/content';
 import { fmt, initials } from '@/lib/format';
 import type { BundleView, FlashDeal } from '@/server/catalog';
 import { AddBundleButton } from '../../CartButtons';
@@ -52,14 +52,16 @@ export function MrukHome(props: {
   supplierCount: number;
   cities: string[];
   compare: string[];
+  /** Admin switch: false removes the Pay Later band, trust item and every monthly price. */
+  payLater: boolean;
   t: T;
 }) {
-  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, t } = props;
+  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, payLater, t } = props;
   const b = `/${brand.key}`;
-  const perMonth = t('perMonthShort');
+  const perMonth = payLater ? t('perMonthShort') : '';
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || y.price - x.price).slice(0, 10);
   const needs = cats.filter((c) => NEED[c.id]).slice(0, 4);
-  const reviews = REVIEWS.mruk;
+  const reviews = reviewsFor('mruk', payLater);
   const avgRating = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 5;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
   const exampleMonthly = Math.min(...products.map((p) => p.price)) / 12;
@@ -75,7 +77,7 @@ export function MrukHome(props: {
             [
               ['truck', t('trustDelivery'), t('trustDeliverySub')],
               ['shield', t('trustWarranty'), t('trustWarrantySub')],
-              ['card', t('trustAdvance'), t('trustAdvanceSub')],
+              payLater ? (['card', t('trustAdvance'), t('trustAdvanceSub')] as const) : (['chat', t('trustSupport'), t('trustSupportSub')] as const),
               ['pin', t('trustShowrooms', { n: supplierCount }), t('trustShowroomsSub')],
             ] as const
           ).map(([icon, a, s]) => (
@@ -217,7 +219,7 @@ export function MrukHome(props: {
                     <div>
                       <s>{fmt(d.was)}</s>
                       <b>{fmt(d.now)}</b>
-                      <span className="mu-bundle-mo">{t('orPerMonth', { amount: fmt(d.now / 12) })}</span>
+                      {payLater && <span className="mu-bundle-mo">{t('orPerMonth', { amount: fmt(d.now / 12) })}</span>}
                     </div>
                     <AddBundleButton brand="mruk" ids={d.items.map((p) => p.id)} className="mu-btn mu-btn-navy mu-btn-sm" />
                   </div>
@@ -229,6 +231,7 @@ export function MrukHome(props: {
       </div>
 
       {/* Salary Advance */}
+      {payLater && (
       <section className="mu-advance">
         <div className="wrap">
           <div className="mu-advance-in" data-reveal>
@@ -258,6 +261,7 @@ export function MrukHome(props: {
           </div>
         </div>
       </section>
+      )}
 
       <div className="wrap">
         <section className="mu-sec" data-reveal>
@@ -302,11 +306,12 @@ export function MrukHome(props: {
   );
 }
 
-function TrustIcon({ kind }: { kind: 'truck' | 'shield' | 'card' | 'pin' }) {
+function TrustIcon({ kind }: { kind: 'truck' | 'shield' | 'card' | 'pin' | 'chat' }) {
   const d = {
     truck: 'M3 6h11v9H3zM14 9h4l3 3v3h-7M7 18a2 2 0 100-4 2 2 0 000 4zM17 18a2 2 0 100-4 2 2 0 000 4z',
     shield: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6zM9 12l2 2 4-4',
     card: 'M3 6h18v12H3zM3 10h18M7 15h4',
+    chat: 'M4 5h16v11H9l-5 4zM8 9h8M8 12h5',
     pin: 'M12 21s-6-5.5-6-11a6 6 0 0112 0c0 5.5-6 11-6 11zM12 12a2 2 0 100-4 2 2 0 000 4z',
   }[kind];
   return (

@@ -3,13 +3,14 @@ import { PImg } from '@/components/store/PImg';
 import { fmt } from '@/lib/format';
 import type { ProductView } from '@/lib/types';
 import { getAllProducts, getBrand, getBundles, getCategories, getCms, getSuppliers } from '@/server/catalog';
+import { getPayLaterStates } from '@/server/paylater';
 import '@/styles/landing.css';
 import { ArrowRightIcon } from '@/components/icons';
 
 const BRAND_COLOR = { mruk: '#1D2366', skywood: '#8A6A2F' } as const;
 
 export default async function Landing() {
-  const [all, mrukCms, skyCms, mrukCats, skyCats, mrukBundles, skyBundles, suppliers, mruk, sky] = await Promise.all([
+  const [all, mrukCms, skyCms, mrukCats, skyCats, mrukBundles, skyBundles, suppliers, mruk, sky, pl] = await Promise.all([
     getAllProducts(),
     getCms('mruk'),
     getCms('skywood'),
@@ -20,7 +21,10 @@ export default async function Landing() {
     getSuppliers(),
     getBrand('mruk'),
     getBrand('skywood'),
+    getPayLaterStates(),
   ]);
+  // Admin Pay Later switch: the Azania section and links show while either brand has it on.
+  const anyPl = pl.mruk.enabled || pl.skywood.enabled;
   // Hot products: staff picks from admin first, then alternate brands (products with photos).
   const picked = [...mrukCms.hot, ...skyCms.hot].map((id) => all.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
   const mu = all.filter((p) => p.brand === 'mruk' && p.img);
@@ -46,8 +50,12 @@ export default async function Landing() {
           <nav className="l-links d-only" aria-label="Main">
             <Link href="/mruk">Shop Mr UK</Link>
             <Link href="/skywood">Shop Skywood</Link>
-            <a href="#salary-advance">Pay Later</a>
-            <a href="#salary-advance">How it works</a>
+            {anyPl && (
+              <>
+                <a href="#salary-advance">Pay Later</a>
+                <a href="#salary-advance">How it works</a>
+              </>
+            )}
           </nav>
           <Link href="/mruk" className="btn btn-sm" style={{ background: '#12164A', color: '#fff', padding: '12px 20px' }}>
             Start shopping
@@ -67,7 +75,7 @@ export default async function Landing() {
               <br />
               One place to shop.
             </h1>
-            <p>Refrigerators, TVs, kitchen, generators, sound and cooling, delivered across Tanzania. Pay in full or monthly from your salary.</p>
+            <p>Refrigerators, TVs, kitchen, generators, sound and cooling, delivered across Tanzania.{anyPl ? ' Pay in full or monthly from your salary.' : ''}</p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/mruk" className="btn btn-white">
                 Shop Mr UK
@@ -119,6 +127,7 @@ export default async function Landing() {
           </Link>
         </section>
 
+        {anyPl && (
         <section id="salary-advance" className="l-sa">
           <div>
             <img src="/brand/azania-bank.png" alt="Azania Bank" style={{ width: 90, height: 70, objectFit: 'contain', objectPosition: 'left' }} />
@@ -164,6 +173,7 @@ export default async function Landing() {
             </div>
           </div>
         </section>
+        )}
 
         <section>
           <div className="pill" style={{ ['--hi' as string]: '#E23B3B' }}>
@@ -189,7 +199,7 @@ export default async function Landing() {
                     </div>
                     <div style={{ fontSize: 17, fontWeight: 600, marginTop: 2 }}>{p.name}</div>
                     <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>
-                      {fmt(p.price)} <span style={{ color: '#0078B4', fontSize: 12, fontWeight: 500 }}>· {fmt(p.price / 12)}/mo</span>
+                      {fmt(p.price)} {pl[p.brand].enabled && <span style={{ color: '#0078B4', fontSize: 12, fontWeight: 500 }}>· {fmt(p.price / 12)}/mo</span>}
                     </div>
                   </div>
                   <span className="icon-btn" style={{ background: BRAND_COLOR[p.brand] === '#8A6A2F' ? '#111216' : '#1D2366', color: '#fff' }}>
@@ -251,9 +261,11 @@ export default async function Landing() {
                 <img src="/brand/skywood-white.png" alt="Skywood" style={{ height: 22 }} />
               </div>
               <p style={{ fontSize: 13.5, lineHeight: 1.6, margin: 0, maxWidth: 260 }}>Two trusted brands of appliances and electronics, delivered across Tanzania.</p>
-              <span style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: '8px 12px', fontSize: 12 }}>
-                Pay Later by <img src="/brand/azania-bank-white.png" alt="Azania Bank" style={{ height: 30 }} />
-              </span>
+              {anyPl && (
+                <span style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: '8px 12px', fontSize: 12 }}>
+                  Pay Later by <img src="/brand/azania-bank-white.png" alt="Azania Bank" style={{ height: 30 }} />
+                </span>
+              )}
             </div>
             <div className="foot-col">
               <div className="t">Mr UK</div>
@@ -276,12 +288,12 @@ export default async function Landing() {
               <Link href="/mruk/track">Track order</Link>
               <Link href="/mruk/support">Support</Link>
               <Link href="/mruk/suppliers">Suppliers near you</Link>
-              <a href="#salary-advance">Pay Later</a>
+              {anyPl && <a href="#salary-advance">Pay Later</a>}
               <a href="tel:+255686990359">+255 686 990 359</a>
             </div>
             <div className="foot-col">
               <div className="t">Platform</div>
-              <Link href="/azania">Azania Bank mini app</Link>
+              {anyPl && <Link href="/azania">Azania Bank mini app</Link>}
               <Link href="/mruk?source=pwa">Mobile app</Link>
               <Link href="/admin">Staff portal</Link>
             </div>

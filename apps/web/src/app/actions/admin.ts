@@ -19,6 +19,7 @@ import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
 import { advanceLifecycle, decideAdvance, requestBankDecision, transitionOrder } from '@/server/orders';
 import { RateLimitError } from '@/server/ratelimit';
+import { setPayLater } from '@/server/paylater';
 import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue } from '@/server/admin/context';
 import { storePublicImage, storePublicMedia, UploadError } from '@/server/admin/files';
 import { assignEntityTasks, checkPhotos, checkStock, emitTaskEvent } from '@/server/tasks';
@@ -804,6 +805,26 @@ export async function changeOwnPasswordAction(fd: FormData): Promise<ActionResul
     await changeOwnStaffPassword(ctx, f.current, f.next);
     revalidateAdmin();
     return { ok: true, data: { message: 'Password changed. Other devices have been signed out.' } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Settings › Pay Later by Azania Bank: per-brand On/Off (owner, or a role with 'paylater.toggle').
+ * Audit-logged and refreshes the storefront cache (server/paylater.ts).
+ */
+export async function setPayLaterAction(brand: string, enabled: boolean): Promise<ActionResult<Msg>> {
+  try {
+    const ctx = await requireStaff();
+    if (!ctx.can('paylater.toggle') && !ctx.can('settings')) throw new AuthError(`Your role (${ctx.roleName}) cannot switch Pay Later`);
+    const b = z.enum(['mruk', 'skywood']).parse(brand);
+    assertBrand(ctx, b);
+    const on = z.boolean().parse(enabled);
+    await setPayLater(b, on, ctx.email);
+    revalidateAdmin();
+    revalidatePath('/', 'layout');
+    return { ok: true, data: { message: `Pay Later by Azania Bank is now ${on ? 'on' : 'off'} for ${b === 'mruk' ? 'Mr UK' : 'Skywood'}` } };
   } catch (e) {
     return fail(e);
   }

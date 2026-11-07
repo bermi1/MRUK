@@ -8,7 +8,8 @@ import type { CartView as Cart } from '@/lib/types';
 import { MinusIcon, PlusIcon, TickIcon } from '../icons';
 import { PImg } from './PImg';
 
-export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
+/** `payLater` false (admin switch) hides the monthly line per item. */
+export function CartItems({ cart, brand, payLater }: { cart: Cart; brand: string; payLater: boolean }) {
   const [pending, start] = useTransition();
   const router = useRouter();
   const qty = (id: string, n: number) =>
@@ -56,9 +57,11 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 17, fontWeight: 600 }}>{fmt(l.price * l.qty)}</div>
-            <div className="monthly" style={{ fontSize: 12 }}>
-              {fmt((l.price * l.qty) / cart.months)}/mo
-            </div>
+            {payLater && (
+              <div className="monthly" style={{ fontSize: 12 }}>
+                {fmt((l.price * l.qty) / cart.months)}/mo
+              </div>
+            )}
           </div>
         </div>
       ))}

@@ -38,7 +38,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   const ctx = await requireStaff(undefined, { allowPasswordChange: true });
   const f = await adminFilters(ctx);
   const [counts, branches, myTasks] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands)]);
-  const nav: { group?: string; href: string; label: string; d: string; perm: string; badge?: number }[] = [
+  const nav: { group?: string; href: string; label: string; d: string; perm: string; alt?: string; badge?: number }[] = [
     { group: 'MY WORK', href: '/admin', label: 'Dashboard', d: ICON.dash, perm: 'dashboard' },
     { href: '/admin/tasks', label: 'My tasks', d: ICON.task, perm: 'dashboard', badge: myTasks },
     { group: 'SALES', href: '/admin/orders', label: 'Orders', d: ICON.orders, perm: 'orders', badge: counts.orders },
@@ -53,9 +53,10 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     { href: '/admin/cms', label: 'Website CMS', d: ICON.cms, perm: 'cms' },
     { group: 'SYSTEM', href: '/admin/tickets', label: 'Support tickets', d: ICON.tk, perm: 'tickets', badge: counts.tickets },
     { href: '/admin/reports', label: 'Reports', d: ICON.rep, perm: 'reports' },
-    { href: '/admin/settings', label: 'Settings and users', d: ICON.set, perm: 'settings' },
+    // Store managers reach Settings for the Pay Later switch only ('paylater.toggle').
+    { href: '/admin/settings', label: 'Settings and users', d: ICON.set, perm: 'settings', alt: 'paylater.toggle' },
   ];
-  const visible = ctx.mustChangePassword ? [] : nav.filter((n) => ctx.can(n.perm));
+  const visible = ctx.mustChangePassword ? [] : nav.filter((n) => ctx.can(n.perm) || (!!n.alt && ctx.can(n.alt)));
   // Keep group headings when the first item of a group is hidden.
   let lastGroup = '';
   const groupOf = (i: number) => {

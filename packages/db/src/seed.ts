@@ -108,7 +108,7 @@ const CUSTOMERS = [
 const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
 
 /** Permissions added after launch: granted to existing roles on every deploy (only ever adds; never removes what an owner set). */
-const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all'] };
+const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all', 'paylater.toggle'] };
 
 async function syncRolePermissions() {
   for (const [id, add] of Object.entries(ADDED_PERMISSIONS)) {
@@ -261,7 +261,7 @@ async function main() {
   // Staff, roles ------------------------------------------------------------
   const PERMS = {
     owner: ['*'],
-    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all'],
+    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all', 'paylater.toggle'],
     finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
     catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
     warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
@@ -492,6 +492,10 @@ async function main() {
       { key: 'notifications', value: { orders: true, bank: true, stock: true, tickets: true, daily: false } },
       { key: 'security', value: { sessionTimeoutMinutes: 30, require2fa: true, backups: 'daily' } },
       { key: 'regions', value: REGIONS.map((r) => ({ ...r })) },
+      // Pay Later by Azania Bank starts OFF for both brands (agreement with the bank still being negotiated).
+      // Owners/managers switch it on in Admin › Settings; e2e tests that need it switch it on first.
+      { key: 'payLater.mruk', value: { enabled: false, updatedBy: 'seed', at: new Date().toISOString() } },
+      { key: 'payLater.skywood', value: { enabled: false, updatedBy: 'seed', at: new Date().toISOString() } },
     ],
   });
 

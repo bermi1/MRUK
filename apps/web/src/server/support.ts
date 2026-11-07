@@ -17,36 +17,50 @@ export const POLICIES: PolicyFact[] = [
   { id: 'payment', topic: 'payment pay card visa mastercard cash mobile money', text: 'We accept Pay Later by Azania Bank, Azania Bank account, Visa and Mastercard cards, and pay on delivery in Dar es Salaam. Mobile money is not available yet.' },
 ];
 
-export async function aiVerdict(items: ProductView[], months: number) {
+/** Policies the assistant may quote: nothing about Pay Later while the brand has it switched off. */
+export function policiesFor(payLater: boolean): PolicyFact[] {
+  if (payLater) return POLICIES;
+  return POLICIES.filter((p) => p.id !== 'salary-advance').map((p) =>
+    p.id === 'payment' ? { ...p, topic: 'payment pay card visa mastercard cash mobile money', text: 'We accept Azania Bank account, Visa and Mastercard cards, and pay on delivery in Dar es Salaam. Mobile money is not available yet.' } : p,
+  );
+}
+
+const NO_PAY_LATER = 'Do not mention monthly prices, instalments, Pay Later or salary advances; these products are sold for payment in full.';
+
+export async function aiVerdict(items: ProductView[], months: number, payLater = true) {
   await limit('ai', 20, 10 * 60);
   const facts = items.map(toFacts);
-  const base = compareVerdict(facts, months);
-  const out = await integrations.ai.complete(groundedPrompt(`Give a short verdict: best overall, best value (mention the monthly price over ${months} months), and who each product suits.`, { products: facts }));
+  const base = compareVerdict(facts, months, payLater);
+  const task = payLater ? `Give a short verdict: best overall, best value (mention the monthly price over ${months} months), and who each product suits.` : `Give a short verdict: best overall, best value (price in full), and who each product suits. ${NO_PAY_LATER}`;
+  const out = await integrations.ai.complete(groundedPrompt(task, { products: facts }));
   return { text: out ?? base.text, source: out ? integrations.ai.name : 'catalogue' };
 }
 
-export async function aiAnswer(items: ProductView[], question: string, months: number) {
+export async function aiAnswer(items: ProductView[], question: string, months: number, payLater = true) {
   await limit('ai', 20, 10 * 60);
   const q = question.slice(0, 300);
   const facts = items.map(toFacts);
-  const det = answerFromCatalogue(q, facts, months, POLICIES);
+  const policies = policiesFor(payLater);
+  const det = answerFromCatalogue(q, facts, months, policies, payLater);
   if (!det.grounded) return { text: det.text, grounded: false };
-  const out = await integrations.ai.complete(groundedPrompt(`Answer the customer question in at most 80 words: ${q}`, { products: facts, policies: POLICIES }));
+  // With Pay Later off, monthly/Pay Later questions get the deterministic full-price answer only.
+  if (!payLater && det.sources.length && /(month|salary|instal|\/mo|pay later|credit|loan|azania|advance)/i.test(q)) return { text: det.text, grounded: true };
+  const out = await integrations.ai.complete(groundedPrompt(`Answer the customer question in at most 80 words: ${q}${payLater ? '' : ` ${NO_PAY_LATER}`}`, { products: facts, policies }));
   return { text: out ?? det.text, grounded: true };
 }
 
 /** Store-wide assistant: retrieve relevant products first, then answer only from them. */
-export async function aiStoreAnswer(products: ProductView[], question: string) {
+export async function aiStoreAnswer(products: ProductView[], question: string, payLater = true) {
   const facts = products.map(toFacts);
   const hits = retrieveProducts(question, facts, 4);
-  return aiAnswer(products.filter((p) => hits.some((h) => h.id === p.id)), question, 12);
+  return aiAnswer(products.filter((p) => hits.some((h) => h.id === p.id)), question, 12, payLater);
 }
 
-export async function aiTips(issue: string, product: ProductView | null, description: string) {
+export async function aiTips(issue: string, product: ProductView | null, description: string, payLater = true) {
   await limit('ai', 20, 10 * 60);
   const base = supportQuickFixes(issue);
   const out = await integrations.ai.complete(
-    groundedPrompt(`A customer has an issue (${issue}) with ${product ? `${product.name} (${product.model})` : 'a home appliance'}: "${description.slice(0, 400)}". Give 3 short, safe troubleshooting steps a customer can try at home, then say when to wait for a technician. Plain numbered list, max 90 words. Never suggest opening the unit or handling gas or wiring.`, { products: product ? [toFacts(product)] : [], policies: POLICIES }),
+    groundedPrompt(`A customer has an issue (${issue}) with ${product ? `${product.name} (${product.model})` : 'a home appliance'}: "${description.slice(0, 400)}". Give 3 short, safe troubleshooting steps a customer can try at home, then say when to wait for a technician. Plain numbered list, max 90 words. Never suggest opening the unit or handling gas or wiring.`, { products: product ? [toFacts(product)] : [], policies: policiesFor(payLater) }),
   );
   return out ?? base;
 }

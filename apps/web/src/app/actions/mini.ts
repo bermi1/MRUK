@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@bt/db';
 import { ADVANCE_TERMS, assessAffordability, deliveryFee, firstDeductionDate, isRegion, monthlyInstalment } from '@bt/core';
+import { payLaterLive } from '@/server/paylater';
 import type { ActionResult } from '@/lib/types';
 import { integrations } from '@/server/integrations';
 import { azaniaCustomerRef, bankCustomer, demoSignInAllowed, endAzaniaSession, mintDemoToken, startAzaniaSession } from '@/server/mini/azania';
@@ -62,6 +63,8 @@ export async function placeMiniOrderAction(input: unknown): Promise<ActionResult
     const ref = await azaniaCustomerRef();
     if (!ref) return { ok: false, error: 'Your Azania session has expired. Close and reopen the shop from the Azania app.', field: 'session' };
     const d = orderZ.parse(input);
+    // Admin switch (Settings › Pay Later), re-checked on every purchase (placeAdvanceOrder checks again).
+    if (!(await payLaterLive(d.brand))) throw new CheckoutError('Shopping this store from the Azania app is not available at the moment. Please check back soon.');
     await limit('azania-pin', 5, 15 * 60, ref);
     const customer = await bankCustomer(ref);
     if (!customer) return { ok: false, error: 'We could not load your Azania Bank profile. Reopen the shop from the Azania app.', field: 'session' };

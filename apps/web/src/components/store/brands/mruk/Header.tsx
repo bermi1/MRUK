@@ -20,7 +20,7 @@ const Caret = () => (
  * compare, cart) → category bar. Full-width mega menu with category tiles, sub-categories,
  * featured products and the CMS promo. The utility bar scrolls away; the rest stays pinned.
  */
-export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, user, labels }: HeaderProps) {
+export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, user, payLater, labels }: HeaderProps) {
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(40);
@@ -133,12 +133,14 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             ))}
           </ul>
           <div className="mu-nav-end">
-            <span className={`mu-pl ${m.open === 'paylater' ? 'open' : ''} ${on('pay-later') ? 'on' : ''}`} onMouseEnter={() => m.hover('paylater')}>
-              <Link href={`${b}/pay-later`}>{labels.payLater}</Link>
-              <button type="button" ref={m.ref('paylater')} aria-expanded={m.open === 'paylater'} aria-controls="mu-mega" aria-label={labels.payLaterHow} onClick={() => m.toggle('paylater')}>
-                <Caret />
-              </button>
-            </span>
+            {payLater && (
+              <span className={`mu-pl ${m.open === 'paylater' ? 'open' : ''} ${on('pay-later') ? 'on' : ''}`} onMouseEnter={() => m.hover('paylater')}>
+                <Link href={`${b}/pay-later`}>{labels.payLater}</Link>
+                <button type="button" ref={m.ref('paylater')} aria-expanded={m.open === 'paylater'} aria-controls="mu-mega" aria-label={labels.payLaterHow} onClick={() => m.toggle('paylater')}>
+                  <Caret />
+                </button>
+              </span>
+            )}
             <Link href={`${b}/deals`} onMouseEnter={m.leave} className={`mu-deals ${on('deals') ? 'on' : ''}`}>
               <span aria-hidden="true">%</span>
               {labels.deals}
@@ -155,7 +157,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
           <div className="mu-scrim" onClick={() => m.close()} aria-hidden="true" />
           <div id="mu-mega" className="mu-mega" role="region" aria-label={m.open === 'paylater' ? labels.payLater : mc ? mc.name : labels.allCategories} onMouseEnter={m.keep}>
             <div className="wrap">
-              {m.open === 'paylater' ? (
+              {m.open === 'paylater' && payLater ? (
                 <PayLaterMenu brand={brand.key} labels={labels} className="mu-plm" />
               ) : m.open === 'all' || !mc ? (
                 <div className="mu-mega-all">
@@ -197,11 +199,13 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                           <span className="mu-feat-model">{p.model}</span>
                           <span className="mu-feat-name">{p.name}</span>
                           <span className="mu-feat-price">{fmt(p.price)}</span>
-                          <span className="mu-feat-mo">
-                            {fill(labels.perMonth, {
-                              amount: fmt(p.price / 12),
-                            })}
-                          </span>
+                          {payLater && (
+                            <span className="mu-feat-mo">
+                              {fill(labels.perMonth, {
+                                amount: fmt(p.price / 12),
+                              })}
+                            </span>
+                          )}
                         </Link>
                       ))}
                     </div>

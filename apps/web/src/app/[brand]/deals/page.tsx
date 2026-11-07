@@ -8,12 +8,13 @@ import { fmt } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBundles, getFlashDeals } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Deals and bundles' };
 
 export default async function DealsPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [bundles, flash, t] = await Promise.all([getBundles(key), getFlashDeals(key), getT()]);
+  const [bundles, flash, t, payLater] = await Promise.all([getBundles(key), getFlashDeals(key), getT(), payLaterOn(key)]);
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
       <section className="deals-hero">
@@ -86,7 +87,7 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
           </div>
         </>
       )}
-      <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />
+      {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />}
       <div className="grid-2" style={{ marginTop: 16 }}>
         <div style={{ borderRadius: 22, background: 'var(--surface)', padding: 24 }}>
           <div style={{ fontSize: 16, fontWeight: 600 }}>Free delivery in Dar</div>
