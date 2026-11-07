@@ -41,6 +41,8 @@ interface RawProduct {
   stock: number;
   features: string[];
   img: string;
+  /** Gallery, front shot first (set for every product by brand-data.js). */
+  images?: string[];
   tag: string;
 }
 
@@ -67,11 +69,10 @@ function loadHandoff() {
   return BT;
 }
 
-/** Local copies of the three product photos shipped with the design. */
+/** Local copies of the Mr UK product photos shipped with the design (Skywood photos come from brand-data.js). */
 const LOCAL_IMAGES: Record<string, string> = {
   'mruk-uk-f275-58-5di0wd': '/img/products/mruk-french-fridge.webp',
   'mruk-uk-g3500q': '/img/products/mruk-g3500q-generator.webp',
-  'skywood-sk6031ges': '/img/products/skywood-sk6031ges-cooker.webp',
 };
 
 /** Replace the customer-facing product name in seeded CMS copy. */
@@ -122,12 +123,65 @@ async function syncRolePermissions() {
   }
 }
 
-/** `seed.ts --tokens`: refresh only the brand design tokens and role permissions (safe on a live database). */
+/**
+ * Images we may replace on a live database: empty, the old www.skywood.co.tz photos (that domain no
+ * longer resolves), or the one placeholder this seed used to ship. Anything else (an /api/files/…
+ * upload or any URL a staff member typed in the admin) is left exactly as it is.
+ */
+const LEGACY_SKYWOOD_IMAGES = new Set(['/img/products/skywood-sk6031ges-cooker.webp']);
+const isReplaceableSkywoodImage = (u: string) => !u.trim() || /^https?:\/\/(www\.)?skywood\.co\.tz\//i.test(u.trim()) || LEGACY_SKYWOOD_IMAGES.has(u.trim());
+const sameList = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
+
+/** Skywood products added to brand-data.js after launch: created on live databases when missing. */
+const ADDED_SKYWOOD_PRODUCTS: string[] = [];
+
+/** Bring the official Skywood photos to a live database without touching photos staff uploaded. */
+async function syncSkywoodPhotos(BT: ReturnType<typeof loadHandoff>) {
+  const audit = (entity: string, entityId: string) => prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.photos.sync', entity, entityId } });
+  let products = 0, cats = 0, created = 0, kept = 0;
+  const b = BT.BRANDS.skywood!;
+  const brand = await prisma.brand.findUnique({ where: { key: 'skywood' }, select: { heroImg: true } });
+  if (brand && b.heroImg && brand.heroImg !== b.heroImg && isReplaceableSkywoodImage(brand.heroImg)) {
+    await prisma.brand.update({ where: { key: 'skywood' }, data: { heroImg: b.heroImg } });
+    await audit('Brand', 'skywood');
+    console.log('  Skywood brand hero image updated.');
+  }
+  for (const c of BT.CATS.skywood!) {
+    const row = await prisma.category.findUnique({ where: { id: `skywood-${c.id}` }, select: { img: true } });
+    if (!row || !c.img || row.img === c.img) continue;
+    if (!isReplaceableSkywoodImage(row.img)) { kept++; continue; }
+    await prisma.category.update({ where: { id: `skywood-${c.id}` }, data: { img: c.img } });
+    await audit('Category', `skywood-${c.id}`);
+    cats++;
+  }
+  for (const p of BT.productsAll('skywood')) {
+    const want = p.images?.length ? p.images : p.img ? [p.img] : [];
+    const row = await prisma.product.findUnique({ where: { id: p.id }, select: { images: true } });
+    if (!row) {
+      if (!ADDED_SKYWOOD_PRODUCTS.includes(p.id)) continue; // removed on purpose by staff: never resurrect
+      const cat = await prisma.category.findUnique({ where: { id: `skywood-${p.cat}` }, select: { id: true } });
+      if (!cat) { console.warn(`  Skipped new product ${p.id}: category skywood-${p.cat} missing.`); continue; }
+      await prisma.product.create({ data: { id: p.id, brandKey: 'skywood', categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: p.price, stock: p.stock, features: p.features, images: want, tag: p.tag, embedding: { create: { text: [p.model, p.name, p.sub, ...p.features].join(' | ') } } } });
+      await audit('Product', p.id);
+      created++;
+      continue;
+    }
+    if (!want.length || sameList(row.images, want)) continue;
+    if (!row.images.every(isReplaceableSkywoodImage)) { kept++; continue; }
+    await prisma.product.update({ where: { id: p.id }, data: { images: want } });
+    await audit('Product', p.id);
+    products++;
+  }
+  console.log(`Skywood photos: ${products} product(s) and ${cats} categor${cats === 1 ? 'y' : 'ies'} updated, ${created} product(s) created, ${kept} kept (staff photos).`);
+}
+
+/** `seed.ts --tokens`: refresh the brand design tokens, role permissions and Skywood photos (safe on a live database). */
 async function syncTokens() {
   const BT = loadHandoff();
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
   await syncRolePermissions();
+  await syncSkywoodPhotos(BT);
 }
 
 async function main() {
@@ -195,7 +249,7 @@ async function main() {
     const list = BT.productsAll(key);
     for (const [i, p] of list.entries()) {
       products.push(p);
-      const images = LOCAL_IMAGES[p.id] ? [LOCAL_IMAGES[p.id]!] : p.img ? [p.img] : [];
+      const images = LOCAL_IMAGES[p.id] ? [LOCAL_IMAGES[p.id]!] : p.images?.length ? p.images : p.img ? [p.img] : [];
       await prisma.product.create({
         data: {
           id: p.id,
