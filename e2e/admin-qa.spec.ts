@@ -81,8 +81,11 @@ test('uploaded JPEG and PNG photos are stored and served as WebP (rotated, resiz
   const jpeg = await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#c04020' } }).jpeg({ quality: 60 }).withMetadata({ orientation: 6 }).toBuffer();
   await page.goto(`/admin/products?b=skywood&q=${encodeURIComponent(product.model)}`);
   const row = page.locator(`tr[data-product="${product.id}"]`);
+  const before = product.images[0];
   await row.locator('input[type=file]').setInputFiles({ name: 'photo.jpg', mimeType: 'image/jpeg', buffer: jpeg });
-  await expect.poll(async () => (await c.product.findUniqueOrThrow({ where: { id: product.id } })).images[0]).toMatch(/\.webp$/);
+  // Wait for the new upload to become the main photo (Skywood products already ship with WebP photos).
+  await expect.poll(async () => (await c.product.findUniqueOrThrow({ where: { id: product.id } })).images[0]).not.toBe(before);
+  expect((await c.product.findUniqueOrThrow({ where: { id: product.id } })).images[0]).toMatch(/\.webp$/);
   const url = (await c.product.findUniqueOrThrow({ where: { id: product.id } })).images[0]!;
   const res = await page.request.get(url);
   expect(res.headers()['content-type']).toBe('image/webp');
