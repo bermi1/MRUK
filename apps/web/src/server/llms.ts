@@ -4,6 +4,8 @@ import { translate, type MessageKey } from '@/lib/i18n';
 import { absUrl, productLabel, publicUrl, siteBrands } from '@/lib/site';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { getBrand, getCategories, getCms, getFlashDeals, getProducts, getSuppliers } from './catalog';
+import { payLaterOn } from './paylater';
+import { stripPayLater } from '@bt/core';
 
 /**
  * /llms.txt and /llms-full.txt (https://llmstxt.org): a plain Markdown map of the store for AI
@@ -30,7 +32,7 @@ const PL_FAQ = [
 ] as const;
 
 async function brandSection(key: BrandKey, full: boolean, nested: boolean): Promise<string> {
-  const [brand, cms, cats, products, flash, suppliers] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getFlashDeals(key), getSuppliers(key)]);
+  const [brand, cms, cats, products, flash, suppliers, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getFlashDeals(key), getSuppliers(key), payLaterOn(key)]);
   const deal = new Map(flash.map((f) => [f.id, f]));
   const price = (p: ProductView) => {
     const d = deal.get(p.id);
@@ -40,7 +42,7 @@ async function brandSection(key: BrandKey, full: boolean, nested: boolean): Prom
   const top = nested ? '##' : '#';
   const h = `${top}#`;
   L.push(`${top} ${brand.name}`, '');
-  L.push(`> ${md(cms.seo.desc || brand.tagline)} Online store of ${md(brand.legal || brand.name)}, Tanzania. Prices are in Tanzanian shillings (TZS), VAT inclusive.`, '');
+  L.push(`> ${md((payLater ? cms.seo.desc : stripPayLater(cms.seo.desc)) || brand.tagline)} Online store of ${md(brand.legal || brand.name)}, Tanzania. Prices are in Tanzanian shillings (TZS), VAT inclusive.`, '');
   L.push(`- Store: ${publicUrl(key)}`);
   if (brand.whatsapp) L.push(`- WhatsApp support: +${brand.whatsapp.replace(/\D/g, '')} (https://wa.me/${brand.whatsapp.replace(/\D/g, '')})`);
   if (brand.supportEmail) L.push(`- Email: ${brand.supportEmail}`);
@@ -51,8 +53,10 @@ async function brandSection(key: BrandKey, full: boolean, nested: boolean): Prom
   L.push(`${h} Policies`, '');
   L.push(`- Delivery: ${t('plA5')}`);
   L.push(`- Warranty and tax: ${t('vatNote')}.`);
-  L.push(`- Payment: pay in full (Azania Bank account or card) or monthly with ${t('salaryAdvance')}.`);
-  L.push(`- Pay Later: ${t('payLaterIntro')} ${t('plEligNote')} Details: ${publicUrl(key, '/pay-later')}`);
+  if (payLater) {
+    L.push(`- Payment: pay in full (Azania Bank account or card) or monthly with ${t('salaryAdvance')}.`);
+    L.push(`- Pay Later: ${t('payLaterIntro')} ${t('plEligNote')} Details: ${publicUrl(key, '/pay-later')}`);
+  } else L.push('- Payment: pay in full (Azania Bank account or card).');
   L.push(`- Support and warranty claims: ${publicUrl(key, '/support')}`);
   L.push(`- Showrooms and dealers: ${suppliers.length} locations, ${publicUrl(key, '/suppliers')}`);
   L.push(`- Privacy: ${absUrl('/privacy')}`, '');
@@ -77,16 +81,19 @@ async function brandSection(key: BrandKey, full: boolean, nested: boolean): Prom
       L.push(`- Model: ${md(p.model)}`);
       L.push(`- Category: ${md(c.name)}${p.sub ? ` > ${md(p.sub)}` : ''}`);
       L.push(`- Price: ${price(p)}`);
-      L.push(`- Pay Later: about ${fmt((deal.get(p.id)?.dealPrice ?? p.price) / 12)} a month over 12 months, subject to Azania Bank approval and terms`);
+      if (payLater) L.push(`- Pay Later: about ${fmt((deal.get(p.id)?.dealPrice ?? p.price) / 12)} a month over 12 months, subject to Azania Bank approval and terms`);
       L.push(`- Availability: ${stockText(p.stock)}`);
       if (p.features.length) L.push(`- Features: ${p.features.map(md).join('; ')}`);
       if (p.images.length) L.push(`- Images: ${p.images.filter(Boolean).map(absUrl).join(' ')}`);
       L.push('');
     }
   }
-  L.push(`${h} ${t('salaryAdvance')}: questions`, '');
-  for (const [q, a] of PL_FAQ) L.push(`- **${t(q)}** ${t(a)}`);
-  L.push('', `${h} Showrooms and dealers`, '');
+  if (payLater) {
+    L.push(`${h} ${t('salaryAdvance')}: questions`, '');
+    for (const [q, a] of PL_FAQ) L.push(`- **${t(q)}** ${t(a)}`);
+    L.push('');
+  }
+  L.push(`${h} Showrooms and dealers`, '');
   for (const s of suppliers) L.push(`- ${md(s.city)}, ${md(s.area)} (${md(s.type)}): ${md(s.phone)}, ${md(s.hours)}`);
   L.push('');
   return L.join('\n');
