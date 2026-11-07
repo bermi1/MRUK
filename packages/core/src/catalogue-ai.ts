@@ -106,13 +106,14 @@ export interface Verdict {
 }
 
 /** Deterministic verdict from catalogue fields only. */
-export function compareVerdict(items: ProductFacts[], months = 12): Verdict {
+/** `payLater: false` (switch off for the brand) leaves out monthly prices and Pay Later entirely. */
+export function compareVerdict(items: ProductFacts[], months = 12, payLater = true): Verdict {
   if (!items.length) throw new Error('Nothing to compare');
   const bestValue = [...items].sort((a, b) => a.price - b.price)[0]!;
   const bestOverall = [...items].sort((a, b) => b.features.length - a.features.length || b.price - a.price)[0]!;
   const lines = [
     `Best overall: ${bestOverall.name} (${bestOverall.model}), with ${bestOverall.features.join(', ').toLowerCase()}.`,
-    `Best value: ${bestValue.name} at ${priceLabel(bestValue)}, or ${fmtTZS(bestValue.price / months)}/mo over ${months} months.`,
+    `Best value: ${bestValue.name} at ${priceLabel(bestValue)}${payLater ? `, or ${fmtTZS(bestValue.price / months)}/mo over ${months} months` : ''}.`,
     items.map((p) => `${p.model} suits buyers who need ${(p.features[0] ?? p.sub).toLowerCase()}.`).join(' '),
   ];
   const low = items.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK);
@@ -133,12 +134,15 @@ export interface GroundedAnswer {
  * Answer a free-text question about specific products using only their data.
  * Returns grounded=false with the support fallback when the data can't answer.
  */
-export function answerFromCatalogue(question: string, items: ProductFacts[], months = 12, policies: PolicyFact[] = []): GroundedAnswer {
+export function answerFromCatalogue(question: string, items: ProductFacts[], months = 12, policies: PolicyFact[] = [], payLater = true): GroundedAnswer {
   const q = question.toLowerCase();
   const toks = expand(tokenize(question));
   if (!items.length || !toks.length) return { grounded: false, text: SUPPORT_FALLBACK, sources: [] };
   const src = (ps: ProductFacts[]) => ps.map((p) => p.model);
 
+  if (!payLater && /(monthly|month|salary|instal|\/mo|pay later|credit|loan|azania|advance)/.test(q)) {
+    return { grounded: true, text: `These products are sold for payment in full: ${items.map((p) => `${p.model} ${fmtTZS(p.price)}`).join(', ')}.`, sources: src(items) };
+  }
   if (/(monthly|salary|instal|per month|\/mo)/.test(q)) {
     return {
       grounded: true,
@@ -151,7 +155,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
     const best = s[0]!;
     return {
       grounded: true,
-      text: `Best value: ${best.name} (${best.model}) at ${priceLabel(best)}, or ${fmtTZS(best.price / months)}/mo with Pay Later. Prices: ${s.map((p) => `${p.model} ${priceLabel(p)}`).join(', ')}.`,
+      text: `Best value: ${best.name} (${best.model}) at ${priceLabel(best)}${payLater ? `, or ${fmtTZS(best.price / months)}/mo with Pay Later` : ''}. Prices: ${s.map((p) => `${p.model} ${priceLabel(p)}`).join(', ')}.`,
       sources: src(s),
     };
   }

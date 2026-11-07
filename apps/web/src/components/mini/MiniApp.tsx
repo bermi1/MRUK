@@ -72,9 +72,11 @@ function closeMiniApp() {
   if (window.history.length > 1) window.history.back();
 }
 
-export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: Record<BrandKey, MiniBrand> }) {
+/** `brands` holds only the stores with Pay Later switched on (admin Settings); at least one. */
+export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: Partial<Record<BrandKey, MiniBrand>> }) {
+  const keys = (['mruk', 'skywood'] as const).filter((k) => brands[k]);
   const [step, setStep] = useState<Step>('shop');
-  const [brandKey, setBrandKey] = useState<BrandKey>('mruk');
+  const [brandKey, setBrandKey] = useState<BrandKey>(keys[0] ?? 'mruk');
   const [cat, setCat] = useState('all');
   const [pid, setPid] = useState<string | null>(null);
   const [months, setMonths] = useState<number>(12);
@@ -88,7 +90,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
   const shopScroll = useRef(0);
   const screenRef = useRef<HTMLDivElement>(null);
 
-  const brand = brands[brandKey];
+  const brand = (brands[brandKey] ?? brands[keys[0]!])!;
   const product = useMemo(() => brand.products.find((p) => p.id === pid) ?? null, [brand, pid]);
 
   // Scroll position: restore the shop list when coming back, start other steps at the top.
@@ -157,17 +159,18 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
             </button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="mn-eyebrow">MINI APP IN AZANIA</div>
-              <h1>Mr UK and Skywood</h1>
+              <h1>{keys.length > 1 ? 'Mr UK and Skywood' : brand.name}</h1>
             </div>
             <img className="mn-azlogo" src="/brand/azania-mark.png" alt="Azania Bank" />
           </div>
+          {keys.length > 1 && (
           <div className="mn-seg" role="group" aria-label="Store">
-            {(['mruk', 'skywood'] as const).map((k) => (
+            {keys.map((k) => (
               <button
                 key={k}
                 type="button"
                 aria-pressed={brandKey === k}
-                style={brandKey === k ? { background: brands[k].primary } : undefined}
+                style={brandKey === k ? { background: brands[k]!.primary } : undefined}
                 onClick={() => {
                   setBrandKey(k);
                   setCat('all');
@@ -175,10 +178,11 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
                   if (screenRef.current) screenRef.current.scrollTop = 0;
                 }}
               >
-                {brands[k].name}
+                {brands[k]!.name}
               </button>
             ))}
           </div>
+          )}
           <div className="mn-limit">
             <div>
               <div className="l1">Salary Advance limit</div>

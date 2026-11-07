@@ -14,6 +14,7 @@ import {
   normaliseNida,
   parseAmount,
   PAYMENT_METHOD_INFO,
+  checkoutMethods,
   paymentAllowed,
   REGIONS,
   signatureMatches,
@@ -32,9 +33,9 @@ interface Props {
   prefill: { name: string; phone: string; email: string };
   initialMethod: PaymentMethod;
   channel: 'web' | 'app';
+  /** Admin switch: false leaves Salary Advance out (the server rejects it too). */
+  payLater: boolean;
 }
-
-const METHODS: PaymentMethod[] = ['salary_advance', 'azania_account', 'card', 'pay_on_delivery'];
 
 function Field({ label, error, children, wide }: { label: string; error?: string; children: React.ReactNode; wide?: boolean }) {
   return (
@@ -50,7 +51,8 @@ function Field({ label, error, children, wide }: { label: string; error?: string
   );
 }
 
-export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: Props) {
+export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel, payLater }: Props) {
+  const METHODS = checkoutMethods(payLater);
   const router = useRouter();
   const [step, setStep] = useState<Step>('checkout');
   const [method, setMethod] = useState<PaymentMethod>(initialMethod);
@@ -267,7 +269,7 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel }: P
             <div id="pay-h" style={{ fontSize: 17, fontWeight: 600 }}>
               Payment
             </div>
-            <div className="pay-grid" role="radiogroup" aria-label="Payment method">
+            <div className={`pay-grid ${METHODS.length % 2 ? 'odd' : ''}`} role="radiogroup" aria-label="Payment method">
               {METHODS.map((m) => {
                 const info = PAYMENT_METHOD_INFO[m];
                 const allowed = paymentAllowed(m, cart.region);

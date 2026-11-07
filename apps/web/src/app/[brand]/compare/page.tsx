@@ -9,6 +9,7 @@ import type { BrandKey, ProductView } from '@/lib/types';
 import { COMPARE_MAX, getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Compare products' };
 
@@ -16,7 +17,7 @@ type Cell = { t: React.ReactNode; c?: string; w?: number };
 
 export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [products, ids, cart, t] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT()]);
+  const [products, ids, cart, t, payLater] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key)]);
   const months = cart.months;
   // Only this brand's live products: ids of hidden/deleted products (or another brand's) are ignored.
   const chosen = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
@@ -50,7 +51,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
         ),
       })),
     },
-    { label: t('cmpMonthly'), key: 'monthly', cells: items.map((p) => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) },
+    ...(payLater ? [{ label: t('cmpMonthly'), key: 'monthly', cells: items.map((p): Cell => ({ t: `${fmt(p.price / months)}/mo`, w: 500, c: 'var(--monthly)' })) }] : []),
     {
       label: t('cmpRating'),
       key: 'rating',

@@ -10,6 +10,7 @@ import type { ActionResult } from '@/lib/types';
 import { AuthError, requestOtp, verifyOtp } from '@/server/auth';
 import { COMPARE_MAX, addToCart, clearCompare, getCart, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
 import { getProducts, isBrandKey } from '@/server/catalog';
+import { payLaterOn } from '@/server/paylater';
 import { LOCALE_COOKIE } from '@/server/locale';
 import { capturePayment, CheckoutError, confirmationPath, confirmationToken, placeAdvanceOrder, placeOrder } from '@/server/orders';
 import { clientIp, RateLimitError } from '@/server/ratelimit';
@@ -253,7 +254,7 @@ export async function aiVerdictAction(brand: string, ids: string[], months: numb
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
     const items = await productsByIds(b, z.array(idZ).min(1).max(3).parse(ids));
     if (!items.length) return { ok: false, error: 'Add products to compare first' };
-    const r = await aiVerdict(items, [3, 6, 12].includes(months) ? months : 12);
+    const r = await aiVerdict(items, [3, 6, 12].includes(months) ? months : 12, await payLaterOn(b));
     return { ok: true, data: { text: r.text } };
   } catch (e) {
     return fail(e);
@@ -264,7 +265,7 @@ export async function aiAskAction(brand: string, ids: string[], question: string
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
     const items = await productsByIds(b, z.array(idZ).min(1).max(3).parse(ids));
-    const r = await aiAnswer(items, z.string().trim().min(2, 'Type a question').max(300).parse(question), [3, 6, 12].includes(months) ? months : 12);
+    const r = await aiAnswer(items, z.string().trim().min(2, 'Type a question').max(300).parse(question), [3, 6, 12].includes(months) ? months : 12, await payLaterOn(b));
     return { ok: true, data: { text: r.text } };
   } catch (e) {
     return fail(e);
@@ -275,7 +276,7 @@ export async function aiTipsAction(brand: string, issue: string, productId: stri
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
     const p = productId ? (await productsByIds(b, [idZ.parse(productId)]))[0] ?? null : null;
-    return { ok: true, data: { text: await aiTips(z.string().max(40).parse(issue), p, z.string().max(2000).parse(description)) } };
+    return { ok: true, data: { text: await aiTips(z.string().max(40).parse(issue), p, z.string().max(2000).parse(description), await payLaterOn(b)) } };
   } catch (e) {
     return fail(e);
   }

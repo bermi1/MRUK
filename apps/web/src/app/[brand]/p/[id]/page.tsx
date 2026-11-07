@@ -10,6 +10,7 @@ import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getProduct, getProducts, getSuppliers } from '@/server/catalog';
 import { env } from '@/server/env';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 
 function abs(url: string) {
   return url.startsWith('http') ? url : `${env.APP_URL}${url}`;
@@ -18,9 +19,9 @@ function abs(url: string) {
 /** Server-side OG/Twitter meta: image, name, price and monthly price (README). */
 export async function generateMetadata({ params }: { params: Promise<{ brand: string; id: string }> }): Promise<Metadata> {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, p] = await Promise.all([getBrand(key), getProduct(key, id)]);
+  const [brand, p, payLater] = await Promise.all([getBrand(key), getProduct(key, id), payLaterOn(key)]);
   const title = `${p.name} (${p.model}) — ${fmt(p.price)}`;
-  const description = `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Pay Later by Azania Bank. ${p.features.join(' · ')}.`;
+  const description = `${payLater ? `${fmt(p.price)} or ${fmt(p.price / 12)}/month with Pay Later by Azania Bank.` : `${fmt(p.price)}.`} ${p.features.join(' · ')}.`;
   const images = p.img ? [{ url: abs(p.img), alt: p.name }] : undefined;
   return {
     title: p.name,
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
-  const [brand, p, products, cmp, cart, suppliers, t] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT()]);
+  const [brand, p, products, cmp, cart, suppliers, t, payLater] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT(), payLaterOn(key)]);
   const st = stockState(p.stock);
   const stockText = st === 'out' ? t('outOfStock') : st === 'low' ? t('onlyLeft', { n: p.stock }) : t('inStock', { n: p.stock });
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
@@ -99,7 +100,8 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             share={{ url: `https://${brand.domain}/p/${p.id}`, domain: brand.domain, brandName: brand.name }}
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
-            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: t('salaryAdvance'), salaryAdvanceSub: t('salaryAdvanceSub'), addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: t('buyWithAdvance'), share: t('share') }}
+            payLater={payLater}
+            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
           />
           <div className="perks">
             <div>
@@ -133,9 +135,11 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
                     {fmt(r.price)}
                     {r.off > 0 && <s style={{ color: 'var(--muted)', fontSize: 12, marginLeft: 6 }}>{fmt(r.listPrice)}</s>}
                   </div>
-                  <div className="monthly" style={{ fontSize: 12 }}>
-                    {fmt(r.price / 12)}/mo
-                  </div>
+                  {payLater && (
+                    <div className="monthly" style={{ fontSize: 12 }}>
+                      {fmt(r.price / 12)}/mo
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}

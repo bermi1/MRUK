@@ -10,7 +10,8 @@ import { PImg } from './PImg';
 import { useMessages } from './Messages';
 import { useToast } from './Toast';
 
-export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
+/** `payLater` false (admin switch) hides the monthly line per item. */
+export function CartItems({ cart, brand, payLater }: { cart: Cart; brand: string; payLater: boolean }) {
   const [pending, start] = useTransition();
   const router = useRouter();
   const t = useMessages();
@@ -67,9 +68,11 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 17, fontWeight: 600 }} data-testid="cart-line-total">{fmt(l.price * l.qty)}</div>
             {l.listPrice > l.price && <s style={{ fontSize: 12.5, color: 'var(--muted)' }}>{fmt(l.listPrice * l.qty)}</s>}
-            <div className="monthly" style={{ fontSize: 12 }}>
-              {fmt((l.price * l.qty) / cart.months)}/mo
-            </div>
+            {payLater && (
+              <div className="monthly" style={{ fontSize: 12 }}>
+                {fmt((l.price * l.qty) / cart.months)}/mo
+              </div>
+            )}
           </div>
         </div>
       ))}

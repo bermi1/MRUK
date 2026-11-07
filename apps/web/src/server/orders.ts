@@ -22,6 +22,7 @@ import {
   orderNumber,
   paymentAllowed,
   paymentLabel,
+  PAY_LATER_OFF_MESSAGE,
   releasesStock,
   signatureMatches,
   type AdvanceStatus,
@@ -34,6 +35,7 @@ import { getCart, clearCart } from './cart';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
+import { payLaterLive } from './paylater';
 import { sign } from './session';
 import { checkOrderStock, checkStock, emitTaskEvent } from './tasks';
 
@@ -199,6 +201,8 @@ export interface AdvanceInput extends ContactInput {
 
 /** Salary Advance purchase: application, schedule, signed contract PDF, submission to Azania Bank. */
 export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, cartOverride?: { lines: { productId: string; qty: number }[]; region: string }) {
+  // Admin switch (Settings › Pay Later): never trust the page the customer had open.
+  if (!(await payLaterLive(brand))) throw new CheckoutError(PAY_LATER_OFF_MESSAGE, 'method');
   await releaseExpiredReservations();
   let lines: { productId: string; qty: number; name: string; model: string; price: number }[];
   let region: string;

@@ -8,6 +8,7 @@ import { PImg } from '../PImg';
 import { StockNote } from '../StockNote';
 
 /**
+ * `perMonth` empty (Pay Later switched off) hides the monthly line.
  * Vertical product card used on both brand homes. Same data and actions; each brand's
  * stylesheet gives it its own look (.pc-mruk: bold retail card; .pc-skywood: quiet gallery card).
  */
@@ -39,7 +40,7 @@ export function ProductCard({ p, brand, badge, was, price, perMonth, inCompare }
               {fmt(now)}
               {old && old > now && <s>{fmt(old)}</s>}
             </div>
-            <div className="pc-mo">{perMonth.replace('{amount}', fmt(now / 12))}</div>
+            {perMonth && <div className="pc-mo">{perMonth.replace('{amount}', fmt(now / 12))}</div>}
           </div>
           {p.stock > 0 && <AddButton brand={brand} id={p.id} name={p.name} className="pc-add" label={<PlusIcon size={18} strokeWidth={1.8} />} />}
         </div>

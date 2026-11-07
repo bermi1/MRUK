@@ -71,9 +71,11 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
           {s.showPrice && (
             <div className="mu-hero-price">
               <span className="mu-hero-amt">{fmt(s.price)}</span>
-              <span className="mu-hero-chip">
-                {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
-              </span>
+              {labels.perMonth && (
+                <span className="mu-hero-chip">
+                  {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
+                </span>
+              )}
             </div>
           )}
           <div className="mu-hero-cta">

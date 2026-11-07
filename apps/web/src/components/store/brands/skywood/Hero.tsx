@@ -101,9 +101,11 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
           {s.showPrice && (
             <div className="sw-hero-price">
               <span className="sw-hero-amt">{fmt(s.price)}</span>
-              <span className="sw-hero-mo">
-                {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
-              </span>
+              {labels.perMonth && (
+                <span className="sw-hero-mo">
+                  {fill(labels.perMonth, { amount: fmt(s.price / 12) })} <em>{labels.withAdvance}</em>
+                </span>
+              )}
             </div>
           )}
           <div className="sw-hero-cta">

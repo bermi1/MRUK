@@ -461,3 +461,11 @@ a.ad-stat:hover { background: #eceef4; }
   .ad-cmsgrid { grid-template-columns: minmax(0, 1fr) !important; }
   .ad-cmsgrid > section { position: static !important; }
 }
+
+/* Settings › Pay Later by Azania Bank (per-brand switch) and its compact status */
+.ad-plrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--bd2); flex-wrap: wrap; }
+.ad-plrow:last-child { border-bottom: 0; }
+.ad-plrow-txt { display: flex; flex-direction: column; gap: 3px; font-size: 13.5px; min-width: 0; }
+.ad-plrow-txt small { font-size: 11.5px; color: var(--mut); }
+.ad-plstat { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--mut2); }
+.ad-plstat.light { color: #e3f4fc; }

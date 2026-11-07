@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { getLocale } from '@/server/locale';
 import { env } from '@/server/env';
+import { getPayLaterStates } from '@/server/paylater';
 import '@/styles/globals.css';
 import { SwRegister } from '@/components/SwRegister';
 
@@ -12,15 +13,24 @@ const caveat = localFont({ src: '../fonts/Caveat-latin.woff2', variable: '--font
 // Every page reads live data (prices, stock, CMS): render on request, never at build time.
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  // Pay Later copy only while the admin switch is on for at least one brand.
+  const pl = await getPayLaterStates();
+  const on = pl.mruk.enabled || pl.skywood.enabled;
+  return {
+    ...metadata,
+    title: { default: on ? 'Mr UK and Skywood — Shop online, pay monthly' : 'Mr UK and Skywood — Shop online', template: '%s' },
+    description: `Refrigerators, TVs, kitchen, generators, sound and cooling, delivered across Tanzania.${on ? ' Pay in full or monthly with Pay Later by Azania Bank.' : ''}`,
+    openGraph: { type: 'website', siteName: 'Mr UK and Skywood', title: on ? 'Mr UK and Skywood — Shop online, pay monthly' : 'Mr UK and Skywood — Shop online', description: on ? 'Appliances and electronics with Pay Later by Azania Bank.' : 'Appliances and electronics, delivered across Tanzania.' },
+  };
+}
+
+const metadata: Metadata = {
   metadataBase: new URL(env.APP_URL),
-  title: { default: 'Mr UK and Skywood — Shop online, pay monthly', template: '%s' },
-  description: 'Refrigerators, TVs, kitchen, generators, sound and cooling, delivered across Tanzania. Pay in full or monthly with Pay Later by Azania Bank.',
   manifest: '/manifest.webmanifest',
   applicationName: 'Mr UK and Skywood',
   appleWebApp: { capable: true, title: 'Mr UK and Skywood', statusBarStyle: 'default' },
   icons: { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
-  openGraph: { type: 'website', siteName: 'Mr UK and Skywood', title: 'Mr UK and Skywood — Shop online, pay monthly', description: 'Appliances and electronics with Pay Later by Azania Bank.' },
   twitter: { card: 'summary_large_image' },
 };
 

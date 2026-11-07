@@ -5,6 +5,7 @@ import { getCompareIds } from '@/server/cart';
 import Link from 'next/link';
 import { getBrand, getCategories, getProducts, photoFirst, searchProducts } from '@/server/catalog';
 import { getT } from '@/server/locale';
+import { payLaterOn } from '@/server/paylater';
 import { SearchIcon } from '@/components/icons';
 
 export const metadata: Metadata = { title: 'Search', robots: { index: false } };
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: 'Search', robots: { index: false } };
 export default async function SearchPage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<{ q?: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
   const q = ((await searchParams).q ?? '').slice(0, 80);
-  const [brand, products, cmp, cats, t] = await Promise.all([getBrand(key), getProducts(key), getCompareIds(key), getCategories(key), getT()]);
+  const [brand, products, cmp, cats, t, payLater] = await Promise.all([getBrand(key), getProducts(key), getCompareIds(key), getCategories(key), getT(), payLaterOn(key)]);
   const results = q ? searchProducts(products, q) : [];
   const none = !!q && results.length === 0;
   const popular = none || !q ? photoFirst(products).slice(0, 5) : [];
@@ -47,7 +48,7 @@ export default async function SearchPage({ params, searchParams }: { params: Pro
       )}
       <div className="grid-5" style={{ marginTop: 20 }}>
         {(results.length ? results : popular).map((p) => (
-          <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} />
+          <ProductTile key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} payLater={payLater} />
         ))}
       </div>
     </div>

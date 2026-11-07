@@ -17,7 +17,7 @@ import { fill, useAuthModal, useMegaMenu, useOverlay, useScrolled, type HeaderPr
  * each with a calm dropdown (sub-categories, two pieces, one image). Transparent over the home
  * hero, ivory once the page scrolls. "Menu" opens a full-height index of the collections.
  */
-export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount, user, locale, labels }: HeaderProps) {
+export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount, user, locale, payLater, labels }: HeaderProps) {
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(24);
@@ -94,12 +94,14 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
               </li>
             ))}
             <li className="sw-cats-sep" aria-hidden="true" />
-            <li className={`sw-cats-pl ${m.open === 'paylater' ? 'open' : ''}`} onMouseEnter={() => m.hover('paylater')}>
-              <Link href={`${b}/pay-later`} className={path.startsWith(`${b}/pay-later`) ? 'on' : ''}>
-                {labels.payLater}
-              </Link>
-              {disc('paylater', labels.payLaterHow)}
-            </li>
+            {payLater && (
+              <li className={`sw-cats-pl ${m.open === 'paylater' ? 'open' : ''}`} onMouseEnter={() => m.hover('paylater')}>
+                <Link href={`${b}/pay-later`} className={path.startsWith(`${b}/pay-later`) ? 'on' : ''}>
+                  {labels.payLater}
+                </Link>
+                {disc('paylater', labels.payLaterHow)}
+              </li>
+            )}
             <li onMouseEnter={m.leave}>
               <Link href={`${b}/deals`} className={path.startsWith(`${b}/deals`) ? 'on' : ''}>
                 {labels.deals}
@@ -135,7 +137,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
           <>
             <div className="sw-scrim" onClick={() => m.close()} aria-hidden="true" />
             <div id="sw-panel" className="sw-panel" role="region" aria-label={mc ? mc.name : labels.payLater} onMouseEnter={m.keep}>
-              {m.open === 'paylater' ? (
+              {m.open === 'paylater' && payLater ? (
                 <div className="wrap">
                   <PayLaterMenu brand={brand.key} labels={labels} className="sw-plm" />
                 </div>
@@ -162,7 +164,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
                           <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="md" />
                           <span className="sw-panel-name">{p.name}</span>
                           <span className="sw-panel-price">
-                            {fmt(p.price)} <em>· {fill(labels.perMonth, { amount: fmt(p.price / 12) })}</em>
+                            {fmt(p.price)} {payLater && <em>· {fill(labels.perMonth, { amount: fmt(p.price / 12) })}</em>}
                           </span>
                         </Link>
                       ))}
