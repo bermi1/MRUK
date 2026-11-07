@@ -417,6 +417,15 @@ textarea.input { resize: vertical; }
 .track-body { padding: 22px 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
 @media (max-width: 767px) { .track-body { grid-template-columns: 1fr; padding: 18px; } }
 .cmp-ai { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-top: 18px; }
+/* Stock availability (In stock / Only N left / Out of stock). */
+.stock-note, .pc-stock, .tile-stock, .cart-stock { display: inline-block; font-size: 12px; font-weight: 600; color: var(--warn); margin-top: 4px; }
+.stock-note.is-in { color: var(--ok); }
+.pc-stock { display: block; }
+.tile-stock { display: block; color: #ffd2c4; }
+.cart-stock { display: block; font-size: 12.5px; }
+.pdp-stock { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ok); }
+.pdp-stock i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 18%, transparent); }
+.pdp-stock.is-low, .pdp-stock.is-out { color: var(--warn); }
 /* Compare page: sticky label column, one column per product; scrolls inside its box on phones. */
 .cmp-head { align-items: flex-end; flex-wrap: wrap; gap: 12px; }
 .cmp-sub { font-size: 14.5px; color: var(--muted2); margin: 6px 0 0; max-width: 680px; }

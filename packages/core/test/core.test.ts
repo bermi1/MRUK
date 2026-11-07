@@ -44,6 +44,8 @@ import {
   paymentLabel,
   priceCart,
   priceLabel,
+  stockState,
+  LOW_STOCK,
   releasesStock,
   repaymentProgress,
   retrievePolicies,
@@ -197,6 +199,17 @@ describe('delivery and pricing', () => {
     expect(checkDiscount(rule, 50_000, 'mruk', now)).toMatchObject({ ok: false });
     expect(checkDiscount({ ...rule, uses: 5 }, 1_000_000, 'mruk', now)).toMatchObject({ ok: false });
     expect(checkDiscount({ code: 'X', percent: 200, active: true }, 1000, 'mruk')).toEqual({ ok: true, amount: 900 });
+  });
+  it('classifies stock: out, low (<= 6) and in', () => {
+    expect([0, -1, 1, 6, 7].map(stockState)).toEqual(['out', 'out', 'low', 'low', 'in']);
+    expect(LOW_STOCK).toBe(6);
+  });
+  it('applies a promo to the goods subtotal, never to delivery', () => {
+    const lines = [{ price: 400_000, qty: 1 }];
+    const d = checkDiscount({ code: 'K', percent: 10, active: true }, 400_000, 'mruk');
+    const t = priceCart(lines, 'Arusha', d.ok ? d.amount : 0);
+    expect(t.discount).toBe(40_000);
+    expect(t.total).toBe(400_000 - 40_000 + t.delivery);
   });
 });
 

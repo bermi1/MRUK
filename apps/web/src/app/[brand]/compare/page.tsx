@@ -4,7 +4,7 @@ import { ClearCompareButton, CompareToggle } from '@/components/store/CartButton
 import { CompareAi } from '@/components/store/CompareAi';
 import { PImg } from '@/components/store/PImg';
 import { Stars, TickIcon } from '@/components/icons';
-import { fmt } from '@/lib/format';
+import { fmt, stockState } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { COMPARE_MAX, getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
@@ -29,7 +29,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
   const minP = Math.min(...items.map((p) => p.price));
   const lowest = items.filter((p) => p.price === minP).length < items.length;
   const stock = (p: ProductView): Cell =>
-    p.stock <= 0 ? { t: t('outOfStock'), c: 'var(--warn)' } : p.stock <= 5 ? { t: t('onlyLeft', { n: p.stock }), c: 'var(--warn)' } : { t: t('inStock', { n: p.stock }), c: 'var(--ok)' };
+    stockState(p.stock) === 'out' ? { t: t('outOfStock'), c: 'var(--warn)' } : stockState(p.stock) === 'low' ? { t: t('onlyLeft', { n: p.stock }), c: 'var(--warn)' } : { t: t('inStock', { n: p.stock }), c: 'var(--ok)' };
   const rows: { label: string; key: string; cells: Cell[] }[] = [
     {
       label: t('cmpPrice'),

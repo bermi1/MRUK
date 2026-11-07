@@ -8,14 +8,17 @@ import type { CartView as Cart } from '@/lib/types';
 import { MinusIcon, PlusIcon, TickIcon } from '../icons';
 import { PImg } from './PImg';
 import { useMessages } from './Messages';
+import { useToast } from './Toast';
 
 export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
   const [pending, start] = useTransition();
   const router = useRouter();
   const t = useMessages();
+  const toast = useToast();
   const qty = (id: string, n: number) =>
     start(async () => {
-      await setQtyAction(brand, id, n);
+      const r = await setQtyAction(brand, id, n);
+      if (!r.ok) toast(r.error);
       router.refresh();
     });
   if (!cart.lines.length)
@@ -39,6 +42,11 @@ export function CartItems({ cart, brand }: { cart: Cart; brand: string }) {
               {l.model}
             </div>
             <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{l.name}</div>
+            {(l.stock <= 0 || l.qty >= l.stock) && (
+              <div className="cart-stock" data-testid="cart-stock" role="status">
+                {l.stock <= 0 ? t('outOfStock') : l.qty > l.stock ? t('cartOnlyAvailable', { n: l.stock }) : t('onlyLeft', { n: l.stock })}
+              </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: 999 }}>
                 <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} disabled={l.qty <= 1} aria-label={t('cartDecrease', { name: l.name })}>

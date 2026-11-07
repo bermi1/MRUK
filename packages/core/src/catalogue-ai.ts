@@ -7,6 +7,7 @@
  * only ever given the facts retrieved here.
  */
 import { fmtTZS } from './money';
+import { LOW_STOCK } from './pricing';
 
 export interface ProductFacts {
   id: string;
@@ -114,7 +115,7 @@ export function compareVerdict(items: ProductFacts[], months = 12): Verdict {
     `Best value: ${bestValue.name} at ${priceLabel(bestValue)}, or ${fmtTZS(bestValue.price / months)}/mo over ${months} months.`,
     items.map((p) => `${p.model} suits buyers who need ${(p.features[0] ?? p.sub).toLowerCase()}.`).join(' '),
   ];
-  const low = items.filter((p) => p.stock <= 5);
+  const low = items.filter((p) => p.stock > 0 && p.stock <= LOW_STOCK);
   if (low.length) lines.push(`Low stock: ${low.map((p) => `${p.model} (${p.stock} left)`).join(', ')}.`);
   return { bestOverall, bestValue, text: lines.join('\n') };
 }
@@ -155,7 +156,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
     };
   }
   if (/(stock|available|availability|left)/.test(q)) {
-    return { grounded: true, text: items.map((p) => `${p.model}: ${p.stock <= 0 ? 'out of stock' : p.stock <= 5 ? `only ${p.stock} left` : 'in stock'}`).join('. ') + '.', sources: src(items) };
+    return { grounded: true, text: items.map((p) => `${p.model}: ${p.stock <= 0 ? 'out of stock' : p.stock <= LOW_STOCK ? `only ${p.stock} left` : 'in stock'}`).join('. ') + '.', sources: src(items) };
   }
 
   // Feature questions: which listed products mention the asked-about features?

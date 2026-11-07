@@ -154,6 +154,7 @@ const en = {
   cmpAddAria: 'Add {name} to compare',
   cmpView: 'View compare',
   cartDecrease: 'Decrease {name}',
+  cartOnlyAvailable: 'Only {n} available. Lower the quantity to continue.',
   cartIncrease: 'Increase {name}',
   cartRemoveItem: 'Remove {name}',
   cartBundle: 'Bundle: {title}',
@@ -577,6 +578,7 @@ const sw: Record<MessageKey, string> = {
   cmpAddAria: 'Ongeza {name} kulinganisha',
   cmpView: 'Angalia ulinganisho',
   cartDecrease: 'Punguza {name}',
+  cartOnlyAvailable: 'Zimebaki {n} tu. Punguza idadi ili kuendelea.',
   cartIncrease: 'Ongeza {name}',
   cartRemoveItem: 'Ondoa {name}',
   cartBundle: 'Seti: {title}',
@@ -853,7 +855,7 @@ export function translate(locale: Locale, key: MessageKey, vars?: Record<string,
 }
 
 /** Strings client components read through <MessagesProvider> (kept small: only these ship to the browser). */
-export const CLIENT_KEYS = ['compare', 'addCompare', 'addedCompare', 'cmpLimit', 'cmpAdded', 'cmpRemoved', 'cmpRemove', 'cmpAddAria', 'cmpClearAll', 'accErrGeneric', 'emptyCart', 'browseProducts', 'remove', 'cartDecrease', 'cartIncrease', 'cartRemoveItem'] as const;
+export const CLIENT_KEYS = ['compare', 'addCompare', 'addedCompare', 'cmpLimit', 'cmpAdded', 'cmpRemoved', 'cmpRemove', 'cmpAddAria', 'cmpClearAll', 'accErrGeneric', 'emptyCart', 'browseProducts', 'remove', 'cartDecrease', 'cartIncrease', 'cartRemoveItem', 'cartOnlyAvailable', 'onlyLeft', 'outOfStock', 'inStock'] as const;
 export type ClientMessageKey = (typeof CLIENT_KEYS)[number];
 
 export function clientMessages(locale: Locale): Record<ClientMessageKey, string> {

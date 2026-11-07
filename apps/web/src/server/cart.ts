@@ -72,19 +72,24 @@ export async function addToCart(brand: BrandKey, productId: string, qty = 1) {
   if (p.stock <= 0) throw new Error('This product is out of stock');
   const cart = await ensureCart(brand);
   const existing = await prisma.cartItem.findUnique({ where: { cartId_productId: { cartId: cart.id, productId } } });
+  // Never more than is on the shelf: say so instead of silently "adding" nothing.
+  if ((existing?.qty ?? 0) >= Math.min(p.stock, 20)) throw new Error(p.stock <= 20 ? `Only ${p.stock} in stock, and they are all in your cart` : 'You can buy up to 20 of one product per order');
   const next = Math.min((existing?.qty ?? 0) + qty, p.stock, 20);
   await prisma.cartItem.upsert({ where: { cartId_productId: { cartId: cart.id, productId } }, create: { cartId: cart.id, productId, qty: next }, update: { qty: next } });
 }
 
-export async function setQty(brand: BrandKey, productId: string, qty: number) {
+/** Set a line's quantity, capped at stock on hand (and 20). Returns the stock when the request was capped. */
+export async function setQty(brand: BrandKey, productId: string, qty: number): Promise<{ capped: number | null }> {
   const cart = await ensureCart(brand);
   if (qty <= 0) {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id, productId } });
-    return;
+    return { capped: null };
   }
   const p = await prisma.product.findFirst({ where: { id: productId, brandKey: brand } });
-  if (!p) return;
-  await prisma.cartItem.updateMany({ where: { cartId: cart.id, productId }, data: { qty: Math.min(qty, Math.max(p.stock, 1), 20) } });
+  if (!p) return { capped: null };
+  const max = Math.min(Math.max(p.stock, 1), 20);
+  await prisma.cartItem.updateMany({ where: { cartId: cart.id, productId }, data: { qty: Math.min(qty, max) } });
+  return { capped: qty > max ? p.stock : null };
 }
 
 export async function updateCartSettings(brand: BrandKey, patch: { region?: string; months?: number; discountCode?: string | null }) {

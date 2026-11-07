@@ -1,12 +1,15 @@
+import { stockState } from '@bt/core';
+
+export { LOW_STOCK, stockState } from '@bt/core';
 export { fmtTZS as fmt, fmtTZSCompact, fmtDate, fmtDateTime, formatTzPhone, maskTzPhone } from '@bt/core';
 
 export function stockLabel(stock: number): string {
-  if (stock <= 0) return 'Out of stock';
-  return stock <= 5 ? `Only ${stock} left` : `${stock} in stock`;
+  const s = stockState(stock);
+  return s === 'out' ? 'Out of stock' : s === 'low' ? `Only ${stock} left` : `${stock} in stock`;
 }
 
 export function stockColor(stock: number): string {
-  return stock <= 5 ? '#B4462E' : '#16825D';
+  return stockState(stock) === 'in' ? '#16825D' : '#B4462E';
 }
 
 /** Short model label for image-less tiles (prototype: strip UK/SKY prefix, 14 chars). */

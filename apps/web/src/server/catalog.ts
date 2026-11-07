@@ -116,11 +116,18 @@ export const getAllProducts = cache(async (): Promise<ProductView[]> => {
   return [...a, ...b];
 });
 
-export async function getProduct(brand: BrandKey, id: string): Promise<ProductView> {
+/**
+ * One product with live stock. Lists use the cached catalogue, but the product page reads
+ * stock (and hidden) from the database so a restock or sale shows at once, also on the
+ * other brand's deployment whose cache an admin action cannot clear.
+ */
+export const getProduct = cache(async (brand: BrandKey, id: string): Promise<ProductView> => {
   const p = (await getProducts(brand)).find((x) => x.id === id);
   if (!p) notFound();
-  return p;
-}
+  const live = await prisma.product.findFirst({ where: { id, brandKey: brand }, select: { stock: true, hidden: true } });
+  if (!live || live.hidden) notFound();
+  return live.stock === p.stock ? p : { ...p, stock: live.stock };
+});
 
 /** Sort products that have a photo first (prototype "popular" order). */
 export function photoFirst<T extends { img: string }>(list: T[]): T[] {

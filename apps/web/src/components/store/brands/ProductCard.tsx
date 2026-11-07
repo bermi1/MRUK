@@ -5,6 +5,7 @@ import { img } from '@/lib/img';
 import { AddButton, CompareToggle } from '../CartButtons';
 import { PlusIcon } from '../../icons';
 import { PImg } from '../PImg';
+import { StockNote } from '../StockNote';
 
 /**
  * Vertical product card used on both brand homes. Same data and actions; each brand's
@@ -31,6 +32,7 @@ export function ProductCard({ p, brand, badge, was, price, perMonth, inCompare }
       <div className="pc-body">
         <span className="pc-model">{p.model}</span>
         <h3 className="pc-name">{p.name}</h3>
+        <StockNote stock={p.stock} className="pc-stock" />
         <div className="pc-foot">
           <div>
             <div className="pc-price">

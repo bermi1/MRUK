@@ -12,8 +12,10 @@ import {
   firstDeductionDate,
   fmtDate,
   fmtTZS,
+  LOW_STOCK,
   monthlyInstalment,
   REGIONS,
+  stockState,
 } from '@bt/core';
 import { placeMiniOrderAction, type MiniOrderResult } from '@/app/actions/mini';
 import { BackspaceIcon, CloseIcon } from '@/components/icons';
@@ -57,8 +59,8 @@ type Step = 'shop' | 'term' | 'review' | 'done';
 const DEFAULT_REGION = 'Dar es Salaam';
 
 function stockText(n: number) {
-  if (n <= 0) return 'Out of stock';
-  return n <= 5 ? `Only ${n} left` : `${n} in stock`;
+  const s = stockState(n);
+  return s === 'out' ? 'Out of stock' : s === 'low' ? `Only ${n} left` : `${n} in stock`;
 }
 
 /** Ask the host Azania app to close the webview (bridge names are a placeholder until the bank's SDK is known). */
@@ -226,7 +228,7 @@ export function MiniApp({ customer, brands }: { customer: MiniCustomer; brands: 
                   <span className="nm" style={{ display: 'block' }}>
                     {p.name}
                   </span>
-                  <span className="st" style={{ display: 'block', color: p.stock <= 5 ? '#FFB199' : '#9FE0B5' }}>
+                  <span className="st" style={{ display: 'block', color: p.stock <= LOW_STOCK ? '#FFB199' : '#9FE0B5' }}>
                     {stockText(p.stock)}
                   </span>
                   <span className="mo" style={{ display: 'block' }}>

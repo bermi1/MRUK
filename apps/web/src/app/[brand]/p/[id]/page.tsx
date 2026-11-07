@@ -4,7 +4,7 @@ import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
 import { PImg } from '@/components/store/PImg';
 import { SparkleIcon, Stars } from '@/components/icons';
-import { fmt, stockLabel } from '@/lib/format';
+import { fmt, stockState } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getProduct, getProducts, getSuppliers } from '@/server/catalog';
@@ -35,6 +35,8 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 export default async function ProductPage({ params }: { params: Promise<{ brand: string; id: string }> }) {
   const { brand: key, id } = (await params) as { brand: BrandKey; id: string };
   const [brand, p, products, cmp, cart, suppliers, t] = await Promise.all([getBrand(key), getProduct(key, id), getProducts(key), getCompareIds(key), getCart(key), getSuppliers(key), getT()]);
+  const st = stockState(p.stock);
+  const stockText = st === 'out' ? t('outOfStock') : st === 'low' ? t('onlyLeft', { n: p.stock }) : t('inStock', { n: p.stock });
   const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -54,7 +56,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         <Link href={`/${key}`}>Home</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
       <div className="pdp">
-        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockLabel(p.stock)} />
+        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}
@@ -82,6 +84,10 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             )}
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t('vatNote')}</div>
+          <div className={`pdp-stock is-${st}`} data-testid="stock-status" data-stock={st} role="status">
+            <i aria-hidden="true" />
+            {stockText}
+          </div>
           {p.price >= 1000 && (
             <div className="earn-pts">
               <SparkleIcon size={16} /> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}

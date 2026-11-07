@@ -3,6 +3,7 @@ import type { ProductView } from '@/lib/types';
 import { fmt } from '@/lib/format';
 import { AddButton, CompareToggle } from './CartButtons';
 import { PImg } from './PImg';
+import { StockNote } from './StockNote';
 
 /** Category grid tile (prototype: 300px tall, image cover, gradient, meta at the bottom). */
 export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductView; brand: string; inCompare: boolean; months?: number }) {
@@ -19,6 +20,7 @@ export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductVi
           {p.model}
         </div>
         <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.2, marginTop: 3 }}>{p.name}</div>
+        {p.stock > 0 && <StockNote stock={p.stock} className="tile-stock" />}
         <div className="row" style={{ alignItems: 'flex-end', marginTop: 8 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 600 }}>
@@ -29,7 +31,7 @@ export function ProductTile({ p, brand, inCompare, months = 12 }: { p: ProductVi
               {fmt(p.price / months)}/mo
             </div>
           </div>
-          {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <span style={{ fontSize: 11, fontWeight: 600 }}>Out of stock</span>}
+          {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <StockNote stock={0} className="tile-stock" />}
         </div>
       </div>
     </div>
@@ -47,6 +49,7 @@ export function ProductRow({ p, brand, inCompare, months = 12 }: { p: ProductVie
         </div>
         <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2 }}>{p.name}</div>
         <div style={{ fontSize: 13, color: 'var(--muted2)', marginTop: 6 }}>{p.features.join(' · ')}</div>
+        <StockNote stock={p.stock} />
         <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link" />
       </div>
       <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>

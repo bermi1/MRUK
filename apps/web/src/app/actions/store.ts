@@ -54,8 +54,9 @@ export async function addBundleAction(brand: string, ids: string[]): Promise<Act
 export async function setQtyAction(brand: string, productId: string, qty: number): Promise<ActionResult> {
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
-    await setQty(b, idZ.parse(productId), z.number().int().min(0).max(20).parse(qty));
+    const { capped } = await setQty(b, idZ.parse(productId), z.number().int().min(0).max(20).parse(qty));
     revalidatePath(`/${b}`, 'layout');
+    if (capped !== null) return { ok: false, error: capped > 0 ? `Only ${capped} in stock` : 'This product is out of stock' };
     return { ok: true };
   } catch (e) {
     return fail(e);
