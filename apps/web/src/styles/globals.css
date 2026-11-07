@@ -329,7 +329,12 @@ textarea.input { resize: vertical; }
   .filters { flex-direction: column; align-items: stretch; gap: 10px; }
   .filters > div { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; }
   .grid-5 .ptile { height: auto; aspect-ratio: 0.72; border-radius: 16px; }
-  .grid-5 .ptile .tags, .grid-5 .ptile .meta .mono, .grid-5 .ptile .monthly-light { display: none; }
+  .grid-5 .ptile .tags .glass, .grid-5 .ptile .meta .mono, .grid-5 .ptile .monthly-light { display: none; }
+  /* Phones: keep compare reachable on category/search tiles as a compact icon button. */
+  [data-brand] .grid-5 .ptile .tags { left: auto; right: 6px; top: 6px; }
+  .grid-5 .ptile .tags .cmp-tag { width: 32px; height: 32px; min-height: 32px; padding: 0; justify-content: center; position: relative; }
+  .grid-5 .ptile .tags .cmp-tag::after { content: ''; position: absolute; inset: -6px; }
+  .grid-5 .ptile .tags .cmp-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .grid-5 .ptile .meta { left: 8px; right: 8px; bottom: 8px; }
   .grid-5 .ptile .meta div { font-size: 12.5px !important; }
   .grid-5 .ptile .plus { width: 28px; height: 28px; font-size: 16px; }
@@ -456,6 +461,7 @@ textarea.input { resize: vertical; }
 .stock-note.is-in { color: var(--ok); }
 .pc-stock { display: block; }
 .tile-stock { display: block; color: #ffd2c4; }
+@media (max-width: 767px) { [data-brand] .grid-5 .ptile .tile-stock { color: var(--warn); } }
 .cart-stock { display: block; font-size: 12.5px; }
 .pdp-stock { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ok); }
 .pdp-stock i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 18%, transparent); }

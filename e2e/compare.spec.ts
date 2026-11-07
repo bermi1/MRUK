@@ -12,7 +12,7 @@ test.afterAll(() => db.$disconnect());
 
 async function addFromPdp(page: Page, brand: string, id: string) {
   await page.goto(`/${brand}/p/${id}`);
-  await page.getByRole('button', { name: /^Add .* to compare$/ }).click();
+  await page.locator('.buybox-cmp [data-testid=compare-toggle], [data-testid=compare-toggle].cmp-link').first().click();
   await expect(page.locator('.toast')).toBeVisible();
   return (await page.locator('.toast').innerText()).trim();
 }
