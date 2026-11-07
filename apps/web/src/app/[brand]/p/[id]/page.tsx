@@ -8,7 +8,6 @@ import { fmt, stockState } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
 import { getBrand, getFlashDeals, getProduct, getProducts, getSuppliers } from '@/server/catalog';
-import { env } from '@/server/env';
 import { getT } from '@/server/locale';
 import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
 import { productLabel, publicUrl } from '@/lib/site';

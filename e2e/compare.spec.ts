@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { setPayLater } from './paylater';
 
 const db = new PrismaClient();
 const DEAL = 'mruk-uk-f215-30-4dl-wd'; // fridge with a seeded 15% flash deal
@@ -9,6 +10,12 @@ const FOURTH = 'mruk-uk-50';
 const OTHER_CAT = 'mruk-uk-g5500q'; // generator
 
 test.afterAll(() => db.$disconnect());
+
+// The verdict must not mention monthly prices while Pay Later is off for the brand: make that state explicit
+// through the admin switch (refreshes the cached setting), since other specs may leave Pay Later on.
+test.beforeAll(async ({ browser }, info) => {
+  await setPayLater(browser, String(info.project.use.baseURL), { mruk: false });
+});
 
 async function addFromPdp(page: Page, brand: string, id: string) {
   await page.goto(`/${brand}/p/${id}`);
