@@ -163,7 +163,12 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
         payments: { create: { method: input.method, amount: cart.total, status: 'pending' } },
       },
     });
-    if (cart.discountCode && !cart.discountError) await tx.discountCode.update({ where: { code: cart.discountCode }, data: { uses: { increment: 1 } } });
+    if (cart.discountCode && !cart.discountError) {
+      // Count the use atomically so two shoppers can't both take the last use of a capped code.
+      const code = await tx.discountCode.findUnique({ where: { code: cart.discountCode }, select: { maxUses: true } });
+      const used = await tx.discountCode.updateMany({ where: { code: cart.discountCode, active: true, ...(code?.maxUses != null ? { uses: { lt: code.maxUses } } : {}) }, data: { uses: { increment: 1 } } });
+      if (used.count !== 1) throw new CheckoutError('This promo code has just been fully used. Remove it to continue.', 'discount');
+    }
     if (input.method === 'pay_on_delivery') await issueInvoice(tx, o.id, o.total, 'issued');
     return o;
   });
