@@ -49,6 +49,8 @@ export interface ProductView {
   reviews: number;
   hidden: boolean;
   createdAt: string;
+  /** Last catalogue change (ISO); sitemap lastmod. Optional for views built outside the catalogue. */
+  updatedAt?: string;
 }
 
 export interface HeroSlide {

@@ -80,6 +80,7 @@ export function toView(p: DbProduct): ProductView {
     reviews: p.reviews,
     hidden: p.hidden,
     createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
   };
 }
 
@@ -207,6 +208,8 @@ const loadFlashPromos = cached(
 export interface FlashDeal extends ProductView {
   off: number;
   dealPrice: number;
+  /** Promotion end (ISO), null = open-ended. */
+  dealEndsAt: string | null;
 }
 
 export async function getFlashDeals(brand: BrandKey): Promise<FlashDeal[]> {
@@ -216,7 +219,7 @@ export async function getFlashDeals(brand: BrandKey): Promise<FlashDeal[]> {
     .filter((pr) => !pr.endsAt || new Date(pr.endsAt).getTime() > now)
     .map((pr) => {
       const p = products.find((x) => x.id === pr.productId);
-      return p ? { ...p, off: pr.percent, dealPrice: salePrice(p.price, pr.percent) } : null;
+      return p ? { ...p, off: pr.percent, dealPrice: salePrice(p.price, pr.percent), dealEndsAt: pr.endsAt } : null;
     })
     .filter((x): x is FlashDeal => !!x);
 }
