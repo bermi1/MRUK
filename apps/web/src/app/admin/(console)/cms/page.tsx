@@ -35,6 +35,7 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
     hot: [],
     social: { facebook: '', instagram: '', tiktok: '', youtube: '', x: '', linkedin: '', ...((m.social as Record<string, string>) ?? {}) },
   };
+  const heroVersion = blocks.find((x) => x.key === 'hero')?.updatedAt.getTime() ?? 0;
   const updated = blocks.reduce<{ at: Date; by: string } | null>((a, x) => (!a || x.updatedAt > a.at ? { at: x.updatedAt, by: x.updatedBy } : a), null);
   const write = ctx.can('cms.write');
   const pimg = (id: string) => products.find((p) => p.id === id)?.images[0] ?? '';
@@ -101,7 +102,9 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
             {write && (
               <AForm action={saveHeroAction.bind(null, brand)} submit="Publish hero slides" label="Hero carousel">
                 {slides.map((s, i) => (
-                  <div className="ad-slide" key={i}>
+                  // Remount the slide rows whenever the saved hero changes: after a slide is switched off the
+                  // others move up, and stale inputs would otherwise be saved against the wrong slide's media.
+                  <div className="ad-slide" key={`${heroVersion}:${i}`}>
                     <div className="ad-stack s8">
                       <ImagePick name={`img_${i}`} current={s.img || pimg(s.pid)} text={`Slide ${i + 1} · Change image`} variant="slide" />
                       {s.img && (

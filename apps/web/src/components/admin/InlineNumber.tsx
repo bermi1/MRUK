@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import type { ActionResult } from '@/lib/types';
 
 /** Inline numeric edit that saves on blur or Enter (price, stock). */
@@ -9,10 +9,16 @@ export function InlineNumber({ value, action, label, width }: { value: number; a
   const [state, setState] = useState<'idle' | 'saved' | 'bad'>('idle');
   const [err, setErr] = useState('');
   const [pending, start] = useTransition();
+  // Enter saves and disables the input, which also fires blur: remember the value in flight so it is sent once.
+  const inFlight = useRef<string | null>(null);
   const save = () => {
-    if (v.trim() === saved) return;
+    const next = v.trim();
+    if (next === saved || next === inFlight.current) return;
+    inFlight.current = next;
     start(async () => {
-      const r = await action(v);
+      const r = await action(v).finally(() => {
+        inFlight.current = null;
+      });
       if (r.ok) {
         setSaved(v.trim());
         setState('saved');
