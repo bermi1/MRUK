@@ -69,8 +69,10 @@ export default async function BrandLayout({ children, params }: { children: Reac
     cartCount,
     compareCount: cmpCount,
     user: customer ? { name: customer.name, phone: customer.phone, email: customer.email } : null,
+    locale,
     labels: {
       track: t('trackOrder'),
+      language: t('language'),
       suppliers: t('suppliersNearYou'),
       support: t('support'),
       signIn: t('signIn'),

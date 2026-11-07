@@ -49,6 +49,12 @@
 .mu-util nav { display: flex; gap: 22px; white-space: nowrap; }
 .mu-util nav a:hover { color: #fff; }
 .mu-util-brands { color: var(--mu-sky-l); font-weight: 600; }
+.mu-util nav { align-items: center; }
+.lang-sw { display: inline-flex; align-items: center; gap: 2px; }
+.lang-sw button { min-width: 30px; height: 28px; padding: 0 6px; border-radius: 6px; font: inherit; font-weight: 600; letter-spacing: .04em; color: inherit; opacity: .7; }
+.lang-sw button.on { opacity: 1; background: rgba(255, 255, 255, .14); }
+.lang-sw button:not(.on):hover { opacity: 1; }
+.lang-sw svg { margin-right: 4px; opacity: .8; }
 .mu-main .wrap { height: 84px; display: flex; align-items: center; gap: 22px; }
 .mu-allcats { display: inline-flex; align-items: center; gap: 10px; height: 48px; padding: 0 18px 0 14px; border-radius: 14px; background: var(--mu-cloud); font-size: 14px; font-weight: 700; color: var(--mu-navy); white-space: nowrap; transition: background 0.2s; }
 .mu-allcats:hover, .mu-allcats.on { background: var(--mu-navy); color: #fff; }

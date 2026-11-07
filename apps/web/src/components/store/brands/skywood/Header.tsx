@@ -7,6 +7,7 @@ import { ArrowRightIcon, CloseIcon } from '../../../icons';
 import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
+import { LangSwitch } from '../../LangSwitch';
 import { PayLaterMenu } from '../PayLaterMenu';
 import { fill, useAuthModal, useMegaMenu, useOverlay, useScrolled, type HeaderProps } from '../shared';
 
@@ -16,7 +17,7 @@ import { fill, useAuthModal, useMegaMenu, useOverlay, useScrolled, type HeaderPr
  * each with a calm dropdown (sub-categories, two pieces, one image). Transparent over the home
  * hero, ivory once the page scrolls. "Menu" opens a full-height index of the collections.
  */
-export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount, user, labels }: HeaderProps) {
+export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount, user, locale, labels }: HeaderProps) {
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(24);
@@ -41,6 +42,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
     <>
       <div className="sw-ann d-only">
         <p>{cms.announcement}</p>
+        <LangSwitch locale={locale} label={labels.language} className="sw-lang" />
       </div>
       <header className={`sw-hdr d-only ${over ? 'is-over' : ''} ${scrolled ? 'is-scrolled' : ''}`} onMouseLeave={m.leave} onMouseEnter={m.keep}>
         <div className="sw-hdr-in">

@@ -153,6 +153,15 @@ const en = {
   cmpRemove: 'Remove {name} from compare',
   cmpAddAria: 'Add {name} to compare',
   cmpView: 'View compare',
+  cartDecrease: 'Decrease {name}',
+  cartIncrease: 'Increase {name}',
+  cartRemoveItem: 'Remove {name}',
+  cartBundle: 'Bundle: {title}',
+  cartNote: 'Delivery is free in Dar es Salaam on orders over TZS 500,000. Change your region at checkout.',
+  searchResults: '{n} results for “{q}”',
+  searchResultOne: '1 result for “{q}”',
+  searchNone: 'No products match. Try a model number (e.g. {model}), a shorter word, or browse a category.',
+  searchPopular: 'Popular right now',
   openMenu: 'Open menu',
   footerHelpLine: 'Need help choosing? Our team answers on WhatsApp.',
   chatWhatsApp: 'Chat on WhatsApp',
@@ -567,6 +576,15 @@ const sw: Record<MessageKey, string> = {
   cmpRemove: 'Ondoa {name} kwenye ulinganisho',
   cmpAddAria: 'Ongeza {name} kulinganisha',
   cmpView: 'Angalia ulinganisho',
+  cartDecrease: 'Punguza {name}',
+  cartIncrease: 'Ongeza {name}',
+  cartRemoveItem: 'Ondoa {name}',
+  cartBundle: 'Seti: {title}',
+  cartNote: 'Usafirishaji ni bure Dar es Salaam kwa oda zaidi ya TZS 500,000. Badilisha mkoa wako wakati wa kulipa.',
+  searchResults: 'Matokeo {n} ya “{q}”',
+  searchResultOne: 'Tokeo 1 la “{q}”',
+  searchNone: 'Hakuna bidhaa inayolingana. Jaribu namba ya modeli (mf. {model}), neno fupi zaidi, au tazama aina ya bidhaa.',
+  searchPopular: 'Zinazopendwa sasa',
   openMenu: 'Fungua menyu',
   footerHelpLine: 'Unahitaji msaada kuchagua? Timu yetu inajibu kwa WhatsApp.',
   chatWhatsApp: 'Ongea kwa WhatsApp',
@@ -835,7 +853,7 @@ export function translate(locale: Locale, key: MessageKey, vars?: Record<string,
 }
 
 /** Strings client components read through <MessagesProvider> (kept small: only these ship to the browser). */
-export const CLIENT_KEYS = ['compare', 'addCompare', 'addedCompare', 'cmpLimit', 'cmpAdded', 'cmpRemoved', 'cmpRemove', 'cmpAddAria', 'cmpClearAll', 'accErrGeneric'] as const;
+export const CLIENT_KEYS = ['compare', 'addCompare', 'addedCompare', 'cmpLimit', 'cmpAdded', 'cmpRemoved', 'cmpRemove', 'cmpAddAria', 'cmpClearAll', 'accErrGeneric', 'emptyCart', 'browseProducts', 'remove', 'cartDecrease', 'cartIncrease', 'cartRemoveItem'] as const;
 export type ClientMessageKey = (typeof CLIENT_KEYS)[number];
 
 export function clientMessages(locale: Locale): Record<ClientMessageKey, string> {

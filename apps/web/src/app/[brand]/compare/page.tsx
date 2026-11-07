@@ -10,10 +10,7 @@ import { COMPARE_MAX, getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
 import { getT } from '@/server/locale';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getT();
-  return { title: t('cmpTitle'), robots: { index: false } };
-}
+export const metadata: Metadata = { title: 'Compare products' };
 
 type Cell = { t: React.ReactNode; c?: string; w?: number };
 
