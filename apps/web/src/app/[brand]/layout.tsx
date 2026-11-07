@@ -12,11 +12,12 @@ import { archivo, fraunces } from '@/fonts/brand';
 import '@/styles/mruk.css';
 import '@/styles/skywood.css';
 import { MessagesProvider } from '@/components/store/Messages';
+import { CompareTray, type TrayItem } from '@/components/store/CompareTray';
 import { ToastProvider } from '@/components/store/Toast';
 import { WhatsAppIcon } from '@/components/icons';
 import { waLink } from '@/lib/format';
 import { themeVars } from '@/lib/theme';
-import { getCartCount, getCompareIds } from '@/server/cart';
+import { COMPARE_MAX, getCartCount, getCompareIds } from '@/server/cart';
 import { getBrand, getCategories, getCms, getProducts, isBrandKey, photoFirst } from '@/server/catalog';
 import { clientMessages } from '@/lib/i18n';
 import { getLocale, getT } from '@/server/locale';
@@ -57,7 +58,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const [brand, cms, cats, products, cartCount, cmp, customer, t, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT(), payLaterOn(key)]);
   const locale = await getLocale();
   // Only this brand's products that are still on sale count (stale or foreign ids in the cookie are ignored).
-  const cmpCount = cmp.filter((id) => products.some((p) => p.id === id)).length;
+  const cmpItems: TrayItem[] = cmp.map((id) => products.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p).map((p) => ({ id: p.id, name: p.name, model: p.model, img: p.img }));
+  const cmpCount = cmpItems.length;
   // Pay Later off: CMS copy that promises it is dropped (the announcement falls back to the service promise).
   const announcement = payLater ? cms.announcement : stripPayLater(cms.announcement) || `${t('trustDelivery')} · ${t('trustWarranty')}`;
   const megaPromo = payLater ? cms.megaPromo : { ...cms.megaPromo, eyebrow: stripPayLater(cms.megaPromo.eyebrow), title: stripPayLater(cms.megaPromo.title) || cms.megaPromo.title };
@@ -158,6 +160,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
           <WhatsAppIcon />
         </a>
+        <CompareTray brand={key} items={cmpItems} max={COMPARE_MAX} />
         <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), account: t('account') }} />
         <RevealObserver />
       </ToastProvider>

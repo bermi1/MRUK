@@ -1,6 +1,6 @@
 import 'server-only';
 import { prisma, type Prisma } from '@bt/db';
-import { answerFromCatalogue, compareVerdict, groundedPrompt, normalizeTzPhone, retrieveProducts, supportQuickFixes, type PolicyFact } from '@bt/core';
+import { answerFromCatalogue, buildVerdict, groundedPrompt, normalizeTzPhone, parseVerdict, retrieveProducts, supportQuickFixes, verdictPrompt, type Lang, type PolicyFact, type VerdictView } from '@bt/core';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { integrations } from './integrations';
 import { limit } from './ratelimit';
@@ -26,13 +26,27 @@ export function policiesFor(payLater: boolean): PolicyFact[] {
 
 const NO_PAY_LATER = 'Do not mention monthly prices, instalments, Pay Later or salary advances; these products are sold for payment in full.';
 
-export async function aiVerdict(items: ProductView[], months: number, payLater = true) {
+/** Verdicts per product set + language + Pay Later + product updatedAt/price (bounded, per server instance). */
+const verdictCache = new Map<string, { v: VerdictView; source: string }>();
+const VERDICT_CACHE_MAX = 300;
+
+/**
+ * AI compare verdict in English or Kiswahili, grounded in the catalogue fields staff entered.
+ * The deterministic verdict (@bt/core buildVerdict) always exists; with an AI provider set the
+ * model rephrases it from the same facts and its JSON is validated (unknown products → rejected).
+ */
+export async function aiCompareVerdict(items: { view: ProductView; updatedAt: Date }[], opts: { lang: Lang; months: number; payLater: boolean }) {
+  const key = [opts.lang, opts.payLater ? `pl${opts.months}` : 'full', ...items.map((i) => `${i.view.id}@${i.updatedAt.getTime()}:${i.view.price}:${i.view.stock}`)].join('|');
+  const hit = verdictCache.get(key);
+  if (hit) return { ...hit, cached: true };
   await limit('ai', 20, 10 * 60);
-  const facts = items.map(toFacts);
-  const base = compareVerdict(facts, months, payLater);
-  const task = payLater ? `Give a short verdict: best overall, best value (mention the monthly price over ${months} months), and who each product suits.` : `Give a short verdict: best overall, best value (price in full), and who each product suits. ${NO_PAY_LATER}`;
-  const out = await integrations.ai.complete(groundedPrompt(task, { products: facts }));
-  return { text: out ?? base.text, source: out ? integrations.ai.name : 'catalogue' };
+  const facts = items.map((i) => toFacts(i.view));
+  const base = buildVerdict(facts, opts);
+  const llm = parseVerdict(await integrations.ai.complete(verdictPrompt(facts, base, opts)), facts, opts.lang);
+  const out = { v: llm ?? base, source: llm ? integrations.ai.name : 'catalogue' };
+  if (verdictCache.size >= VERDICT_CACHE_MAX) verdictCache.delete(verdictCache.keys().next().value!);
+  verdictCache.set(key, out);
+  return { ...out, cached: false };
 }
 
 export async function aiAnswer(items: ProductView[], question: string, months: number, payLater = true) {

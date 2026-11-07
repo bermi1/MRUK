@@ -1,7 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { prisma } from '@bt/db';
-import { checkDiscount, isAdvanceTerm, isRegion, priceCart, salePrice } from '@bt/core';
+import { COMPARE_MAX, checkDiscount, isAdvanceTerm, isRegion, priceCart, salePrice } from '@bt/core';
 import type { BrandKey, CartView } from '@/lib/types';
 import { env } from './env';
 import { sign, verifySigned } from './session';
@@ -115,7 +115,7 @@ export async function getCartCount(brand: BrandKey): Promise<number> {
 
 // Compare list (max 3 products, non-sensitive, cookie only) -------------------------
 
-export const COMPARE_MAX = 3;
+export { COMPARE_MAX };
 
 export async function getCompareIds(brand: BrandKey): Promise<string[]> {
   const raw = (await cookies()).get(cmpCookie(brand))?.value ?? '';
@@ -128,31 +128,46 @@ async function saveCompare(brand: BrandKey, ids: string[]) {
   else jar.delete(cmpCookie(brand));
 }
 
-export type CompareToggle = { ids: string[]; added: boolean; full: boolean };
+export type CompareToggle = { ids: string[]; added: boolean; full: boolean; mixed: string | null };
 
 /**
  * Add or remove one product. Only products of this brand that are on sale can be added
- * (a Skywood id never enters the Mr UK list). At the limit nothing is dropped silently:
- * the caller gets full=true and tells the shopper to remove one first.
+ * (a Skywood id never enters the Mr UK list), and only from the category already being
+ * compared (mixed = that category's name; the shopper can start a new comparison instead).
+ * At the limit nothing is dropped silently: full=true and the shopper removes one first.
  */
 export async function toggleCompare(brand: BrandKey, id: string): Promise<CompareToggle> {
   const stored = await getCompareIds(brand);
   if (stored.includes(id)) {
     const ids = stored.filter((x) => x !== id);
     await saveCompare(brand, ids);
-    return { ids, added: false, full: false };
+    return { ids, added: false, full: false, mixed: null };
   }
   // Drop ids that are no longer this brand's products (hidden or deleted) so they don't hold a slot.
-  const live = (await prisma.product.findMany({ where: { id: { in: [...stored, id] }, brandKey: brand, hidden: false }, select: { id: true } })).map((p) => p.id);
-  const cur = stored.filter((x) => live.includes(x));
-  if (!live.includes(id)) throw new Error('Product not found');
+  const live = await prisma.product.findMany({ where: { id: { in: [...stored, id] }, brandKey: brand, hidden: false }, select: { id: true, categoryId: true, category: { select: { name: true } } } });
+  const cur = stored.filter((x) => live.some((p) => p.id === x));
+  const next = live.find((p) => p.id === id);
+  if (!next) throw new Error('Product not found');
+  const first = live.find((p) => p.id === cur[0]);
+  if (first && first.categoryId !== next.categoryId) {
+    if (cur.length !== stored.length) await saveCompare(brand, cur);
+    return { ids: cur, added: false, full: false, mixed: first.category.name };
+  }
   if (cur.length >= COMPARE_MAX) {
     if (cur.length !== stored.length) await saveCompare(brand, cur);
-    return { ids: cur, added: false, full: true };
+    return { ids: cur, added: false, full: true, mixed: null };
   }
   const ids = [...cur, id];
   await saveCompare(brand, ids);
-  return { ids, added: true, full: false };
+  return { ids, added: true, full: false, mixed: null };
+}
+
+/** Start a new comparison with just this product (after a different-category add). */
+export async function restartCompare(brand: BrandKey, id: string): Promise<string[]> {
+  const p = await prisma.product.findFirst({ where: { id, brandKey: brand, hidden: false }, select: { id: true } });
+  if (!p) throw new Error('Product not found');
+  await saveCompare(brand, [p.id]);
+  return [p.id];
 }
 
 export async function clearCompare(brand: BrandKey) {

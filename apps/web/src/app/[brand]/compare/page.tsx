@@ -1,14 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ClearCompareButton, CompareToggle } from '@/components/store/CartButtons';
-import { CompareAi } from '@/components/store/CompareAi';
+import { CompareAi, type VerdictLabels } from '@/components/store/CompareAi';
 import { PImg } from '@/components/store/PImg';
 import { Stars, TickIcon } from '@/components/icons';
 import { fmt, stockState } from '@/lib/format';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { COMPARE_MAX, getCart, getCompareIds } from '@/server/cart';
 import { getProducts } from '@/server/catalog';
-import { getT } from '@/server/locale';
+import { getLocale, getT } from '@/server/locale';
+import { translate, type Locale } from '@/lib/i18n';
 import { payLaterOn } from '@/server/paylater';
 
 export const metadata: Metadata = { title: 'Compare products' };
@@ -17,10 +18,26 @@ type Cell = { t: React.ReactNode; c?: string; w?: number };
 
 export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [products, ids, cart, t, payLater] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key)]);
+  const [products, ids, cart, t, payLater, locale] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key), getLocale()]);
+  const verdictLabels = (l: Locale): VerdictLabels => ({
+    title: translate(l, 'cmpVerdictTitle'),
+    hint: translate(l, 'cmpVerdictHint'),
+    generate: translate(l, 'cmpGenerate'),
+    regenerate: translate(l, 'cmpRegenerate'),
+    analysing: translate(l, 'cmpAnalysing'),
+    pick: translate(l, 'cmpOurPick'),
+    value: translate(l, 'cmpValue'),
+    bestFor: translate(l, 'cmpBestFor'),
+    pros: translate(l, 'cmpPros'),
+    cons: translate(l, 'cmpCons'),
+    notSpecified: translate(l, 'cmpNotSpecified'),
+    source: translate(l, 'cmpSourceNote'),
+  });
   const months = cart.months;
   // Only this brand's live products: ids of hidden/deleted products (or another brand's) are ignored.
-  const chosen = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
+  const picked = ids.map((id) => products.find((p) => p.id === id)).filter((p): p is ProductView => !!p);
+  // One category per comparison (a list saved before this rule keeps the first product's category).
+  const chosen = picked.filter((p) => p.cat === picked[0]?.cat);
   // Prototype: with fewer than 2 picks, suggest products from the same category.
   let items = chosen;
   const seed = chosen[0] ?? products.find((p) => p.img) ?? products[0];
@@ -85,7 +102,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
           <div className="eyebrow">{t('cmpEyebrow')}</div>
           <h1 className="h1">{t('cmpTitle')}</h1>
           <p className="cmp-sub">
-            {t('cmpSub')} {chosen.length < 2 ? t('cmpSuggest') : ''}
+            {t('cmpSub')} {chosen.length === 1 ? t('cmpAddMore', { cat: chosen[0]!.catName }) : chosen.length < 2 ? t('cmpSuggest') : ''} {t('cmpSameCatOnly')}
           </p>
         </div>
         <div className="cmp-actions">
@@ -146,7 +163,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       )}
-      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} />}
+      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} locale={locale} labels={{ en: verdictLabels('en'), sw: verdictLabels('sw') }} />}
     </div>
   );
 }

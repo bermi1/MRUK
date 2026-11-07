@@ -26,7 +26,8 @@ test('order tracking', async ({ page }) => {
 test('AI compare answers only from catalogue data', async ({ page }) => {
   await page.goto('/mruk/compare');
   await page.getByTestId('run-verdict').click();
-  await expect(page.getByTestId('verdict')).toContainText('Best overall');
+  await expect(page.getByTestId('verdict-pick')).toBeVisible();
+  await expect(page.getByTestId('verdict')).toContainText('Best value');
   await page.getByTestId('ai-question').fill('Can it make coffee?');
   await page.getByRole('button', { name: 'Ask', exact: true }).click();
   await expect(page.getByTestId('ai-answer')).toContainText("doesn't cover that");

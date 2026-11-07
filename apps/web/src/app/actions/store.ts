@@ -5,17 +5,17 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@bt/db';
-import { isPaymentMethod } from '@bt/core';
+import { isPaymentMethod, sameCategory, type VerdictView } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
 import { AuthError, requestOtp, verifyOtp } from '@/server/auth';
-import { COMPARE_MAX, addToCart, clearCompare, getCart, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
-import { getProducts, isBrandKey } from '@/server/catalog';
+import { COMPARE_MAX, addToCart, clearCompare, getCart, restartCompare, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
+import { getProducts, getProductsLive, isBrandKey } from '@/server/catalog';
 import { payLaterOn } from '@/server/paylater';
 import { LOCALE_COOKIE } from '@/server/locale';
 import { capturePayment, CheckoutError, confirmationPath, confirmationToken, placeAdvanceOrder, placeOrder } from '@/server/orders';
 import { clientIp, RateLimitError } from '@/server/ratelimit';
 import { CUSTOMER_COOKIE, currentCustomer, endSession } from '@/server/session';
-import { aiAnswer, aiTips, aiVerdict, createTicket } from '@/server/support';
+import { aiAnswer, aiCompareVerdict, aiTips, createTicket } from '@/server/support';
 
 const brandZ = z.string().refine(isBrandKey, 'Unknown brand');
 const idZ = z.string().regex(/^[a-z0-9-]{1,80}$/);
@@ -78,12 +78,23 @@ export async function updateCartAction(brand: string, patch: { region?: string; 
   }
 }
 
-export async function toggleCompareAction(brand: string, productId: string): Promise<ActionResult<{ ids: string[]; added: boolean; full: boolean; max: number }>> {
+export async function toggleCompareAction(brand: string, productId: string): Promise<ActionResult<{ ids: string[]; added: boolean; full: boolean; mixed: string | null; max: number }>> {
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
     const r = await toggleCompare(b, idZ.parse(productId));
     revalidatePath(`/${b}`, 'layout');
     return { ok: true, data: { ...r, max: COMPARE_MAX } };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function restartCompareAction(brand: string, productId: string): Promise<ActionResult<{ ids: string[] }>> {
+  try {
+    const b = brandZ.parse(brand) as 'mruk' | 'skywood';
+    const ids = await restartCompare(b, idZ.parse(productId));
+    revalidatePath(`/${b}`, 'layout');
+    return { ok: true, data: { ids } };
   } catch (e) {
     return fail(e);
   }
@@ -249,13 +260,16 @@ async function productsByIds(brand: 'mruk' | 'skywood', ids: string[]) {
   return ids.map((id) => all.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p);
 }
 
-export async function aiVerdictAction(brand: string, ids: string[], months: number): Promise<ActionResult<{ text: string }>> {
+/** AI compare verdict in the shopper's language, from live catalogue data of one category. */
+export async function aiVerdictAction(brand: string, ids: string[], months: number, lang: string = 'en'): Promise<ActionResult<{ verdict: VerdictView; source: string }>> {
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
-    const items = await productsByIds(b, z.array(idZ).min(1).max(3).parse(ids));
-    if (!items.length) return { ok: false, error: 'Add products to compare first' };
-    const r = await aiVerdict(items, [3, 6, 12].includes(months) ? months : 12, await payLaterOn(b));
-    return { ok: true, data: { text: r.text } };
+    const l = lang === 'sw' ? 'sw' : 'en';
+    const items = await getProductsLive(b, z.array(idZ).min(1).max(COMPARE_MAX).parse(ids));
+    if (!items.length) return { ok: false, error: l === 'sw' ? 'Ongeza bidhaa za kulinganisha kwanza' : 'Add products to compare first' };
+    if (!sameCategory(items.map((i) => ({ category: i.view.cat })))) return { ok: false, error: l === 'sw' ? 'Linganisha bidhaa za aina moja tu.' : 'Compare products from one category only.' };
+    const r = await aiCompareVerdict(items, { lang: l, months: [3, 6, 12].includes(months) ? months : 12, payLater: await payLaterOn(b) });
+    return { ok: true, data: { verdict: r.v, source: r.source } };
   } catch (e) {
     return fail(e);
   }

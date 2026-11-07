@@ -1,7 +1,7 @@
 'use client';
 import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { addBundleAction, addToCartAction, clearCompareAction, toggleCompareAction } from '@/app/actions/store';
+import { addBundleAction, addToCartAction, clearCompareAction, restartCompareAction, toggleCompareAction } from '@/app/actions/store';
 import { useMessages } from './Messages';
 import { PlusIcon, TickIcon } from '../icons';
 import { useToast } from './Toast';
@@ -57,7 +57,17 @@ export function CompareToggle({ brand, id, name = '', on, long = false, classNam
           setShown(!shown);
           const r = await toggleCompareAction(brand, id);
           if (!r.ok) toast(r.error);
-          else if (r.data!.full) toast(t('cmpLimit', { max: r.data!.max }));
+          else if (r.data!.mixed)
+            toast(t('cmpMixed', { cat: r.data!.mixed }), {
+              label: t('cmpStartNew'),
+              run: () =>
+                start(async () => {
+                  const n = await restartCompareAction(brand, id);
+                  toast(n.ok ? t('cmpAdded', { name: name || t('compare') }) : n.error);
+                  router.refresh();
+                }),
+            });
+          else if (r.data!.full) toast(t('cmpLimit', { max: r.data!.max }), { label: t('cmpView'), run: () => router.push(`/${brand}/compare`) });
           else if (name) toast(t(r.data!.added ? 'cmpAdded' : 'cmpRemoved', { name }));
           router.refresh();
         });

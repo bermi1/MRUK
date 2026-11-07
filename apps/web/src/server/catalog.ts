@@ -3,7 +3,7 @@ import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@bt/db';
-import { bundlePrice, salePrice, type ProductFacts } from '@bt/core';
+import { bundlePrice, salePrice, type CompareFacts } from '@bt/core';
 import { SOCIAL_KEYS } from '@/lib/types';
 import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView , SocialLinks } from '@/lib/types';
 
@@ -90,6 +90,27 @@ const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
   return ps.map(toView);
 }, 'products');
 
+/**
+ * These products straight from the database (not the 60 s catalogue cache), with live deals
+ * applied, plus their updatedAt. Used by the AI compare so an admin edit to features or
+ * price is reflected in the next verdict.
+ */
+export async function getProductsLive(brand: BrandKey, ids: string[]): Promise<{ view: ProductView; updatedAt: Date }[]> {
+  const [rows, promos] = await Promise.all([
+    prisma.product.findMany({ where: { id: { in: ids }, brandKey: brand, hidden: false }, include: { category: true } }),
+    loadFlashPromos(brand),
+  ]);
+  const deals = liveDeals(promos);
+  return ids
+    .map((id) => rows.find((r) => r.id === id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => {
+      const v = toView(r);
+      const off = deals.get(v.id) ?? 0;
+      return { view: off ? { ...v, off, price: salePrice(v.price, off) } : v, updatedAt: r.updatedAt };
+    });
+}
+
 /** Live flash-deal percentage per product (deals past their end time are ignored). */
 function liveDeals(promos: { productId: string | null; percent: number; endsAt: string | null }[], now = Date.now()): Map<string, number> {
   const m = new Map<string, number>();
@@ -171,8 +192,8 @@ export function searchProducts(products: ProductView[], q: string): ProductView[
   });
 }
 
-export function toFacts(p: ProductView): ProductFacts {
-  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features };
+export function toFacts(p: ProductView): CompareFacts {
+  return { id: p.id, brand: p.brand, model: p.model, name: p.name, category: p.catName, sub: p.sub, price: p.price, listPrice: p.listPrice, stock: p.stock, features: p.features, rating: p.rating, reviews: p.reviews };
 }
 
 // CMS --------------------------------------------------------------------------
