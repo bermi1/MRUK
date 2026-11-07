@@ -127,12 +127,40 @@ export function photoFirst<T extends { img: string }>(list: T[]): T[] {
   return [...list].sort((a, b) => Number(!!b.img) - Number(!!a.img));
 }
 
+/** Kiswahili shopping words → catalogue (English) words, so "friji" or "jiko" finds products. */
+const SW_TERMS: Record<string, string[]> = {
+  friji: ['fridge', 'refrigerator'],
+  jokofu: ['fridge', 'refrigerator'],
+  friza: ['freezer'],
+  televisheni: ['tv', 'television'],
+  runinga: ['tv', 'television'],
+  tv: ['tv', 'television'],
+  jiko: ['cooker', 'stove', 'hob', 'oven'],
+  oveni: ['oven'],
+  feni: ['fan'],
+  pangaboi: ['fan'],
+  kiyoyozi: ['air conditioner', 'conditioner', 'ac'],
+  jenereta: ['generator'],
+  pampu: ['pump'],
+  maji: ['water'],
+  spika: ['speaker'],
+  redio: ['radio'],
+  muziki: ['music', 'speaker', 'sound'],
+  blenda: ['blender'],
+  birika: ['kettle'],
+  pasi: ['iron'],
+  kufulia: ['washing', 'washer'],
+  dobi: ['washing', 'washer'],
+  microwave: ['microwave'],
+  mikrowevu: ['microwave'],
+};
+
 export function searchProducts(products: ProductView[], q: string): ProductView[] {
   const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   return products.filter((p) => {
     const t = `${p.model} ${p.name} ${p.sub} ${p.catName} ${p.features.join(' ')}`.toLowerCase();
-    return terms.every((x) => t.includes(x));
+    return terms.every((x) => t.includes(x) || (SW_TERMS[x] ?? []).some((s) => t.includes(s)));
   });
 }
 
