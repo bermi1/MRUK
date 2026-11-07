@@ -3,6 +3,7 @@ import { prisma, type Prisma } from '@bt/db';
 import { answerFromCatalogue, compareVerdict, groundedPrompt, normalizeTzPhone, retrieveProducts, supportQuickFixes, type PolicyFact } from '@bt/core';
 import type { BrandKey, ProductView } from '@/lib/types';
 import { integrations } from './integrations';
+import { toWebp } from './images';
 import { limit } from './ratelimit';
 import { toFacts } from './catalog';
 import { emitTaskEvent } from './tasks';
@@ -71,6 +72,15 @@ export async function createTicket(t: TicketInput) {
   if (!(ISSUES as readonly string[]).includes(t.issue)) throw new Error('Choose an issue type');
   if (t.description.trim().length < 5) throw new Error('Describe the problem in a few words');
   await limit('ticket', 5, 60 * 60, phone);
+  // Customer photos are stored as WebP like every other image (rotated, metadata such as GPS stripped).
+  let photo: Uint8Array | null = null;
+  if (t.photo) {
+    try {
+      photo = await toWebp(t.photo.data);
+    } catch {
+      throw new Error('The photo could not be read. Attach a JPG, PNG or WebP image.');
+    }
+  }
   const ticket = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const c = await tx.counter.upsert({ where: { key: 'ticket' }, create: { key: 'ticket', value: 4_200 }, update: { value: { increment: 1 } } });
     const number = `TK-${c.value}`;
@@ -89,10 +99,9 @@ export async function createTicket(t: TicketInput) {
       },
     });
   });
-  if (t.photo) {
-    const ext = t.photo.contentType === 'image/png' ? 'png' : t.photo.contentType === 'image/webp' ? 'webp' : 'jpg';
-    const key = `tickets/${ticket.number}.${ext}`;
-    await integrations.storage.put(key, t.photo.data, t.photo.contentType);
+  if (photo) {
+    const key = `tickets/${ticket.number}.webp`;
+    await integrations.storage.put(key, photo, 'image/webp');
     await prisma.ticket.update({ where: { id: ticket.id }, data: { photoKey: key } });
   }
   await emitTaskEvent({ type: 'ticket.created', brand: t.brand, ticketId: ticket.id, number: ticket.number, issue: t.issue });
