@@ -13,6 +13,10 @@ describe('product facts', () => {
     expect(factKind('High flow')).toBe('water');
     expect(factKind('Electronic temperature control')).toBe('temperature');
     expect(factKind('Reversible door')).toBe('feature');
+    expect(factKind('3m copper pipes')).toBe('feature');
+    expect(factKind('2 in 1 design')).toBe('feature');
+    expect(factKind('138L (93L fridge, 45L freezer)')).toBe('capacity');
+    expect(factKind('Super freeze')).toBe('cooling');
   });
 
   it('derives spec rows only from measurable features, one per kind', () => {

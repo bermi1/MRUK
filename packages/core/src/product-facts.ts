@@ -5,11 +5,13 @@
 
 export type FactKind = 'capacity' | 'power' | 'cooling' | 'size' | 'timer' | 'water' | 'temperature' | 'feature';
 
+// Order matters: the first match wins ("138L (93L fridge, 45L freezer)" is a capacity, not cooling).
 const RULES: { kind: Exclude<FactKind, 'feature'>; re: RegExp }[] = [
+  { kind: 'capacity', re: /\b\d+(?:\.\d+)?\s?(?:l|litres?|liters?|kg)\b|\bcapacity\b/i },
   { kind: 'cooling', re: /\b\d[\d,.]*\s?btu\b|\binverter\b|\bno-?frost\b|\bfreez/i },
   { kind: 'power', re: /\b\d+(?:\.\d+)?\s?(?:hp|kw|kva|w|watts?|v|volts?)\b|\bstroke\b|\bstarter\b|\bengine\b/i },
-  { kind: 'capacity', re: /\b\d+(?:\.\d+)?\s?(?:l|litres?|liters?|kg)\b|\bcapacity\b/i },
-  { kind: 'size', re: /\b\d+(?:\.\d+)?\s?(?:inch|in|cm|mm|m)\b|\d+\s?"|\bslim\b|\bcompact\b/i },
+  // Screen/fan sizes and dimensions; not bare metres ("3m copper pipes" is an accessory, not the size).
+  { kind: 'size', re: /\b\d+(?:\.\d+)?\s?(?:inch(?:es)?|cm|mm)\b|\d+\s?"|\bslim\b|\bcompact\b/i },
   { kind: 'timer', re: /\btimer\b|\bhours?\b|\bhrs?\b/i },
   { kind: 'water', re: /\bwater\b|\bpump\b|\bdispens|\bflow\b|\bdrain\b/i },
   { kind: 'temperature', re: /\btemperature\b|\bthermostat\b|\bheat/i },
