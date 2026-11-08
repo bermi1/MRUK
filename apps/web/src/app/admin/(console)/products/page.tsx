@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
-import { toggleProductHiddenAction, updateProductFieldAction, uploadProductPhotoAction } from '@/app/actions/admin';
+import { publishProductAction, toggleProductHiddenAction, updateProductFieldAction, uploadProductPhotoAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { InlineNumber } from '@/components/admin/InlineNumber';
 import { PhotoUpload } from '@/components/admin/PhotoUpload';
 import { BrandMark, Forbidden, Thumb } from '@/components/admin/ui';
-import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
+import { adminFilters, BRAND_NAME, DRAFT_WHERE, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Products and photos' };
@@ -19,33 +19,48 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   if (!brand) return <Forbidden what="any brand catalogue" />;
   const cat = sp.cat && /^[a-z0-9-]{1,40}$/.test(sp.cat) ? sp.cat : '';
   const q = (sp.q ?? '').trim().slice(0, 60);
-  const [cats, products] = await Promise.all([
+  // Drafts view: every hidden product, the ones still without a price first (drafts from the client's
+  // photo/spec pack are created hidden with price 0). A row stays here after its price is set, so staff
+  // can press Publish next to it.
+  const drafts = sp.f === 'drafts';
+  const [cats, rows, draftCount] = await Promise.all([
     prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' } }),
     prisma.product.findMany({
-      where: { brandKey: brand, ...(cat ? { category: { slug: cat } } : {}), ...(q ? { OR: [{ model: { contains: q, mode: 'insensitive' } }, { name: { contains: q, mode: 'insensitive' } }] } : {}) },
+      where: { brandKey: brand, ...(drafts ? { hidden: true } : {}), ...(cat ? { category: { slug: cat } } : {}), ...(q ? { OR: [{ model: { contains: q, mode: 'insensitive' } }, { name: { contains: q, mode: 'insensitive' } }] } : {}) },
       include: { category: { select: { name: true } } },
       orderBy: [{ category: { sort: 'asc' } }, { createdAt: 'asc' }],
     }),
+    prisma.product.count({ where: { brandKey: brand, ...DRAFT_WHERE } }),
   ]);
+  const products = drafts ? [...rows].sort((a, b) => Number(a.price > 0) - Number(b.price > 0)) : rows;
   const write = ctx.can('products.write');
+  const base = `/admin/products?b=${brand}`;
 
   return (
     <div className="ad-stack">
       <section className="ad-card">
         <div className="ad-between">
           <BrandMark brand={brand}>
-            {BRAND_NAME[brand]} catalogue · {products.length} products · changes publish instantly
+            {BRAND_NAME[brand]} catalogue · {products.length} {drafts ? 'hidden products' : 'products'} · changes publish instantly
           </BrandMark>
           <div className="ad-row" style={{ flexWrap: 'wrap' }}>
             {f.allowed.length > 1 && (
               <div className="ad-seg" role="group" aria-label="Catalogue brand">
                 {f.allowed.map((b) => (
-                  <Link key={b} href={`/admin/products?b=${b}`} aria-current={b === brand ? 'true' : undefined}>
+                  <Link key={b} href={`/admin/products?b=${b}${drafts ? '&f=drafts' : ''}`} aria-current={b === brand ? 'true' : undefined}>
                     {BRAND_NAME[b]}
                   </Link>
                 ))}
               </div>
             )}
+            <div className="ad-seg" role="group" aria-label="Show">
+              <Link href={base} aria-current={!drafts ? 'true' : undefined}>
+                All products
+              </Link>
+              <Link href={`${base}&f=drafts`} aria-current={drafts ? 'true' : undefined} data-testid="drafts-filter">
+                Drafts — needs price{draftCount ? ` (${draftCount})` : ''}
+              </Link>
+            </div>
             <a className="ad-btn line sm" href={`/${brand}`} target="_blank" rel="noopener">
               View live store
             </a>
@@ -58,6 +73,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         </div>
         <form action="/admin/products" className="ad-row" style={{ marginTop: 12, flexWrap: 'wrap' }} role="search">
           <input type="hidden" name="b" value={brand} />
+          {drafts && <input type="hidden" name="f" value="drafts" />}
           <label className="ad-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
             <span className="sr-only">Category</span>
             <select name="cat" defaultValue={cat} className="ad-input" style={{ width: 200 }}>
@@ -74,7 +90,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             Filter
           </button>
           {(cat || q) && (
-            <Link className="ad-btn line" href={`/admin/products?b=${brand}`}>
+            <Link className="ad-btn line" href={drafts ? `${base}&f=drafts` : base}>
               Clear
             </Link>
           )}
@@ -110,7 +126,26 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <td>{write ? <InlineNumber value={p.price} action={updateProductFieldAction.bind(null, p.id, 'price')} label={`Price of ${p.name}`} /> : p.price.toLocaleString('en-US')}</td>
                   <td className="c">{write ? <InlineNumber value={p.stock} action={updateProductFieldAction.bind(null, p.id, 'stock')} label={`Stock of ${p.name}`} width={70} /> : p.stock}</td>
                   <td>
-                    {write ? (
+                    {p.hidden && p.price <= 0 ? (
+                      <span className="ad-row" style={{ flexWrap: 'wrap', gap: 4 }} data-testid="draft-pill">
+                        {write ? (
+                          // Publishing is refused on the server until a price is set; the button explains why.
+                          <ActBtn action={publishProductAction.bind(null, p.id)} className="ad-pill pill-amber" label={`Draft, needs price: publish ${p.name}`}>
+                            Draft · needs price
+                          </ActBtn>
+                        ) : (
+                          <span className="ad-pill pill-amber">Draft · needs price</span>
+                        )}
+                      </span>
+                    ) : drafts && p.hidden ? (
+                      write ? (
+                        <ActBtn action={publishProductAction.bind(null, p.id)} className="ad-btn sm" label={`Publish ${p.name}`}>
+                          Publish
+                        </ActBtn>
+                      ) : (
+                        <span className="ad-pill pill-grey">Hidden</span>
+                      )
+                    ) : write ? (
                       <ActBtn action={toggleProductHiddenAction.bind(null, p.id)} className={`ad-pill ${p.hidden ? 'pill-grey' : 'pill-green'}`} label={`${p.hidden ? 'Hidden' : 'Live'}: toggle visibility of ${p.name}`}>
                         {p.hidden ? 'Hidden' : 'Live'}
                       </ActBtn>
@@ -133,7 +168,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
               {!products.length && (
                 <tr>
                   <td colSpan={7} className="ad-empty">
-                    No products {q || cat ? 'match this filter' : 'yet'}
+                    {drafts ? 'No drafts or hidden products. Everything is live.' : `No products ${q || cat ? 'match this filter' : 'yet'}`}
                   </td>
                 </tr>
               )}
@@ -141,6 +176,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           </table>
         </div>
         {!write && <p className="ad-muted2" style={{ fontSize: 12.5 }}>Read-only: your role cannot edit products.</p>}
+        {write && drafts && (
+          <p className="ad-muted" style={{ fontSize: 12 }} data-testid="drafts-help">
+            Drafts are hidden from the store. Type the price (and stock) and press Enter, then press Publish. A product without a price cannot be published.
+          </p>
+        )}
         {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or available stock (sets the exact number; use Inventory to add a delivery) and press Enter (or leave the field) to publish. Photos: JPG, PNG or WebP up to 5 MB.</p>}
       </section>
     </div>

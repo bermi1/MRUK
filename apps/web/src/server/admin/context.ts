@@ -70,15 +70,20 @@ export const LOW_STOCK = 6;
 export const REORDER_STOCK = 3;
 
 /** Live counts for the sidebar badges. */
+/** Draft products: hidden and without a price (created from the client's photo/spec pack, or saved hidden at 0). */
+export const DRAFT_WHERE = { hidden: true, price: { lte: 0 } } as const;
+
 export async function navCounts(ctx: StaffContext, f: AdminFilters) {
   const ow = orderWhere(f);
-  const [orders, advances, lowStock, tickets] = await Promise.all([
+  const [orders, advances, lowStock, tickets, drafts] = await Promise.all([
     ctx.can('orders') ? prisma.order.count({ where: { ...ow, status: { in: ['approved', 'packed'] } } }) : 0,
     ctx.can('advance') ? prisma.salaryAdvanceApplication.count({ where: { status: 'submitted', order: ow } }) : 0,
-    ctx.can('inventory') ? prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } } }) : 0,
+    ctx.can('inventory') ? prisma.product.count({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } } }) : 0,
     ctx.can('tickets') ? prisma.ticket.count({ where: { brandKey: { in: f.brands }, status: 'new' } }) : 0,
+    // Draft products (hidden, no price yet) for the staff who can price and publish them.
+    ctx.can('products.write') ? prisma.product.count({ where: { brandKey: { in: f.brands }, ...DRAFT_WHERE } }) : 0,
   ]);
-  return { orders, advances, lowStock, tickets };
+  return { orders, advances, lowStock, tickets, drafts };
 }
 
 /** Orders waiting to be packed (paid or confirmed) in the staff member's brands, newest first: drives the new-order alert. */

@@ -99,11 +99,11 @@ export async function WarehouseWidgets({ f }: { f: AdminFilters }) {
     prisma.orderEvent.count({ where: { status: 'delivered', at: { gte: today }, order: ow } }),
     prisma.order.findMany({ where: { ...ow, status: 'placed', reservedUntil: { gt: now } }, orderBy: { reservedUntil: 'asc' }, take: 5, select: { number: true, brandKey: true, reservedUntil: true, items: { select: { qty: true } } } }),
     prisma.order.findMany({ where: { ...ow, status: { in: ['approved', 'packed'] } }, orderBy: { updatedAt: 'asc' }, take: 8, select: { number: true, brandKey: true, status: true, region: true, branch: true, updatedAt: true, items: { select: { qty: true, model: true } } } }),
-    prisma.product.findMany({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } }, orderBy: [{ stock: 'asc' }, { model: 'asc' }], take: 10, select: { id: true, brandKey: true, model: true, name: true, stock: true } }),
+    prisma.product.findMany({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } }, orderBy: [{ stock: 'asc' }, { model: 'asc' }], take: 10, select: { id: true, brandKey: true, model: true, name: true, stock: true } }),
     prisma.order.groupBy({ by: ['branch', 'status'], where: { ...ow, status: { in: ['approved', 'packed', 'out_for_delivery'] } }, _count: { _all: true } }),
   ]);
   const c = (s: string) => counts.find((x) => x.status === s)?._count._all ?? 0;
-  const lowCount = await prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } } });
+  const lowCount = await prisma.product.count({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } } });
   const branchRows = [...new Set(branches.map((b) => b.branch))].sort().map((b) => ({ b, pack: 0, dispatch: 0, out: 0, ...Object.fromEntries(branches.filter((x) => x.branch === b).map((x) => [x.status === 'approved' ? 'pack' : x.status === 'packed' ? 'dispatch' : 'out', x._count._all])) }));
   return (
     <>
@@ -323,12 +323,12 @@ export async function SupportWidgets({ ctx, f }: { ctx: StaffContext; f: AdminFi
 export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
   const pw = { brandKey: { in: f.brands } };
   const soon = new Date(Date.now() + 14 * DAY);
-  const [total, hidden, out, low, noPhoto, recent, cms, flash, codes] = await Promise.all([
+  const [total, drafts, out, low, noPhoto, recent, cms, flash, codes] = await Promise.all([
     prisma.product.count({ where: pw }),
-    prisma.product.count({ where: { ...pw, hidden: true } }),
-    prisma.product.count({ where: { ...pw, stock: 0 } }),
-    prisma.product.count({ where: { ...pw, stock: { gt: 0, lte: LOW_STOCK } } }),
-    prisma.product.count({ where: { ...pw, images: { isEmpty: true } } }),
+    prisma.product.count({ where: { ...pw, hidden: true, price: { lte: 0 } } }),
+    prisma.product.count({ where: { ...pw, price: { gt: 0 }, stock: 0 } }),
+    prisma.product.count({ where: { ...pw, price: { gt: 0 }, stock: { gt: 0, lte: LOW_STOCK } } }),
+    prisma.product.count({ where: { ...pw, hidden: false, images: { isEmpty: true } } }),
     prisma.product.findMany({ where: pw, orderBy: { updatedAt: 'desc' }, take: 6, select: { id: true, brandKey: true, model: true, name: true, updatedAt: true, hidden: true } }),
     prisma.cmsBlock.findMany({ where: pw, orderBy: { updatedAt: 'desc' }, select: { brandKey: true, key: true, updatedAt: true, updatedBy: true } }),
     prisma.promotion.groupBy({ by: ['brandKey'], where: { ...pw, active: true }, _count: { _all: true } }),
@@ -340,7 +340,7 @@ export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
       <Widget title="Catalogue health" sub="Both stores update the moment you save" link={{ href: '/admin/products', label: 'Products' }} testid="dash-catalogue">
         <div className="ad-stats s5">
           <Stat label="Products" value={total} href="/admin/products" testid="cat-total" />
-          <Stat label="Hidden" value={hidden} href="/admin/products" />
+          <Stat label="Drafts · need price" value={drafts} tone={drafts ? 'warn' : 'ok'} href="/admin/products?f=drafts" testid="cat-drafts" />
           <Stat label="Out of stock" value={out} tone={out ? 'bad' : 'ok'} href="/admin/inventory?show=low" />
           <Stat label="Low stock" value={low} tone={low ? 'warn' : 'ok'} href="/admin/inventory?show=low" />
           <Stat label="Without photo" value={noPhoto} tone={noPhoto ? 'warn' : 'ok'} href="/admin/products" testid="cat-nophoto" />

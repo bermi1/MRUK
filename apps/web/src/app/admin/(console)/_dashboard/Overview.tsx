@@ -33,8 +33,8 @@ export async function Overview({ ctx, f }: { ctx: StaffContext; f: AdminFilters 
     prisma.order.aggregate({ where: { ...rev, createdAt: { gte: lastMonth, lt: month } }, _sum: { total: true } }),
     prisma.salaryAdvanceApplication.findMany({ where: { status: 'submitted', order: ow }, select: { createdAt: true } }),
     prisma.salaryAdvanceApplication.findMany({ where: { decidedAt: { gte: new Date(now.getTime() - 30 * 86_400_000) }, order: ow }, select: { createdAt: true, decidedAt: true } }),
-    prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } } }),
-    prisma.product.count({ where: { brandKey: { in: f.brands }, stock: { lte: REORDER_STOCK } } }),
+    prisma.product.count({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } } }),
+    prisma.product.count({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: REORDER_STOCK } } }),
     ctx.can('orders') ? prisma.order.findMany({ where: ow, orderBy: { createdAt: 'desc' }, take: 6 }) : Promise.resolve([]),
     prisma.order.findMany({ where: { ...rev, createdAt: { gte: days14 } }, select: { total: true, paymentMethod: true, createdAt: true } }),
     prisma.order.groupBy({ by: ['paymentMethod'], where: { ...ow, createdAt: { gte: month }, status: { notIn: ['cancelled'] } }, _count: { _all: true } }),
@@ -46,7 +46,7 @@ export async function Overview({ ctx, f }: { ctx: StaffContext; f: AdminFilters 
     prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, createdAt: { gte: month } }, _count: { _all: true } }),
     prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, createdAt: { gte: month }, advance: { isNot: null } }, _count: { _all: true } }),
     prisma.order.groupBy({ by: ['brandKey'], where: { ...ow, advance: { is: { status: 'submitted' } } }, _count: { _all: true } }),
-    prisma.product.groupBy({ by: ['brandKey'], where: { brandKey: { in: f.brands }, stock: { lte: LOW_STOCK } }, _count: { _all: true } }),
+    prisma.product.groupBy({ by: ['brandKey'], where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } }, _count: { _all: true } }),
   ]);
   const perf = (b: string | null) => {
     const pick = <T extends { brandKey: string }>(rows: T[], v: (r: T) => number) => rows.filter((r) => !b || r.brandKey === b).reduce((a, r) => a + v(r), 0);

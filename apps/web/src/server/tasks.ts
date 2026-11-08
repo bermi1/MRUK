@@ -24,7 +24,8 @@ export async function emitTaskEvent(e: TaskEvent, actor = 'system'): Promise<voi
 export async function checkStock(productIds: string[]): Promise<void> {
   try {
     if (!productIds.length) return;
-    const ps = await prisma.product.findMany({ where: { id: { in: [...new Set(productIds)] } }, select: { id: true, brandKey: true, model: true, stock: true, hidden: true } });
+    // Drafts (hidden, no price yet) are not stocked items yet: no reorder or review tasks until they are published.
+    const ps = await prisma.product.findMany({ where: { id: { in: [...new Set(productIds)] }, NOT: { hidden: true, price: { lte: 0 } } }, select: { id: true, brandKey: true, model: true, stock: true, hidden: true } });
     for (const p of ps) await emitTaskEvent({ type: 'stock.level', brand: p.brandKey, productId: p.id, model: p.model, stock: p.stock, hidden: p.hidden });
   } catch (err) {
     console.error('[tasks] stock', err instanceof Error ? err.message : 'unknown error');

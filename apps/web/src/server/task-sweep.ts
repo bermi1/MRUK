@@ -34,7 +34,7 @@ export async function sweepTasks(now = new Date()) {
     out.escalated++;
   }
 
-  const low = await prisma.product.findMany({ where: { stock: { lte: TASK_DEFAULTS.lowStock } }, select: { id: true } });
+  const low = await prisma.product.findMany({ where: { stock: { lte: TASK_DEFAULTS.lowStock }, price: { gt: 0 } }, select: { id: true } });
   // Products with open stock tasks are re-checked too, so restocked ones close.
   const withTasks = await prisma.staffTask.findMany({ where: { entity: 'Product', status: 'open' }, select: { entityId: true }, distinct: ['entityId'] });
   const ids = [...new Set([...low.map((p) => p.id), ...withTasks.map((t) => t.entityId)])];

@@ -46,7 +46,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     { href: '/admin/invoices', label: 'Invoices', d: ICON.invoice, perm: 'invoices' },
     { href: '/admin/advance', label: 'Salary Advance', d: ICON.adv, perm: 'advance', badge: counts.advances },
     { href: '/admin/customers', label: 'Customers', d: ICON.cust, perm: 'customers' },
-    { group: 'CATALOGUE', href: '/admin/products', label: 'Products and photos', d: ICON.prod, perm: 'products' },
+    { group: 'CATALOGUE', href: '/admin/products', label: 'Products and photos', d: ICON.prod, perm: 'products', badge: counts.drafts },
     { href: '/admin/inventory', label: 'Inventory', d: ICON.inv, perm: 'inventory', badge: counts.lowStock },
     { href: '/admin/catalog', label: 'Brands and categories', d: ICON.cat, perm: 'catalog' },
     { group: 'MARKETING', href: '/admin/promos', label: 'Promotions and deals', d: ICON.promo, perm: 'promos' },

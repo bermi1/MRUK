@@ -27,7 +27,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const show = sp.show === 'low' ? 'low' : 'all';
   // Unpaid orders past their 30-minute hold give their stock back before we count.
   await releaseExpiredReservations();
-  const all = await prisma.product.findMany({ where: { brandKey: { in: f.brands } }, orderBy: [{ stock: 'asc' }, { name: 'asc' }], select: { id: true, brandKey: true, model: true, name: true, price: true, stock: true, images: true, hidden: true } });
+  // Drafts (hidden, no price yet) are priced and stocked in Products › Drafts, not here.
+  const all = await prisma.product.findMany({ where: { brandKey: { in: f.brands }, NOT: { hidden: true, price: { lte: 0 } } }, orderBy: [{ stock: 'asc' }, { name: 'asc' }], select: { id: true, brandKey: true, model: true, name: true, price: true, stock: true, images: true, hidden: true } });
   // Product.stock is what can still be sold. Units held for unpaid orders (awaiting payment, or a
   // Salary Advance waiting for the bank) were already taken off it and come back if the order is not completed.
   const held = await prisma.orderItem.groupBy({ by: ['productId'], where: { productId: { in: all.map((p) => p.id) }, order: { status: { in: RESERVING_STATUSES } } }, _sum: { qty: true } });
