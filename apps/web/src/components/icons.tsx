@@ -68,6 +68,15 @@ export const HelpIcon = (p: S) => <Svg {...p}><circle cx="12" cy="12" r="9" /><p
 export const SetIcon = (p: S) => <Svg {...p}><rect x="3" y="8" width="8" height="12" rx="1" /><rect x="13" y="4" width="8" height="16" rx="1" /></Svg>;
 export const RouteIcon = (p: S) => <Svg {...p}><circle cx="6" cy="18" r="2" /><circle cx="18" cy="6" r="2" /><path d="M8 18h7a3 3 0 000-6H9a3 3 0 010-6h7" /></Svg>;
 export const SlidersIcon = (p: S) => <Svg {...p}><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></Svg>;
+export const ChevronDownIcon = (p: S) => <Svg {...p}><path d="M5 9l7 7 7-7" /></Svg>;
+export const ExpandIcon = (p: S) => <Svg {...p}><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" /></Svg>;
+export const ZoomInIcon = (p: S) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4M11 8v6M8 11h6" /></Svg>;
+export const ZoomOutIcon = (p: S) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4M8 11h6" /></Svg>;
+export const DropIcon = (p: S) => <Svg {...p}><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z" /></Svg>;
+export const SnowIcon = (p: S) => <Svg {...p}><path d="M12 2v20M3.5 7l17 10M20.5 7l-17 10M9 4l3 2 3-2M9 20l3-2 3 2" /></Svg>;
+export const RulerIcon = (p: S) => <Svg {...p}><path d="M3 16L16 3l5 5L8 21zM7 12l2 2M10 9l2 2M13 6l2 2" /></Svg>;
+export const BoxIcon = (p: S) => <Svg {...p}><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8" /></Svg>;
+export const ThermoIcon = (p: S) => <Svg {...p}><path d="M10 14V5a2 2 0 014 0v9a4 4 0 11-4 0z" /><path d="M12 10v7" /></Svg>;
 export const DotIcon = ({ size = 8, className }: S) => (
   <svg width={size} height={size} viewBox="0 0 8 8" aria-hidden="true" focusable="false" className={className}><circle cx="4" cy="4" r="4" fill="currentColor" /></svg>
 );
