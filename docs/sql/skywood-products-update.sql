@@ -102,7 +102,7 @@ UPDATE "Product" SET features = ARRAY['Hot 420W, 0.8L hot tank', 'Compressor coo
  WHERE id = 'skywood-lc38-black' AND "brandKey" = 'skywood' AND features = ARRAY['Hot 420W', 'Compressor cooling', 'Tabletop loading']::text[];
 
 -- 3. New Skywood products ------------------------------------------------------
--- None: the spec documents carry no prices, so no new models were added (see docs/skywood-photo-mapping.md).
+-- New models are added as hidden drafts (price 0) by docs/sql/skywood-drafts.sql and by the deploy-time sync.
 
 -- 4. Category tiles ------------------------------------------------------------
 UPDATE "Category" SET img = '/img/products/skywood/skywood-b-09-1.webp' WHERE id = 'skywood-music' AND (btrim(img) = '' OR img ~* '^https?://(www\.)?skywood\.co\.tz/' OR img = '/img/products/skywood-sk6031ges-cooker.webp') AND img IS DISTINCT FROM '/img/products/skywood/skywood-b-09-1.webp';

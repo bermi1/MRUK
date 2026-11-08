@@ -44,7 +44,16 @@ interface RawProduct {
   /** Gallery, front shot first (set for every product by brand-data.js). */
   images?: string[];
   tag: string;
+  /** Draft products (client photo/spec pack): hidden, price 0 and stock 0 until staff publish them. */
+  hidden?: boolean;
+  draft?: boolean;
+  description?: string;
+  specs?: { label: string; value: string }[];
 }
+
+/** Text the AI retrieval index stores for a product (same fields as the admin editor). */
+const embeddingText = (p: RawProduct, catName = '') =>
+  [p.model, p.name, p.sub, catName, ...p.features, p.description ?? '', ...(p.specs ?? []).map((s) => `${s.label}: ${s.value}`)].filter(Boolean).join(' | ');
 
 /** Evaluate the prototype's brand-data.js in a sandbox and read its catalogue. */
 function loadHandoff() {
@@ -184,6 +193,39 @@ async function syncSkywoodPhotos(BT: ReturnType<typeof loadHandoff>) {
   console.log(`Skywood photos: ${products} product(s) and ${cats} categor${cats === 1 ? 'y' : 'ies'} updated, ${created} product(s) created, ${kept} kept (staff photos).`);
 }
 
+/**
+ * Skywood draft products (client photo/spec pack) on a live database: add missing sub-categories, then create each
+ * draft that is missing. Drafts are created hidden with price 0 and stock 0. Existing products are never changed
+ * (whoever created them), a draft is skipped when the brand already has a product with the same model, and a draft
+ * staff deleted is not created again (its creation is remembered in the audit log). Idempotent.
+ */
+async function syncSkywoodDrafts(BT: ReturnType<typeof loadHandoff>) {
+  let subs = 0, created = 0, skipped = 0;
+  for (const c of BT.CATS.skywood!) {
+    const row = await prisma.category.findUnique({ where: { id: `skywood-${c.id}` }, select: { subs: true } });
+    if (!row) continue;
+    const missing = c.subs.filter((s) => !row.subs.includes(s));
+    if (!missing.length) continue;
+    await prisma.category.update({ where: { id: `skywood-${c.id}` }, data: { subs: [...row.subs, ...missing] } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.subs.sync', entity: 'Category', entityId: `skywood-${c.id}`, diff: { added: missing } } });
+    subs += missing.length;
+  }
+  const cats = new Map(BT.CATS.skywood!.map((c) => [c.id, c.name]));
+  for (const p of BT.productsAll('skywood').filter((x) => x.draft)) {
+    if (await prisma.product.findUnique({ where: { id: p.id }, select: { id: true } })) continue;
+    const sameModel = await prisma.product.findFirst({ where: { brandKey: 'skywood', model: { equals: p.model, mode: 'insensitive' } }, select: { id: true } });
+    const deleted = await prisma.auditLog.findFirst({ where: { action: 'catalogue.draft.create', entity: 'Product', entityId: p.id }, select: { id: true } });
+    const cat = await prisma.category.findUnique({ where: { id: `skywood-${p.cat}` }, select: { id: true } });
+    if (sameModel || deleted || !cat) { skipped++; continue; }
+    await prisma.product.create({
+      data: { id: p.id, brandKey: 'skywood', categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: 0, stock: 0, features: p.features, description: p.description ?? '', specs: p.specs ?? [], images: p.images ?? [], tag: '', hidden: true, reviews: 0, embedding: { create: { text: embeddingText(p, cats.get(p.cat)) } } },
+    });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.draft.create', entity: 'Product', entityId: p.id, diff: { model: p.model, hidden: true, price: 0, photos: p.images?.length ?? 0 } } });
+    created++;
+  }
+  console.log(`Skywood drafts: ${created} created (hidden, no price), ${skipped} skipped, ${subs} sub-categor${subs === 1 ? 'y' : 'ies'} added.`);
+}
+
 /** `seed.ts --tokens`: refresh the brand design tokens, role permissions and Skywood photos (safe on a live database). */
 async function syncTokens() {
   // Dar es Salaam regional showroom: exact map position supplied by the client (Google Maps pin).
@@ -195,6 +237,7 @@ async function syncTokens() {
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
   await syncRolePermissions();
+  await syncSkywoodDrafts(BT);
   await syncSkywoodPhotos(BT);
 }
 
@@ -261,9 +304,17 @@ async function main() {
       await prisma.category.create({ data: { id: `${key}-${c.id}`, brandKey: key, slug: c.id, name: c.name, short: c.short, img: c.img, subs: c.subs, sort: i } });
     }
     const list = BT.productsAll(key);
+    const live = list.filter((p) => !p.draft).length;
     for (const [i, p] of list.entries()) {
       products.push(p);
       const images = LOCAL_IMAGES[p.id] ? [LOCAL_IMAGES[p.id]!] : p.images?.length ? p.images : p.img ? [p.img] : [];
+      if (p.draft) {
+        // Drafts: hidden with no price or stock; no rnd() call so the demo data below stays the same.
+        await prisma.product.create({
+          data: { id: p.id, brandKey: key, categoryId: `${key}-${p.cat}`, sub: p.sub, model: p.model, name: p.name, price: 0, stock: 0, features: p.features, description: p.description ?? '', specs: p.specs ?? [], images, tag: '', hidden: true, reviews: 0, embedding: { create: { text: embeddingText(p, cats.find((c) => c.id === p.cat)?.name) } } },
+        });
+        continue;
+      }
       await prisma.product.create({
         data: {
           id: p.id,
@@ -280,7 +331,7 @@ async function main() {
           rating: Math.round((4.5 + rnd() * 0.45) * 10) / 10,
           reviews: 20 + Math.floor(rnd() * 300),
           // Later items in the handoff list are "new this season" (prototype reverses the list).
-          createdAt: new Date(Date.now() - (list.length - i) * 86_400_000),
+          createdAt: new Date(Date.now() - (live - i) * 86_400_000),
           embedding: { create: { text: [p.model, p.name, p.sub, ...p.features].join(' | ') } },
         },
       });
@@ -354,7 +405,7 @@ async function main() {
 
   // Customers and demo orders ------------------------------------------------
   const byId = new Map(products.map((p) => [p.id, p]));
-  const visible = products.filter((p) => p.stock > 0);
+  const visible = products.filter((p) => !p.hidden && p.price > 0 && p.stock > 0);
   const counters = { mruk: 10_420, skywood: 20_330, invoice: 1_400, contract: 88_090, ticket: 4_100 };
   const customers = [];
   for (const [name, phone, region] of CUSTOMERS) {
@@ -616,7 +667,7 @@ async function seedTasks() {
   }
 
   // Stock and photos.
-  for (const p of await prisma.product.findMany({ where: { stock: { lte: 6 } } })) add({ type: 'stock.level', brand: p.brandKey, productId: p.id, model: p.model, stock: p.stock, hidden: p.hidden }, new Date(now - 26 * H));
+  for (const p of await prisma.product.findMany({ where: { stock: { lte: 6 }, price: { gt: 0 } } })) add({ type: 'stock.level', brand: p.brandKey, productId: p.id, model: p.model, stock: p.stock, hidden: p.hidden }, new Date(now - 26 * H));
   for (const b of ['mruk', 'skywood']) add({ type: 'catalogue.photos', brand: b, missing: await prisma.product.count({ where: { brandKey: b, hidden: false, images: { isEmpty: true } } }) }, new Date(now - 48 * H));
 
   // Marketing: a sent campaign with a few failures goes back to the manager to review.
