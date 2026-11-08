@@ -94,10 +94,10 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, pay
           {out ? 'Out of stock' : pending ? '…' : pay === 'salary' ? labels.buyWithAdvance : labels.buyNow}
         </button>
       </div>
-      <div style={{ display: 'flex', gap: 18, marginTop: 16, fontSize: 14, fontWeight: 600, alignItems: 'center' }}>
-        <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link" />
-        <button type="button" onClick={() => setShareOpen((x) => !x)} style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 44 }} aria-expanded={shareOpen}>
-          <ShareIcon /> {labels.share}
+      <div className="pdp-actions">
+        <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link pdp-act" />
+        <button type="button" className="pdp-act" onClick={() => setShareOpen((x) => !x)} aria-expanded={shareOpen}>
+          <ShareIcon size={16} /> {labels.share}
         </button>
       </div>
       {shareOpen && (

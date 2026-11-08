@@ -742,3 +742,68 @@
 .sw-pl-how b { display: block; font-family: var(--sw-display); font-size: 19px; font-weight: 500; color: var(--sw-ink); }
 .sw-pl-how small { display: block; margin-top: 3px; font-size: 14px; color: var(--muted2); }
 @media (max-width: 760px) { .sw-pl-how li { padding: 18px; gap: 16px; } .sw-pl-how b { font-size: 16.5px; } }
+
+/* Product page (pdp.css structure, Skywood look): ink / ivory / champagne gold, tailored rectangles ---- */
+[data-brand='skywood'] .pdp-media { border-radius: 2px; background: var(--sw-stone); }
+[data-brand='skywood'] .pdp-zoom-i, [data-brand='skywood'] .pdp-arrow { border-radius: 2px; background: rgba(251, 248, 243, 0.94); color: var(--sw-ink); box-shadow: inset 0 0 0 1px rgba(28, 25, 21, 0.12); }
+[data-brand='skywood'] .pdp-count { border-radius: 2px; background: var(--sw-ink); color: var(--sw-gold-hi); letter-spacing: 0.16em; font-size: 11px; }
+[data-brand='skywood'] .thumbs button { border-radius: 2px; border-width: 1px; }
+[data-brand='skywood'] .thumbs button.on { border-color: var(--sw-ink); box-shadow: inset 0 -2px 0 var(--sw-gold); }
+[data-brand='skywood'] .pdp-hl { gap: 0; border-top: 1px solid var(--sw-gold); border-bottom: 1px solid var(--border); }
+[data-brand='skywood'] .pdp-hl li { background: transparent; border-radius: 0; padding: 16px 16px 16px 0; }
+[data-brand='skywood'] .pdp-hl li + li { padding-left: 16px; border-left: 1px solid var(--border); }
+[data-brand='skywood'] .pdp-hl-i { width: auto; height: auto; justify-content: flex-start; background: transparent; color: var(--sw-bronze); border-radius: 0; }
+[data-brand='skywood'] .pdp-hl-t { font-weight: 500; color: var(--sw-ink); }
+[data-brand='skywood'] .pdx-title { font-family: var(--sw-display); font-weight: 340; letter-spacing: -0.02em; color: var(--sw-ink); }
+[data-brand='skywood'] .pdx-title::before { content: ''; display: block; width: 28px; height: 1px; margin-bottom: 18px; background: var(--sw-gold); }
+[data-brand='skywood'] .pdx-list { border-top: 1px solid var(--sw-ink); }
+[data-brand='skywood'] .pdx-item { border-bottom-color: rgba(28, 25, 21, 0.14); }
+[data-brand='skywood'] .pdx-btn { min-height: 80px; }
+[data-brand='skywood'] .pdx-btn:focus-visible { border-radius: 2px; }
+[data-brand='skywood'] .pdx-n { color: var(--sw-bronze); letter-spacing: 0.18em; }
+[data-brand='skywood'] .pdx-l { font-family: var(--sw-display); font-size: 23px; font-weight: 360; letter-spacing: -0.015em; color: var(--sw-ink); }
+[data-brand='skywood'] .pdx-chev { border-radius: 2px; background: transparent; box-shadow: inset 0 0 0 1px rgba(28, 25, 21, 0.18); color: var(--sw-ink); }
+[data-brand='skywood'] .pdx-item.is-open .pdx-chev { background: var(--sw-ink); color: var(--sw-gold-hi); box-shadow: none; }
+[data-brand='skywood'] .pdx-body { padding-left: 52px; color: #4d463d; }
+[data-brand='skywood'] .pdx-bullets li::before { width: 8px; height: 1px; top: 0.8em; border: 0; background: var(--sw-gold); transform: none; }
+[data-brand='skywood'] .pdx-bullets li { padding-left: 22px; }
+[data-brand='skywood'] .pdx-specs th, [data-brand='skywood'] .pdx-specs td { padding: 15px 0; border-bottom-color: rgba(28, 25, 21, 0.1); }
+[data-brand='skywood'] .pdx-specs td { padding-left: 16px; }
+[data-brand='skywood'] .pdx-specs tbody th { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sw-bronze); padding-top: 17px; }
+[data-brand='skywood'] .pdx-specs thead th { letter-spacing: 0.16em; color: var(--sw-ink); border-bottom-color: var(--sw-ink); }
+[data-brand='skywood'] .pdx-fees tbody th { font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--sw-ink); font-weight: 500; padding-top: 15px; }
+[data-brand='skywood'] .pdx-free { color: var(--sw-bronze); }
+[data-brand='skywood'] .pdx-link { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sw-ink); text-decoration: none; background: linear-gradient(var(--sw-gold), var(--sw-gold)) left calc(100% - 10px) / 100% 1px no-repeat; }
+[data-brand='skywood'] .pdx-wa { border-radius: 2px; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
+[data-brand='skywood'] .perks a { border-radius: 2px; }
+[data-brand='skywood'] .pdp-sticky { background: rgba(251, 248, 243, 0.97); border-top: 0; box-shadow: 0 -10px 30px rgba(28, 25, 21, 0.08); }
+[data-brand='skywood'] .pdp-sticky::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--sw-gold); }
+[data-brand='skywood'] .pdp-sticky-img { border-radius: 2px; background: var(--sw-stone); }
+[data-brand='skywood'] .pdp-sticky-n { font-family: var(--sw-display); font-weight: 400; font-size: 17px; color: var(--sw-ink); }
+[data-brand='skywood'] .pdp-sticky-m { letter-spacing: 0.12em; text-transform: uppercase; font-size: 11px; }
+[data-brand='skywood'] .pdp-sticky-p b { font-weight: 500; color: var(--sw-ink); }
+[data-brand='skywood'] .pdp-sticky-btn { border-radius: 2px; background: var(--sw-ink); color: #fbf8f3; font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; }
+[data-brand='skywood'] .lbx { background: rgba(28, 25, 21, 0.97); color: #fbf8f3; }
+[data-brand='skywood'] .lbx-count { color: var(--sw-gold-hi); letter-spacing: 0.22em; font-size: 11.5px; }
+[data-brand='skywood'] .lbx-btn { border-radius: 2px; background: transparent; box-shadow: inset 0 0 0 1px rgba(226, 200, 145, 0.35); color: var(--sw-gold-hi); }
+[data-brand='skywood'] .lbx-btn:hover { background: rgba(226, 200, 145, 0.1); }
+[data-brand='skywood'] .lbx-stage img { background: var(--sw-stone); }
+[data-brand='skywood'] .lbx-thumbs button { border-radius: 2px; border-width: 1px; background: var(--sw-stone); }
+[data-brand='skywood'] .lbx-thumbs button.on { border-color: var(--sw-gold); }
+[data-brand='skywood'] .pdp-act.pdp-act { border-radius: 2px; background: transparent; box-shadow: inset 0 0 0 1px rgba(28, 25, 21, 0.2); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--sw-ink); }
+[data-brand='skywood'] .pdp-act.pdp-act:hover { background: var(--sw-stone); }
+[data-brand='skywood'] .pdp-act[aria-pressed='true'] { color: var(--sw-bronze); box-shadow: inset 0 0 0 1px var(--sw-gold); }
+[data-brand='skywood'] .pdx-jump a { font-size: 12px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted2); border-radius: 0; }
+[data-brand='skywood'] .pdx-jump a:hover { color: var(--sw-ink); text-decoration: none; box-shadow: inset 0 -1px 0 var(--sw-gold); }
+@media (max-width: 767px) {
+  [data-brand='skywood'] .pdp-media { border-radius: 0; }
+  [data-brand='skywood'] .pdp-hl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-brand='skywood'] .pdp-hl li, [data-brand='skywood'] .pdp-hl li + li { padding: 12px 10px 12px 0; border-left: 0; }
+  [data-brand='skywood'] .pdp-hl li:nth-child(even) { padding-left: 12px; border-left: 1px solid var(--border); }
+  [data-brand='skywood'] .pdp-hl li:nth-child(n + 3) { border-top: 1px solid var(--border); }
+  [data-brand='skywood'] .pdx-btn { min-height: 64px; }
+  [data-brand='skywood'] .pdx-l { font-size: 19px; }
+  [data-brand='skywood'] .pdx-body { padding-left: 2px; }
+  [data-brand='skywood'] .pdp-sticky-n { font-size: 14.5px; }
+  [data-brand='skywood'] .pdp-sticky-btn { padding: 0 14px; font-size: 11.5px; letter-spacing: 0.08em; }
+}

@@ -614,3 +614,58 @@
   .mu-hero-ctrl { padding-bottom: 12px; }
   .mu-hero.is-photo .mu-hero-in { min-height: min(62svh, 520px); }
 }
+
+/* Product page (pdp.css structure, Mr UK look): bold Archivo headings, navy + sky, round tiles ---- */
+[data-brand='mruk'] .pdp-media { border-radius: 28px; }
+[data-brand='mruk'] .pdp-zoom-i, [data-brand='mruk'] .pdp-arrow { color: var(--mu-navy); }
+[data-brand='mruk'] .pdp-count { background: var(--mu-navy); }
+[data-brand='mruk'] .thumbs button { border-radius: 16px; }
+[data-brand='mruk'] .thumbs button.on { border-color: var(--mu-sky); }
+[data-brand='mruk'] .pdp-hl li { background: var(--mu-cloud); border-radius: 18px; }
+[data-brand='mruk'] .pdp-hl-i { background: var(--mu-navy); color: #fff; border-radius: 12px; }
+[data-brand='mruk'] .pdp-hl-t { font-weight: 700; color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-title { font-weight: 780; letter-spacing: -0.04em; color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-title::after { content: ''; display: block; width: 44px; height: 4px; margin-top: 16px; border-radius: 4px; background: var(--mu-sky); }
+[data-brand='mruk'] .pdx-list { border-top: 0; display: flex; flex-direction: column; gap: 10px; }
+[data-brand='mruk'] .pdx-item { border: 1.5px solid var(--mu-line); border-radius: 22px; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
+[data-brand='mruk'] .pdx-item.is-open { border-color: var(--mu-navy); box-shadow: 0 16px 40px rgba(18, 22, 74, 0.08); }
+[data-brand='mruk'] .pdx-btn { padding: 12px 18px 12px 20px; }
+[data-brand='mruk'] .pdx-btn:focus-visible { border-radius: 20px; }
+[data-brand='mruk'] .pdx-n { min-width: 34px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--mu-cloud); color: var(--mu-sky-d); font-weight: 700; letter-spacing: 0.04em; }
+[data-brand='mruk'] .pdx-item.is-open .pdx-n { background: var(--mu-sky); color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-l { font-family: var(--mu-display); font-size: 20px; font-weight: 750; letter-spacing: -0.025em; color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-chev { background: var(--mu-cloud); color: var(--mu-navy); }
+[data-brand='mruk'] .pdx-item.is-open .pdx-chev { background: var(--mu-navy); color: #fff; }
+[data-brand='mruk'] .pdx-body { padding: 0 24px 26px 72px; }
+[data-brand='mruk'] .pdx-bullets li::before { border-color: var(--mu-sky); }
+[data-brand='mruk'] .pdx-specs { border-radius: 16px; overflow: hidden; border-collapse: separate; border-spacing: 0; box-shadow: inset 0 0 0 1px var(--mu-line); }
+[data-brand='mruk'] .pdx-specs tbody tr:nth-child(odd) > * { background: var(--mu-cloud); }
+[data-brand='mruk'] .pdx-specs th, [data-brand='mruk'] .pdx-specs td { border-bottom: 0; }
+[data-brand='mruk'] .pdx-specs tbody th { color: var(--muted); font-weight: 600; }
+[data-brand='mruk'] .pdx-specs td { font-weight: 600; color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-specs thead th { background: var(--mu-navy); color: #fff; }
+[data-brand='mruk'] .pdx-link { color: var(--mu-navy); text-decoration-color: var(--mu-sky); text-decoration-thickness: 2px; }
+[data-brand='mruk'] .pdx-wa { font-weight: 700; }
+[data-brand='mruk'] .pdp-sticky { border-top: 0; box-shadow: 0 -12px 34px rgba(18, 22, 74, 0.14); }
+[data-brand='mruk'] .pdp-sticky::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--mu-navy), var(--mu-sky)); }
+[data-brand='mruk'] .pdp-sticky-img { background: linear-gradient(150deg, #f4f6fc, #e1e6f4); }
+[data-brand='mruk'] .pdp-sticky-n { font-family: var(--mu-display); font-weight: 750; color: var(--mu-ink); }
+[data-brand='mruk'] .pdp-sticky-p b { font-family: var(--mu-display); font-weight: 780; color: var(--mu-navy); }
+[data-brand='mruk'] .pdp-sticky-btn { border-radius: 999px; background: var(--mu-sky); color: var(--mu-ink); font-weight: 700; box-shadow: 0 8px 20px rgba(0, 152, 218, 0.32); }
+[data-brand='mruk'] .lbx { background: rgba(11, 15, 51, 0.97); }
+[data-brand='mruk'] .lbx-count { font-family: var(--mu-display); font-weight: 700; }
+[data-brand='mruk'] .lbx-thumbs button { border-radius: 14px; background: rgba(255, 255, 255, 0.12); }
+[data-brand='mruk'] .lbx-thumbs button.on { border-color: var(--mu-sky); }
+[data-brand='mruk'] .pdp-act.pdp-act { background: #fff; color: var(--mu-navy); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--mu-line); }
+[data-brand='mruk'] .pdp-act.pdp-act:hover { box-shadow: inset 0 0 0 1.5px var(--mu-navy); background: #fff; }
+[data-brand='mruk'] .pdp-act[aria-pressed='true'] { color: var(--mu-sky-d); box-shadow: inset 0 0 0 1.5px var(--mu-sky); }
+[data-brand='mruk'] .pdx-jump a { font-weight: 600; color: var(--muted); padding-left: 14px; border-left: 2px solid var(--mu-line); border-radius: 0; }
+[data-brand='mruk'] .pdx-jump a:hover { color: var(--mu-navy); border-left-color: var(--mu-sky); text-decoration: none; }
+@media (max-width: 767px) {
+  [data-brand='mruk'] .pdp-media { border-radius: 0; }
+  [data-brand='mruk'] .pdx-list { gap: 8px; }
+  [data-brand='mruk'] .pdx-item { border-radius: 18px; }
+  [data-brand='mruk'] .pdx-btn { padding: 8px 12px 8px 14px; }
+  [data-brand='mruk'] .pdx-l { font-size: 17px; }
+  [data-brand='mruk'] .pdx-body { padding: 0 14px 20px; }
+}

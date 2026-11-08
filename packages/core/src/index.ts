@@ -12,3 +12,4 @@ export * from './compare-verdict';
 export * from './marketing';
 export * from './tasks';
 export * from './paylater';
+export * from './product-facts';

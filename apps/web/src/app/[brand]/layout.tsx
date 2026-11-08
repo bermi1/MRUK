@@ -9,6 +9,7 @@ import { SkywoodHeader } from '@/components/store/brands/skywood/Header';
 import { SkywoodMobileMenu } from '@/components/store/brands/skywood/MobileMenu';
 import { RevealObserver } from '@/components/store/Reveal';
 import { archivo, fraunces } from '@/fonts/brand';
+import '@/styles/pdp.css';
 import '@/styles/mruk.css';
 import '@/styles/skywood.css';
 import { MessagesProvider } from '@/components/store/Messages';
