@@ -596,6 +596,8 @@ export async function createShopSale(input: ShopSaleInput, actor: string) {
   if (!qty.size) throw new CheckoutError('Add at least one item', 'lines');
   const products = await prisma.product.findMany({ where: { id: { in: [...qty.keys()] }, brandKey: input.brand } });
   if (products.length !== qty.size) throw new CheckoutError('An item is not in this brand\'s catalogue', 'lines');
+  const unpriced = products.find((p) => p.price <= 0);
+  if (unpriced) throw new CheckoutError(`${unpriced.name} (${unpriced.model}) has no price yet. Set its price in Products first.`, 'lines');
   const lines = products.map((p) => ({ productId: p.id, name: p.name, model: p.model, price: p.price, qty: qty.get(p.id)! }));
   const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
   if (input.discount > subtotal) throw new CheckoutError('The discount cannot be more than the items', 'discount');

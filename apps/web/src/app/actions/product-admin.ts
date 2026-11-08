@@ -82,7 +82,8 @@ const productZ = z.object({
   sub: text(60, 1, 'Sub-category'),
   model: text(40, 2, 'Model'),
   name: text(120, 2, 'Product name'),
-  price: whole(1_000, 500_000_000, 'Price'),
+  // 0 is allowed only while the product is hidden (a draft); see the publish check below.
+  price: whole(0, 500_000_000, 'Price'),
   stock: whole(0, 100_000, 'Stock'),
   features: z.array(z.string().trim().max(80, 'Each feature: keep it under 80 characters')).max(12, 'At most 12 features'),
   description: z.string().trim().max(2000, 'Description: keep it under 2,000 characters').default(''),
@@ -96,6 +97,9 @@ export type ProductInput = z.input<typeof productZ>;
 export async function saveProductAction(input: ProductInput): Promise<ActionResult<{ id: string; message: string }>> {
   return run('products.write', async (ctx) => {
     const p = productZ.parse(input);
+    // Never publish without a price: drafts keep price 0 while hidden.
+    if (!p.hidden && p.price <= 0) throw new z.ZodError([{ code: 'custom', path: ['price'], message: 'Set a price before publishing' }]);
+    if (p.price > 0 && p.price < 1_000) throw new z.ZodError([{ code: 'custom', path: ['price'], message: 'Price: at least 1,000' }]);
     const current = p.id ? await prisma.product.findUnique({ where: { id: p.id } }) : null;
     if (p.id && !current) throw new Error('Product not found');
     const brand = current ? current.brandKey : p.brand;

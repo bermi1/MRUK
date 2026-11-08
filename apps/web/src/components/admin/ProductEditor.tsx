@@ -43,7 +43,8 @@ function validate(p: EditorProduct): Record<string, string> {
   const price = Number(digits(p.price));
   if (!digits(p.price)) e.price = 'Enter the price in TZS';
   else if (!Number.isInteger(price)) e.price = 'Whole shillings only, e.g. 1,250,000';
-  else if (price < 1000) e.price = 'At least TZS 1,000';
+  else if (price <= 0 && !p.hidden) e.price = 'Set a price before publishing';
+  else if (price > 0 && price < 1000) e.price = 'At least TZS 1,000';
   const stock = Number(digits(p.stock));
   if (!digits(p.stock) || !Number.isInteger(stock) || stock < 0) e.stock = 'Enter 0 or more units';
   return e;

@@ -311,15 +311,36 @@ export async function updateProductFieldAction(id: string, field: 'price' | 'sto
   });
 }
 
+/** A product can only be shown in the store once it has a price (drafts are created with price 0). */
+const NEEDS_PRICE = 'Set a price before publishing';
+
 export async function toggleProductHiddenAction(id: string): Promise<ActionResult<Msg>> {
   return run('products.write', async (ctx) => {
     const p = await loadProduct(ctx, id);
+    if (p.hidden && p.price <= 0) throw new Error(NEEDS_PRICE);
     await prisma.product.update({ where: { id: p.id }, data: { hidden: !p.hidden } });
     await audit(ctx.email, p.hidden ? 'product.show' : 'product.hide', 'Product', p.id);
     await checkStock([p.id]);
     await checkPhotos(p.brandKey);
     revalidateStore();
     return { message: p.hidden ? 'Product is live' : 'Product hidden' };
+  });
+}
+
+/** Drafts › Publish: one click once the price is set (hidden → live). */
+export async function publishProductAction(id: string): Promise<ActionResult<Msg>> {
+  return run('products.write', async (ctx) => {
+    const p = await loadProduct(ctx, id);
+    if (!p.hidden) return { message: 'Already live' };
+    if (p.price <= 0) throw new Error(NEEDS_PRICE);
+    // Guarded update: refuses if the price was cleared or someone published it in the meantime.
+    const r = await prisma.product.updateMany({ where: { id: p.id, hidden: true, price: { gt: 0 } }, data: { hidden: false } });
+    if (!r.count) throw new Error(NEEDS_PRICE);
+    await audit(ctx.email, 'product.publish', 'Product', p.id, { price: p.price, stock: p.stock });
+    await checkStock([p.id]);
+    await checkPhotos(p.brandKey);
+    revalidateStore();
+    return { message: `${p.name} is live` };
   });
 }
 
