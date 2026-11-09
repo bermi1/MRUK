@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 
 /**
- * Product page: detail accordion (keyboard, deep links), photo lightbox and sticky buy bar,
+ * Product page: detail accordion (keyboard, deep links), in-page photo gallery and sticky buy bar,
  * on both brands. Products are picked from the seeded catalogue (the one with most photos).
  */
 const db = new PrismaClient();
@@ -87,50 +87,20 @@ for (const brand of BRANDS) {
       await expect(fees).toContainText('Zanzibar');
     });
 
-    test('lightbox: open, next/arrow keys, zoom, focus trap, Esc closes and returns focus', async ({ page }) => {
+    test('photos stay on the page: clicking the photo opens no full-screen viewer; arrows and thumbnails switch', async ({ page }) => {
       const p = picks[brand]!;
       await page.goto(`/${brand}/p/${p.id}`);
-      const open = page.getByTestId('gallery-open');
-      await open.click();
-      const box = page.getByRole('dialog');
-      await expect(box).toBeVisible();
-      await expect(box).toHaveAttribute('aria-modal', 'true');
-      const count = page.getByTestId('lightbox-count');
-      await expect(count).toHaveText(`1 of ${p.images}`);
-      await expect(page.getByTestId('lightbox-close')).toBeFocused();
-
+      const media = page.getByTestId('gallery-media');
+      await media.click({ position: { x: 40, y: 40 } });
+      await expect(page.getByRole('dialog')).toHaveCount(0);
       if (p.images > 1) {
-        await page.getByTestId('lightbox-next').click();
-        await expect(count).toHaveText(`2 of ${p.images}`);
-        await page.keyboard.press('ArrowLeft');
-        await expect(count).toHaveText(`1 of ${p.images}`);
-        await page.keyboard.press('ArrowLeft');
-        await expect(count).toHaveText(`${p.images} of ${p.images}`);
-        await page.keyboard.press('ArrowRight');
-        await expect(count).toHaveText(`1 of ${p.images}`);
-      } else {
-        await expect(page.getByTestId('lightbox-next')).toHaveCount(0);
-        await page.keyboard.press('ArrowRight');
-        await expect(count).toHaveText('1 of 1');
+        const count = page.getByTestId('gallery-count');
+        await expect(count).toHaveText(`1 / ${p.images}`);
+        await page.getByRole('button', { name: /next/i }).first().click();
+        await expect(count).toHaveText(`2 / ${p.images}`);
+        await page.locator('.thumbs button').first().click();
+        await expect(count).toHaveText(`1 / ${p.images}`);
       }
-
-      // Click to zoom in and out.
-      const imgEl = page.getByTestId('lightbox-img');
-      await imgEl.click();
-      await expect(page.getByRole('button', { name: 'Zoom out' })).toBeVisible();
-      await expect(imgEl).toHaveAttribute('style', /scale\(2\.5\)/);
-      await page.getByRole('button', { name: 'Zoom out' }).click();
-      await expect(imgEl).toHaveAttribute('style', /scale\(1\)/);
-
-      // Tab stays inside the dialog.
-      for (let i = 0; i < 12; i++) {
-        await page.keyboard.press('Tab');
-        expect(await box.evaluate((el) => el.contains(document.activeElement))).toBe(true);
-      }
-
-      await page.keyboard.press('Escape');
-      await expect(box).toBeHidden();
-      await expect(open).toBeFocused();
     });
   });
 }

@@ -214,16 +214,9 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     });
 
   const galleryLabels = {
-    dialog: t('pdPhotos', { name: productLabel(p) }),
-    close: t('pdClose'),
     prev: t('pdPrev'),
     next: t('pdNext'),
-    zoomIn: t('pdZoomIn'),
-    zoomOut: t('pdZoomOut'),
-    hint: t('pdZoomHint'),
-    count: t('pdCount', { n: '{n}', total: '{total}' }),
     photo: t('pdPhoto', { n: '{n}' }),
-    expand: t('pdExpand', { n: '{n}', total: '{total}' }),
     thumbs: t('pdPhotos', { name: productLabel(p) }),
   };
 

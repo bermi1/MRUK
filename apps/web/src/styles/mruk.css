@@ -617,7 +617,7 @@
 
 /* Product page (pdp.css structure, Mr UK look): bold Archivo headings, navy + sky, round tiles ---- */
 [data-brand='mruk'] .pdp-media { border-radius: 28px; }
-[data-brand='mruk'] .pdp-zoom-i, [data-brand='mruk'] .pdp-arrow { color: var(--mu-navy); }
+[data-brand='mruk'] .pdp-arrow { color: var(--mu-navy); }
 [data-brand='mruk'] .pdp-count { background: var(--mu-navy); }
 [data-brand='mruk'] .thumbs button { border-radius: 16px; }
 [data-brand='mruk'] .thumbs button.on { border-color: var(--mu-sky); }
@@ -652,10 +652,6 @@
 [data-brand='mruk'] .pdp-sticky-n { font-family: var(--mu-display); font-weight: 750; color: var(--mu-ink); }
 [data-brand='mruk'] .pdp-sticky-p b { font-family: var(--mu-display); font-weight: 780; color: var(--mu-navy); }
 [data-brand='mruk'] .pdp-sticky-btn { border-radius: 999px; background: var(--mu-sky); color: var(--mu-ink); font-weight: 700; box-shadow: 0 8px 20px rgba(0, 152, 218, 0.32); }
-[data-brand='mruk'] .lbx { background: rgba(11, 15, 51, 0.97); }
-[data-brand='mruk'] .lbx-count { font-family: var(--mu-display); font-weight: 700; }
-[data-brand='mruk'] .lbx-thumbs button { border-radius: 14px; background: rgba(255, 255, 255, 0.12); }
-[data-brand='mruk'] .lbx-thumbs button.on { border-color: var(--mu-sky); }
 [data-brand='mruk'] .pdp-act.pdp-act { background: #fff; color: var(--mu-navy); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--mu-line); }
 [data-brand='mruk'] .pdp-act.pdp-act:hover { box-shadow: inset 0 0 0 1.5px var(--mu-navy); background: #fff; }
 [data-brand='mruk'] .pdp-act[aria-pressed='true'] { color: var(--mu-sky-d); box-shadow: inset 0 0 0 1.5px var(--mu-sky); }

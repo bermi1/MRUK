@@ -1,5 +1,5 @@
 /* =====================================================================================
-   Product page, shared structure: larger gallery + lightbox, highlights, detail accordion,
+   Product page, shared structure: larger gallery, highlights, detail accordion,
    sticky mini buy bar. Brand looks are layered on top in mruk.css and skywood.css.
    ===================================================================================== */
 
@@ -8,10 +8,6 @@
 .pdp-gallery { position: sticky; top: 104px; }
 .pdp-page .pdp-media { height: min(680px, calc(100vh - 250px)); min-height: 520px; touch-action: pan-y; }
 .pdp-info { display: flex; flex-direction: column; }
-.pdp-zoom { position: absolute; inset: 0; z-index: 2; width: 100%; background: transparent; cursor: zoom-in; border-radius: inherit; }
-.pdp-zoom:focus-visible { outline: 3px solid var(--focus, var(--az)); outline-offset: -3px; }
-.pdp-zoom-i { position: absolute; right: 18px; bottom: 18px; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255, 255, 255, 0.94); color: var(--text); box-shadow: 0 6px 20px rgba(10, 12, 30, 0.18); transition: transform 0.2s var(--ease); }
-.pdp-zoom:hover .pdp-zoom-i { transform: scale(1.08); }
 .pdp-badge { z-index: 3; pointer-events: none; }
 .pdp-arrow { position: absolute; top: 50%; z-index: 3; width: 48px; height: 48px; margin-top: -24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255, 255, 255, 0.94); color: var(--text); box-shadow: 0 6px 20px rgba(10, 12, 30, 0.16); opacity: 0; transition: opacity 0.2s, transform 0.2s var(--ease); }
 .pdp-arrow-l { left: 18px; }
@@ -91,29 +87,7 @@ html[data-pdp-sticky] .toast { bottom: 100px; }
 .pdp-act.pdp-act:hover { background: color-mix(in srgb, var(--surface) 80%, var(--text) 8%); }
 .pdp-act[aria-pressed='true'] { color: var(--ok); }
 
-/* Lightbox --------------------------------------------------------------------------- */
-.lbx { position: fixed; inset: 0; z-index: 140; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: rgba(9, 11, 26, 0.97); color: #fff; animation: fade 0.18s ease-out; }
-.lbx-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; }
-.lbx-count { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; font-variant-numeric: tabular-nums; opacity: 0.85; padding-left: 6px; }
-.lbx-tools { display: flex; gap: 8px; }
-.lbx-btn { width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #fff; background: rgba(255, 255, 255, 0.1); transition: background 0.2s; }
-.lbx-btn:hover { background: rgba(255, 255, 255, 0.2); }
-.lbx-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.lbx-stage { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; cursor: zoom-in; user-select: none; -webkit-user-select: none; }
-.lbx-stage.is-zoomed { cursor: grab; }
-.lbx-stage img { max-width: min(92vw, 1400px); max-height: 100%; object-fit: contain; transition: transform 0.22s var(--ease); will-change: transform; -webkit-user-drag: none; }
-.lbx-nav { position: absolute; top: 50%; margin-top: -26px; width: 52px; height: 52px; }
-.lbx-prev { left: 20px; }
-.lbx-next { right: 20px; }
-.lbx-foot { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); }
-.lbx-hint { font-size: 12px; opacity: 0.6; }
-.lbx-thumbs { display: flex; gap: 8px; max-width: 100%; overflow-x: auto; padding: 2px; }
-.lbx-thumbs button { flex: none; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: rgba(255, 255, 255, 0.08); border: 2px solid transparent; opacity: 0.6; padding: 0; transition: opacity 0.2s, border-color 0.2s; }
-.lbx-thumbs button.on, .lbx-thumbs button:hover { opacity: 1; border-color: #fff; }
-.lbx-thumbs img { width: 100%; height: 100%; object-fit: contain; }
-
 @media (hover: none) { .pdp-arrow { opacity: 1; } }
-@media (hover: hover) { .lbx-hint { display: none; } }
 
 @media (max-width: 1100px) {
   .pdp-page .pdp { gap: 40px; }
@@ -129,8 +103,7 @@ html[data-pdp-sticky] .toast { bottom: 100px; }
   .pdp-page .thumbs { padding: 0 16px; }
   .pdp-page .thumbs button { width: 64px; height: 64px; }
   .pdp-arrow { display: none; }
-  .pdp-zoom-i { right: 14px; bottom: 14px; }
-  .pdp-count { left: 14px; bottom: 16px; }
+    .pdp-count { left: 14px; bottom: 16px; }
   .pdp-hl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
   .pdp-hl li { flex-direction: row; align-items: center; gap: 10px; padding: 10px 12px; }
   .pdp-hl-i { width: 32px; height: 32px; flex: none; }
@@ -157,12 +130,7 @@ html[data-pdp-sticky] .toast { bottom: 100px; }
   .pdp-sticky-t { min-width: 72px; }
   .pdp-sticky-p { font-size: 15px; font-weight: 700; }
   .pdp-sticky-btn { min-height: 44px; padding: 4px 14px; font-size: 14px; white-space: normal; line-height: 1.15; max-width: 136px; flex: none; }
-  .lbx-top { padding: 10px 10px; }
-  .lbx-nav { display: none; }
-  .lbx-stage img { max-width: 100vw; }
-  .lbx-thumbs button { width: 52px; height: 52px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pdx-panel, .pdx-chev, .pdp-sticky, .lbx-stage img, .pdp-arrow, .pdp-zoom-i { transition: none !important; }
-  .lbx { animation: none; }
+  .pdx-panel, .pdx-chev, .pdp-sticky, .pdp-arrow { transition: none !important; }
 }
