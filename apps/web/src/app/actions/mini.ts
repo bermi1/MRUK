@@ -3,7 +3,8 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@bt/db';
-import { ADVANCE_TERMS, assessAffordability, deliveryFee, firstDeductionDate, isRegion, monthlyInstalment } from '@bt/core';
+import { ADVANCE_TERMS, assessAffordability, deliveryFee, firstDeductionDate, isRegion, monthlyInstalment, salePrice } from '@bt/core';
+import { flashDiscounts } from '@/server/cart';
 import { payLaterLive } from '@/server/paylater';
 import type { ActionResult } from '@/lib/types';
 import { integrations } from '@/server/integrations';
@@ -73,7 +74,8 @@ export async function placeMiniOrderAction(input: unknown): Promise<ActionResult
     // Re-check the pre-approved limit and affordability on the server (never trust the client).
     const product = await prisma.product.findFirst({ where: { id: d.productId, brandKey: d.brand, hidden: false } });
     if (!product) throw new CheckoutError('This product is no longer available');
-    const total = product.price + deliveryFee(d.region, product.price);
+    const unit = salePrice(product.price, (await flashDiscounts(d.brand))(product.id)); // flash deal, as shown in the mini app
+    const total = unit + deliveryFee(d.region, unit);
     if (total > customer.preApprovedLimit) throw new CheckoutError('This purchase is above your pre-approved Salary Advance limit');
     if (assessAffordability(monthlyInstalment(total, d.months), customer.netSalary).status !== 'within') {
       throw new CheckoutError('The monthly instalment is above one third of your net salary. Choose a longer term.', 'months');

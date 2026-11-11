@@ -93,9 +93,6 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
         </div>
         {!photo && (
         <div className="mu-hero-stage" key={`s${i}`}>
-          <span className="mu-hero-word" aria-hidden="true">
-            {s.model}
-          </span>
           <span className="mu-ring r1" aria-hidden="true" />
           <span className="mu-ring r2" aria-hidden="true" />
           <span className="mu-plinth" aria-hidden="true" />

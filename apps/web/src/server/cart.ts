@@ -27,12 +27,17 @@ async function ensureCart(brand: BrandKey) {
   return c;
 }
 
+/** Live flash-deal percentage per product, read from the database (the same rule the storefront shows). */
+export async function flashDiscounts(brand: BrandKey): Promise<(productId: string) => number> {
+  const flash = await prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true }, orderBy: { createdAt: 'asc' } });
+  const now = new Date();
+  return (pid: string) => flash.find((f) => f.productId === pid && (!f.endsAt || f.endsAt > now))?.percent ?? 0;
+}
+
 export async function getCart(brand: BrandKey): Promise<CartView> {
   const id = await cartId(brand);
   const cart = id ? await prisma.cart.findUnique({ where: { id }, include: { items: { include: { product: true }, orderBy: { id: 'asc' } } } }) : null;
-  // Active flash deals reduce the unit price.
-  const flash = await prisma.promotion.findMany({ where: { brandKey: brand, kind: 'flash', active: true }, orderBy: { createdAt: 'asc' } });
-  const off = (pid: string) => flash.find((f) => f.productId === pid && (!f.endsAt || f.endsAt > new Date()))?.percent ?? 0;
+  const off = await flashDiscounts(brand);
   const lines = (cart?.items ?? [])
     .filter((i) => !i.product.hidden)
     .map((i) => ({ productId: i.productId, qty: i.qty, name: i.product.name, model: i.product.model, price: salePrice(i.product.price, off(i.productId)), listPrice: i.product.price, img: i.product.images[0] ?? '', stock: i.product.stock, sub: i.product.sub }));

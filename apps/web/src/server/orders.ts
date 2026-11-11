@@ -24,6 +24,7 @@ import {
   paymentLabel,
   PAY_LATER_OFF_MESSAGE,
   releasesStock,
+  salePrice,
   signatureMatches,
   type AdvanceStatus,
   type OrderStatus,
@@ -31,7 +32,7 @@ import {
 } from '@bt/core';
 import { contractPdf, invoicePdf } from '@bt/integrations';
 import type { BrandKey } from '@/lib/types';
-import { getCart, clearCart } from './cart';
+import { getCart, clearCart, flashDiscounts } from './cart';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
@@ -216,10 +217,12 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   let discountCode: string | null = null;
   if (cartOverride) {
     const ps = await prisma.product.findMany({ where: { id: { in: cartOverride.lines.map((l) => l.productId) }, brandKey: brand, hidden: false } });
+    const off = await flashDiscounts(brand);
     lines = cartOverride.lines.map((l) => {
       const p = ps.find((x) => x.id === l.productId);
       if (!p) throw new CheckoutError('Product not found');
-      return { productId: p.id, qty: l.qty, name: p.name, model: p.model, price: p.price };
+      // Same unit price as the cart and the storefront: a live flash deal applies here too.
+      return { productId: p.id, qty: l.qty, name: p.name, model: p.model, price: salePrice(p.price, off(p.id)) };
     });
     region = cartOverride.region;
     subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);

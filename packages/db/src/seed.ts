@@ -79,10 +79,8 @@ function loadHandoff() {
 }
 
 /** Local copies of the Mr UK product photos shipped with the design (Skywood photos come from brand-data.js). */
-const LOCAL_IMAGES: Record<string, string> = {
-  'mruk-uk-f275-58-5di0wd': '/img/products/mruk-french-fridge.webp',
-  'mruk-uk-g3500q': '/img/products/mruk-g3500q-generator.webp',
-};
+/** Products with a local photo but none in brand-data.js (the Mr UK drive photos now cover both former entries). */
+const LOCAL_IMAGES: Record<string, string> = {};
 
 /** Replace the customer-facing product name in seeded CMS copy. */
 function payLaterCopy<T>(v: T): T {
@@ -139,45 +137,51 @@ async function syncRolePermissions() {
  */
 const LEGACY_SKYWOOD_IMAGES = new Set(['/img/products/skywood-sk6031ges-cooker.webp']);
 const isReplaceableSkywoodImage = (u: string) => !u.trim() || /^https?:\/\/(www\.)?skywood\.co\.tz\//i.test(u.trim()) || LEGACY_SKYWOOD_IMAGES.has(u.trim());
+/** Mr UK: empty, a photo hot-linked from www.mruk.co.tz, one of the two placeholders this seed used to ship, or an earlier official photo set. */
+const LEGACY_MRUK_IMAGES = new Set(['/img/products/mruk-french-fridge.webp', '/img/products/mruk-g3500q-generator.webp']);
+const isReplaceableMrukImage = (u: string) => !u.trim() || /^https?:\/\/(www\.)?mruk\.co\.tz\//i.test(u.trim()) || LEGACY_MRUK_IMAGES.has(u.trim()) || u.trim().startsWith('/img/products/mruk/');
+const isReplaceable = (brand: 'mruk' | 'skywood') => (brand === 'mruk' ? isReplaceableMrukImage : isReplaceableSkywoodImage);
 const sameList = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
 
 /** Skywood products added to brand-data.js after launch: created on live databases when missing. */
 const ADDED_SKYWOOD_PRODUCTS: string[] = [];
 
-/** Bring the official Skywood photos to a live database without touching photos staff uploaded. */
-async function syncSkywoodPhotos(BT: ReturnType<typeof loadHandoff>) {
+/** Bring the official brand photos to a live database without touching photos staff uploaded. */
+async function syncBrandPhotos(BT: ReturnType<typeof loadHandoff>, key: 'mruk' | 'skywood') {
+  const ok = isReplaceable(key);
+  const label = key === 'mruk' ? 'Mr UK' : 'Skywood';
   const audit = (entity: string, entityId: string) => prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.photos.sync', entity, entityId } });
   let products = 0, cats = 0, created = 0, kept = 0;
-  const b = BT.BRANDS.skywood!;
-  const brand = await prisma.brand.findUnique({ where: { key: 'skywood' }, select: { heroImg: true } });
-  if (brand && b.heroImg && brand.heroImg !== b.heroImg && isReplaceableSkywoodImage(brand.heroImg)) {
-    await prisma.brand.update({ where: { key: 'skywood' }, data: { heroImg: b.heroImg } });
-    await audit('Brand', 'skywood');
-    console.log('  Skywood brand hero image updated.');
+  const b = BT.BRANDS[key]!;
+  const brand = await prisma.brand.findUnique({ where: { key }, select: { heroImg: true } });
+  if (brand && b.heroImg && brand.heroImg !== b.heroImg && ok(brand.heroImg)) {
+    await prisma.brand.update({ where: { key }, data: { heroImg: b.heroImg } });
+    await audit('Brand', key);
+    console.log(`  ${label} brand hero image updated.`);
   }
-  for (const c of BT.CATS.skywood!) {
-    const row = await prisma.category.findUnique({ where: { id: `skywood-${c.id}` }, select: { img: true } });
+  for (const c of BT.CATS[key]!) {
+    const row = await prisma.category.findUnique({ where: { id: `${key}-${c.id}` }, select: { img: true } });
     if (!row || !c.img || row.img === c.img) continue;
-    if (!isReplaceableSkywoodImage(row.img)) { kept++; continue; }
-    await prisma.category.update({ where: { id: `skywood-${c.id}` }, data: { img: c.img } });
-    await audit('Category', `skywood-${c.id}`);
+    if (!ok(row.img)) { kept++; continue; }
+    await prisma.category.update({ where: { id: `${key}-${c.id}` }, data: { img: c.img } });
+    await audit('Category', `${key}-${c.id}`);
     cats++;
   }
-  for (const p of BT.productsAll('skywood')) {
+  for (const p of BT.productsAll(key)) {
     const want = p.images?.length ? p.images : p.img ? [p.img] : [];
     const row = await prisma.product.findUnique({ where: { id: p.id }, select: { images: true } });
     if (!row) {
       if (!ADDED_SKYWOOD_PRODUCTS.includes(p.id)) continue; // removed on purpose by staff: never resurrect
-      const cat = await prisma.category.findUnique({ where: { id: `skywood-${p.cat}` }, select: { id: true } });
-      if (!cat) { console.warn(`  Skipped new product ${p.id}: category skywood-${p.cat} missing.`); continue; }
-      await prisma.product.create({ data: { id: p.id, brandKey: 'skywood', categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: p.price, stock: p.stock, features: p.features, images: want, tag: p.tag, embedding: { create: { text: [p.model, p.name, p.sub, ...p.features].join(' | ') } } } });
+      const cat = await prisma.category.findUnique({ where: { id: `${key}-${p.cat}` }, select: { id: true } });
+      if (!cat) { console.warn(`  Skipped new product ${p.id}: category ${key}-${p.cat} missing.`); continue; }
+      await prisma.product.create({ data: { id: p.id, brandKey: key, categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: p.price, stock: p.stock, features: p.features, images: want, tag: p.tag, embedding: { create: { text: [p.model, p.name, p.sub, ...p.features].join(' | ') } } } });
       await audit('Product', p.id);
       created++;
       continue;
     }
     // No official photo for this model yet: drop links to the dead site so the store shows its placeholder.
     if (!want.length) {
-      if (row.images.length && row.images.every((u) => /^https?:\/\/(www\.)?skywood\.co\.tz\//i.test(u.trim()))) {
+      if (key === 'skywood' && row.images.length && row.images.every((u) => /^https?:\/\/(www\.)?skywood\.co\.tz\//i.test(u.trim()))) {
         await prisma.product.update({ where: { id: p.id }, data: { images: [] } });
         await audit('Product', p.id);
         products++;
@@ -185,48 +189,54 @@ async function syncSkywoodPhotos(BT: ReturnType<typeof loadHandoff>) {
       continue;
     }
     if (sameList(row.images, want)) continue;
-    if (!row.images.every(isReplaceableSkywoodImage)) { kept++; continue; }
+    if (!row.images.every(ok)) { kept++; continue; }
     await prisma.product.update({ where: { id: p.id }, data: { images: want } });
     await audit('Product', p.id);
     products++;
   }
-  console.log(`Skywood photos: ${products} product(s) and ${cats} categor${cats === 1 ? 'y' : 'ies'} updated, ${created} product(s) created, ${kept} kept (staff photos).`);
+  console.log(`${label} photos: ${products} product(s) and ${cats} categor${cats === 1 ? 'y' : 'ies'} updated, ${created} product(s) created, ${kept} kept (staff photos).`);
 }
 
 /**
- * Skywood draft products (client photo/spec pack) on a live database: add missing sub-categories, then create each
+ * Draft products (client photo/spec packs) on a live database: add missing categories (a category shows in the store
+ * only once it has a published product) and sub-categories, then create each
  * draft that is missing. Drafts are created hidden with price 0 and stock 0. Existing products are never changed
  * (whoever created them), a draft is skipped when the brand already has a product with the same model, and a draft
  * staff deleted is not created again (its creation is remembered in the audit log). Idempotent.
  */
-async function syncSkywoodDrafts(BT: ReturnType<typeof loadHandoff>) {
-  let subs = 0, created = 0, skipped = 0;
-  for (const c of BT.CATS.skywood!) {
-    const row = await prisma.category.findUnique({ where: { id: `skywood-${c.id}` }, select: { subs: true } });
-    if (!row) continue;
+async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' | 'skywood') {
+  let subs = 0, created = 0, skipped = 0, newCats = 0;
+  for (const [i, c] of BT.CATS[key]!.entries()) {
+    const row = await prisma.category.findUnique({ where: { id: `${key}-${c.id}` }, select: { subs: true } });
+    if (!row) {
+      await prisma.category.create({ data: { id: `${key}-${c.id}`, brandKey: key, slug: c.id, name: c.name, short: c.short, img: c.img, subs: c.subs, sort: i } });
+      await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.category.create', entity: 'Category', entityId: `${key}-${c.id}`, diff: { name: c.name } } });
+      newCats++;
+      continue;
+    }
     const missing = c.subs.filter((s) => !row.subs.includes(s));
     if (!missing.length) continue;
-    await prisma.category.update({ where: { id: `skywood-${c.id}` }, data: { subs: [...row.subs, ...missing] } });
-    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.subs.sync', entity: 'Category', entityId: `skywood-${c.id}`, diff: { added: missing } } });
+    await prisma.category.update({ where: { id: `${key}-${c.id}` }, data: { subs: [...row.subs, ...missing] } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.subs.sync', entity: 'Category', entityId: `${key}-${c.id}`, diff: { added: missing } } });
     subs += missing.length;
   }
-  const cats = new Map(BT.CATS.skywood!.map((c) => [c.id, c.name]));
-  for (const p of BT.productsAll('skywood').filter((x) => x.draft)) {
+  const cats = new Map(BT.CATS[key]!.map((c) => [c.id, c.name]));
+  for (const p of BT.productsAll(key).filter((x) => x.draft)) {
     if (await prisma.product.findUnique({ where: { id: p.id }, select: { id: true } })) continue;
-    const sameModel = await prisma.product.findFirst({ where: { brandKey: 'skywood', model: { equals: p.model, mode: 'insensitive' } }, select: { id: true } });
+    const sameModel = await prisma.product.findFirst({ where: { brandKey: key, model: { equals: p.model, mode: 'insensitive' } }, select: { id: true } });
     const deleted = await prisma.auditLog.findFirst({ where: { action: 'catalogue.draft.create', entity: 'Product', entityId: p.id }, select: { id: true } });
-    const cat = await prisma.category.findUnique({ where: { id: `skywood-${p.cat}` }, select: { id: true } });
+    const cat = await prisma.category.findUnique({ where: { id: `${key}-${p.cat}` }, select: { id: true } });
     if (sameModel || deleted || !cat) { skipped++; continue; }
     await prisma.product.create({
-      data: { id: p.id, brandKey: 'skywood', categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: 0, stock: 0, features: p.features, description: p.description ?? '', specs: p.specs ?? [], images: p.images ?? [], tag: '', hidden: true, reviews: 0, embedding: { create: { text: embeddingText(p, cats.get(p.cat)) } } },
+      data: { id: p.id, brandKey: key, categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: 0, stock: 0, features: p.features, description: p.description ?? '', specs: p.specs ?? [], images: p.images ?? [], tag: '', hidden: true, reviews: 0, embedding: { create: { text: embeddingText(p, cats.get(p.cat)) } } },
     });
     await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'catalogue.draft.create', entity: 'Product', entityId: p.id, diff: { model: p.model, hidden: true, price: 0, photos: p.images?.length ?? 0 } } });
     created++;
   }
-  console.log(`Skywood drafts: ${created} created (hidden, no price), ${skipped} skipped, ${subs} sub-categor${subs === 1 ? 'y' : 'ies'} added.`);
+  console.log(`${key === 'mruk' ? 'Mr UK' : 'Skywood'} drafts: ${created} created (hidden, no price), ${skipped} skipped, ${newCats} categor${newCats === 1 ? 'y' : 'ies'} and ${subs} sub-categor${subs === 1 ? 'y' : 'ies'} added.`);
 }
 
-/** `seed.ts --tokens`: refresh the brand design tokens, role permissions and Skywood photos (safe on a live database). */
+/** `seed.ts --tokens`: refresh the brand design tokens, role permissions, drafts and brand photos (safe on a live database). */
 async function syncTokens() {
   // Dar es Salaam regional showroom: exact map position supplied by the client (Google Maps pin).
   await prisma.supplier.updateMany({
@@ -237,8 +247,10 @@ async function syncTokens() {
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
   await syncRolePermissions();
-  await syncSkywoodDrafts(BT);
-  await syncSkywoodPhotos(BT);
+  for (const key of ['mruk', 'skywood'] as const) {
+    await syncBrandDrafts(BT, key);
+    await syncBrandPhotos(BT, key);
+  }
 }
 
 async function main() {

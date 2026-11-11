@@ -2,6 +2,7 @@
   const MU = 'https://www.mruk.co.tz/', SW = 'https://www.skywood.co.tz/';
   // Official Skywood photos (client photo pack), optimised WebP served by the storefront.
   const SWL = '/img/products/skywood/';
+  const MUL = '/img/products/mruk/';
   const BRANDS = {
     mruk: {
       key: 'mruk', name: 'Mr UK', legal: 'MR UK Corporation Ltd', domain: 'shop.mruk.co.tz', tagline: 'Home of the best quality',
@@ -18,12 +19,13 @@
   };
   const CATS = {
     mruk: [
-      { id: 'fridges', name: 'Refrigerators and Freezers', short: 'Refrigeration', img: MU + 'Hero/hero-refrigerator.webp', subs: ['Fridges', 'Freezers'] },
-      { id: 'music-tv', name: 'Music and TV', short: 'Music and TV', img: MU + 'Hero/hero-tv.webp', subs: ['Televisions', 'Subwoofers'] },
-      { id: 'kitchen', name: 'Kitchen Appliances', short: 'Kitchen', img: MU + 'categories/kitchen.png', subs: ['Water dispensers', 'Standing cookers', 'Gas hobs'] },
-      { id: 'generators', name: 'Generators', short: 'Generators', img: MU + 'Hero/hero-generator.webp', subs: ['Generators', 'Engines'] },
-      { id: 'agriculture', name: 'Agriculture', short: 'Agriculture', img: MU + 'Hero/hero-water-pump.webp', subs: ['Water pumps', 'Sprayer pumps', 'Pump controls'] },
-      { id: 'washing', name: 'Washing Machine', short: 'Laundry', img: '', subs: ['Washing machines'] }
+      { id: 'fridges', name: 'Refrigerators and Freezers', short: 'Refrigeration', img: MUL + 'mruk-uk-f275-58-5di0wd-1.webp', subs: ['Fridges', 'Freezers'] },
+      { id: 'music-tv', name: 'Music and TV', short: 'Music and TV', img: MUL + 'mruk-uk-43p9-1.webp', subs: ['Televisions', 'Subwoofers'] },
+      { id: 'kitchen', name: 'Kitchen Appliances', short: 'Kitchen', img: MUL + 'mruk-uk-6134-ge-1.webp', subs: ['Water dispensers', 'Standing cookers', 'Gas hobs', 'Blenders'] },
+      { id: 'generators', name: 'Generators', short: 'Generators', img: MUL + 'mruk-uk-g3500q-1.webp', subs: ['Generators', 'Engines'] },
+      { id: 'agriculture', name: 'Agriculture', short: 'Agriculture', img: MUL + 'mruk-surface-pump-1.webp', subs: ['Water pumps', 'Sprayer pumps', 'Pump controls', 'Hose pipes'] },
+      { id: 'washing', name: 'Washing Machine', short: 'Laundry', img: MUL + 'mruk-uk-wm-8kg-1.webp', subs: ['Washing machines'] },
+      { id: 'ac', name: 'Air Conditioning', short: 'Air Conditioning', img: MUL + 'mruk-ac-9000-btu-1.webp', subs: ['Split units'] }
     ],
     skywood: [
       { id: 'music', name: 'Music Systems', short: 'Music', img: SWL + 'skywood-b-09-1.webp', subs: ['Subwoofers', 'Soundbars', 'Rechargeable speakers', 'Party speakers', 'Boombox'] },
@@ -235,11 +237,69 @@
     D('washing', 'Front load', 'XQG100-1458DPH', 'Front Load Washing Machine')
   ];
   PRODUCTS.push.apply(PRODUCTS, DRAFTS);
+  // Mr UK drafts from the client photo pack (Google Drive, Nov 2026): hidden, no price, until staff confirm price and specs.
+  const MD = (cat, sub, model, name, features) => Object.assign(P('mruk', cat, sub, model, name, 0, 0, features || []), { hidden: true, draft: true, description: '', specs: [] });
+  const MRUK_DRAFTS = [
+    MD('fridges', 'Fridges', 'UK-F42', 'Double Door Refrigerator (white, silver, black)', ['Double door', 'Three colours']),
+    MD('fridges', 'Fridges', 'UK-F43', 'Double Door Refrigerator (stainless)', ['Double door', 'Stainless finish']),
+    MD('fridges', 'Fridges', 'UK-F56', 'Double Door Refrigerator', ['Double door']),
+    MD('fridges', 'Fridges', 'UK-F57', 'Double Door Refrigerator (gold)', ['Double door', 'Gold finish']),
+    MD('fridges', 'Fridges', 'UK-F93', 'Double Door Refrigerator', ['Double door']),
+    MD('fridges', 'Fridges', 'UK-F103 WD', 'Double Door Refrigerator with Dispenser', ['Double door', 'Water dispenser']),
+    MD('fridges', 'Fridges', 'UK-F215', 'Side by Side Refrigerator (no dispenser)', ['Side by side']),
+    MD('fridges', 'Fridges', 'UK Showcase Fridge', 'Showcase Display Fridge', ['Glass door', 'Commercial display']),
+    MD('fridges', 'Fridges', 'DSC01525', 'Double Door Refrigerator (model to confirm)', []),
+    MD('fridges', 'Freezers', 'Chest Freezer 75', 'Chest Freezer 75', ['Chest freezer']),
+    MD('fridges', 'Freezers', 'Chest Freezer 100', 'Chest Freezer 100', ['Chest freezer']),
+    MD('fridges', 'Freezers', 'Chest Freezer 125', 'Chest Freezer 125', ['Chest freezer']),
+    MD('fridges', 'Freezers', 'Double-Lid Chest Freezer', 'Double-Lid Chest Freezer', ['Two lids', 'Large capacity']),
+    MD('fridges', 'Freezers', 'Showcase Chest Freezer Big', 'Showcase Chest Freezer (large)', ['Glass sliding lids', 'Commercial display']),
+    MD('fridges', 'Freezers', 'Showcase Chest Freezer Small', 'Showcase Chest Freezer (small)', ['Glass sliding lids', 'Commercial display']),
+    MD('generators', 'Generators', 'UK-6500Q', '6500Q Generator', ['Enclosed frame', 'Wheels']),
+    MD('music-tv', 'Subwoofers', 'UK-T05', 'T05 Subwoofer System', []),
+    MD('music-tv', 'Subwoofers', 'UK-T08', 'T08 Subwoofer System', ['LED light']),
+    MD('music-tv', 'Subwoofers', 'UK-T11', 'T11 Home Theatre System', ['Tower speakers']),
+    MD('music-tv', 'Subwoofers', 'UK-T18', 'T18 Subwoofer System', []),
+    MD('music-tv', 'Subwoofers', 'UK-T19', 'T19 Subwoofer System', ['Tower speakers']),
+    MD('music-tv', 'Subwoofers', 'UK-T21', 'T21 Home Theatre System', ['Tower speakers']),
+    MD('music-tv', 'Subwoofers', 'UK-T22', 'T22 Subwoofer System', ['RGB light', 'Remote control']),
+    MD('music-tv', 'Subwoofers', 'UK-S16', 'S16 Subwoofer System', ['LED light']),
+    MD('music-tv', 'Subwoofers', 'UK-S17', 'S17 Home Theatre System', ['LED light', 'Tower speakers']),
+    MD('music-tv', 'Subwoofers', 'UK-SB234', 'SB 234 Speaker System', []),
+    MD('music-tv', 'Subwoofers', 'UK-SB243', 'SB 243 Speaker System', []),
+    MD('music-tv', 'Subwoofers', 'UK RGB System', 'RGB Home Audio Speaker System', ['RGB light', 'Speaker stands']),
+    MD('music-tv', 'Televisions', 'UK 40', '40\' LED TV', []),
+    MD('music-tv', 'Televisions', 'UK 43P9', '43\' LED TV (43P9)', []),
+    MD('music-tv', 'Televisions', 'UK 55 New', '55\' LED TV (new model, to confirm)', []),
+    MD('music-tv', 'Televisions', 'TV 525D8181', 'LED TV (model to confirm)', []),
+    MD('music-tv', 'Televisions', 'TV 20210129', 'LED TV (model to confirm, side view)', []),
+    MD('kitchen', 'Standing cookers', 'L500', 'L500 Standing Cooker', ['Black or silver']),
+    MD('kitchen', 'Gas hobs', 'UK 9285', 'Gas Hob 9285', ['Five burners']),
+    MD('kitchen', 'Gas hobs', 'UK GE1', 'Gas and Electric Hob GE1', ['Three gas burners, one hot plate']),
+    MD('kitchen', 'Gas hobs', 'UK SE1', 'Stainless Gas and Electric Hob SE1', ['Stainless steel', 'Three gas burners, one hot plate']),
+    MD('kitchen', 'Blenders', 'Blender Stainless', 'Blender with Grinder (stainless)', ['Glass jug', 'Grinder cup']),
+    MD('kitchen', 'Blenders', 'Blender 3-in-1', '3-in-1 Blender (red)', ['Two grinder cups', 'Pulse and two speeds']),
+    MD('ac', 'Split units', 'AC 9000 BTU', '9,000 BTU Split Air Conditioner', ['Indoor and outdoor unit']),
+    MD('washing', 'Washing machines', 'UK-WM 6.5kg', '6.5kg Twin Tub Washing Machine', ['Twin tub']),
+    MD('washing', 'Washing machines', 'UK-WM 8kg', '8kg Twin Tub Washing Machine', ['Twin tub']),
+    MD('washing', 'Washing machines', 'UK-WM 10kg', '10kg Twin Tub Washing Machine', ['Twin tub']),
+    MD('washing', 'Washing machines', 'UK-WM 14kg', '14kg Twin Tub Washing Machine', ['Twin tub']),
+    MD('washing', 'Washing machines', 'UK-WM 16kg', '16kg Twin Tub Washing Machine', ['Twin tub']),
+    MD('washing', 'Washing machines', 'Twin Tub 525D8129', 'Twin Tub Washing Machine (model to confirm)', ['Twin tub']),
+    MD('agriculture', 'Water pumps', 'UK 0.37 F', 'Submersible Pump 0.37 kW with Float Switch', ['Float switch', 'Stainless body']),
+    MD('agriculture', 'Water pumps', 'UK 1.1 F', 'Submersible Pump 1.1 kW with Float Switch', ['Float switch', 'Stainless body']),
+    MD('agriculture', 'Water pumps', 'Submersible Pump Yellow', 'Submersible Dirty Water Pump (model to confirm)', []),
+    MD('agriculture', 'Hose pipes', 'Hose Pipe', 'Layflat Hose Pipe', [])
+  ];
+  PRODUCTS.push.apply(PRODUCTS, MRUK_DRAFTS);
+  // Mr UK product photos: id -> number of files (<id>-1.webp is the front shot), drafts included. See docs/mruk-photo-mapping.md.
+  const MU_PHOTOS = {'mruk-uk-f275-58-5di0wd': 1, 'mruk-uk-f215-30-4dl-wd': 1, 'mruk-uk-f143-27-0wd': 1, 'mruk-uk-f120-20-2diwd': 1, 'mruk-uk-50': 1, 'mruk-uk-1500': 1, 'mruk-uk-2500q': 1, 'mruk-uk-g3500q': 1, 'mruk-uk-g5500q': 1, 'mruk-uk-t09': 3, 'mruk-uk-6134-ge': 1, 'mruk-pump-control': 2, 'mruk-surface-pump': 3, 'mruk-submissible-pump': 2, 'mruk-uk-f42': 1, 'mruk-uk-f43': 1, 'mruk-uk-f56': 1, 'mruk-uk-f57': 1, 'mruk-uk-f93': 1, 'mruk-uk-f103-wd': 1, 'mruk-uk-f215': 1, 'mruk-uk-showcase-fridge': 1, 'mruk-dsc01525': 1, 'mruk-chest-freezer-75': 1, 'mruk-chest-freezer-100': 1, 'mruk-chest-freezer-125': 1, 'mruk-double-lid-chest-freezer': 1, 'mruk-showcase-chest-freezer-big': 1, 'mruk-showcase-chest-freezer-small': 1, 'mruk-uk-6500q': 1, 'mruk-uk-t05': 1, 'mruk-uk-t08': 2, 'mruk-uk-t11': 2, 'mruk-uk-t18': 1, 'mruk-uk-t19': 1, 'mruk-uk-t21': 2, 'mruk-uk-t22': 3, 'mruk-uk-s16': 1, 'mruk-uk-s17': 1, 'mruk-uk-sb234': 1, 'mruk-uk-sb243': 1, 'mruk-uk-rgb-system': 2, 'mruk-uk-40': 1, 'mruk-uk-43p9': 1, 'mruk-uk-55-new': 2, 'mruk-tv-525d8181': 2, 'mruk-tv-20210129': 1, 'mruk-l500': 2, 'mruk-uk-9285': 1, 'mruk-uk-ge1': 1, 'mruk-uk-se1': 1, 'mruk-blender-stainless': 1, 'mruk-blender-3-in-1': 2, 'mruk-ac-9000-btu': 4, 'mruk-uk-wm-6-5kg': 1, 'mruk-uk-wm-8kg': 1, 'mruk-uk-wm-10kg': 1, 'mruk-uk-wm-14kg': 1, 'mruk-uk-wm-16kg': 1, 'mruk-twin-tub-525d8129': 2, 'mruk-uk-0-37-f': 2, 'mruk-uk-1-1-f': 2, 'mruk-submersible-pump-yellow': 3, 'mruk-hose-pipe': 2};
   // Skywood product photos: id -> number of files (<id>-1.webp is the front shot), drafts included. See docs/skywood-photo-mapping.md.
   const SW_PHOTOS = { 'skywood-sky-32-0bi': 2, 'skywood-sky-50-5bi': 2, 'skywood-sky-24-6bi': 2, 'skywood-sky-17-3bg': 1, 'skywood-sky-13-8': 4, 'skywood-sky-25-0cf': 2, 'skywood-sk6031ges': 1, 'skywood-sky-em19a01': 5, 'skywood-skm-e9a': 5, 'skywood-sk-g05': 2, 'skywood-multi-purpose-blender-p5a': 2, 'skywood-sk-20s03': 1, 'skywood-lc38-black': 1, 'skywood-tf4201trl': 2, 'skywood-ctf4203-black': 3, 'skywood-af4204': 1, 'skywood-ac2401': 3, 'skywood-csdc-12k': 2, 'skywood-csdc-18k': 2, 'skywood-csc-09k': 2, 'skywood-csc-12k': 2, 'skywood-xqb100-1729az': 1, 'skywood-b-09': 1, 'skywood-sky-10-8': 3, 'skywood-sky-12-5': 4, 'skywood-sky-14-2': 3, 'skywood-sky-177-biwd': 2, 'skywood-sky-24-6wd': 2, 'skywood-sky-43-9wd': 2, 'skywood-sky-10-0cf': 2, 'skywood-sky-15-0cf': 2, 'skywood-sky-20-0cf': 2, 'skywood-ed25a01': 5, 'skywood-em04a05': 5, 'skywood-em10a02': 5, 'skywood-em10a04': 5, 'skywood-sk5031geb': 1, 'skywood-sk5031ges': 1, 'skywood-sk6031geb': 1, 'skywood-skm20-e70': 2, 'skywood-skm23-e80': 3, 'skywood-bimwo-skq25n-e8i': 3, 'skywood-bimwo-ski25n': 2, 'skywood-sk-g01': 2, 'skywood-sk-g02': 2, 'skywood-sk-g03': 2, 'skywood-sk-g04': 2, 'skywood-r-02': 1, 'skywood-r-02s': 1, 'skywood-nk-b148': 1, 'skywood-nk-b141': 1, 'skywood-nk-j268': 1, 'skywood-nk-j220b': 1, 'skywood-sk-8823': 1, 'skywood-sk-8870': 1, 'skywood-lc38-white': 1, 'skywood-lc38-silver': 1, 'skywood-lc38t': 1, 'skywood-lc31t': 1, 'skywood-lc32f': 1, 'skywood-lc37f': 1, 'skywood-lcd31f': 1, 'skywood-tea-bar': 1, 'skywood-sk2023-b01': 1, 'skywood-sk2023-b02': 1, 'skywood-sk2023-s04': 1, 'skywood-sk2023-s05': 1, 'skywood-sk2025-b03': 1, 'skywood-sk2025-b05': 1, 'skywood-sk2025-b07': 1, 'skywood-ctf4202tr-l': 5, 'skywood-tf1302': 2, 'skywood-tf2902tr-l': 2, 'skywood-tf4001tr-l': 3, 'skywood-csc-18k': 2, 'skywood-csc-24k': 2, 'skywood-csdc-09k': 2, 'skywood-csdc-24k': 2 };
   PRODUCTS.forEach(p => {
-    const n = SW_PHOTOS[p.id];
+    const n = SW_PHOTOS[p.id], m = MU_PHOTOS[p.id];
     if (n) { p.images = Array.from({ length: n }, (_, i) => SWL + p.id + '-' + (i + 1) + '.webp'); p.img = p.images[0]; }
+    else if (m) { p.images = Array.from({ length: m }, (_, i) => MUL + p.id + '-' + (i + 1) + '.webp'); p.img = p.images[0]; }
     else if (p.img) p.images = [p.img];
     else p.images = [];
   });

@@ -55,7 +55,8 @@ export const getBrand = cache(async (key: string): Promise<BrandView> => {
 export const getCategories = cache(
   cached(async (brand: BrandKey): Promise<CategoryView[]> => {
   const cats = await prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, include: { _count: { select: { products: { where: { hidden: false } } } } } });
-  return cats.map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img, subs: c.subs, count: c._count.products }));
+  // A category with no published products (e.g. one holding only drafts) stays out of the store until one goes live.
+  return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img, subs: c.subs, count: c._count.products }));
   }, 'categories'),
 );
 

@@ -66,38 +66,8 @@ function Columns({ brand, cats, t, headClass, payLater }: { brand: BrandView; ca
 }
 
 function MrukFooter({ brand, cats, t, social, payLater }: { brand: BrandView; cats: CategoryView[]; t: T; social?: SocialLinks; payLater: boolean }) {
-  const b = `/${brand.key}`;
   return (
     <footer className="mu-foot">
-      <div className="wrap mu-foot-help">
-        <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="mu-foot-card wa">
-          <span className="mu-foot-ico" aria-hidden="true">
-            <WhatsAppIcon size={22} />
-          </span>
-          <span>
-            <b>{t('chatWhatsApp')}</b>
-            {t('footerHelpLine')}
-          </span>
-        </a>
-        <Link href={`${b}/track`} className="mu-foot-card">
-          <span className="mu-foot-ico" aria-hidden="true">
-            <RouteIcon size={22} />
-          </span>
-          <span>
-            <b>{t('trackOrder')}</b>
-            {t('trustDeliverySub')}
-          </span>
-        </Link>
-        <Link href={`${b}/suppliers`} className="mu-foot-card">
-          <span className="mu-foot-ico" aria-hidden="true">
-            <PinIcon size={22} />
-          </span>
-          <span>
-            <b>{t('suppliersNearYou')}</b>
-            {t('trustShowroomsSub')}
-          </span>
-        </Link>
-      </div>
       <div className="wrap">
         <Subscribe brand="mruk" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
       </div>
