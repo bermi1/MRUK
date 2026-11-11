@@ -44,7 +44,9 @@ describe('Pay Later switch', () => {
   it('offers Salary Advance at checkout only when on', () => {
     expect(checkoutMethods(true)).toContain('salary_advance');
     expect(checkoutMethods(false)).not.toContain('salary_advance');
-    expect(checkoutMethods(false)).toEqual(['azania_account', 'card', 'pay_on_delivery']);
+    // Azania Bank account payment is an Azania method too: off with Pay Later.
+    expect(checkoutMethods(false)).toEqual(['card', 'pay_on_delivery']);
+    expect(checkoutMethods(true)).toEqual(['salary_advance', 'azania_account', 'card', 'pay_on_delivery']);
   });
 
   it('opens the Azania mini app while either brand has Pay Later', () => {

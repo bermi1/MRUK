@@ -36,7 +36,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, pay
       const r = await addToCartAction(brand, p.id);
       if (!r.ok) return toast(r.error);
       if (payLater) await updateCartAction(brand, { months });
-      if (checkout) router.push(`/${brand}/checkout?method=${pay === 'salary' ? 'salary_advance' : 'azania_account'}`);
+      if (checkout) router.push(`/${brand}/checkout?method=${pay === 'salary' ? 'salary_advance' : payLater ? 'azania_account' : 'card'}`);
       else router.push(`/${brand}/cart`);
     });
 

@@ -9,7 +9,8 @@ import { sign, verifySigned } from './session';
 const cartCookie = (brand: BrandKey) => `bt_cart_${brand}`;
 const cmpCookie = (brand: BrandKey) => `bt_cmp_${brand}`;
 
-async function cartId(brand: BrandKey): Promise<string | null> {
+/** This browser's cart id for the brand (signed cookie), or null. */
+export async function cartId(brand: BrandKey): Promise<string | null> {
   const raw = (await cookies()).get(cartCookie(brand))?.value;
   if (!raw) return null;
   const [id, sig] = raw.split('.');

@@ -104,10 +104,12 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel, pay
       return;
     }
     start(async () => {
-      const r = await placeOrderAction(brand.key, { name: co.name, phone: co.phone, email: co.email, address: co.address, method, consent: co.consent, channel });
+      const r = await placeOrderAction(brand.key, { name: co.name, phone: co.phone, email: co.email, address: co.address, method, consent: co.consent, channel, expectedTotal: cart.total });
       if (!r.ok) {
         setFormErr(r.error);
         if (r.field) setErrors({ [r.field]: r.error });
+        // The cart changed on the server (stock, code, price): show the current summary.
+        if (r.field === 'total' || r.field === 'discount') router.refresh();
         return;
       }
       router.push(r.data!.redirect);

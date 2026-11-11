@@ -123,7 +123,7 @@ const contactZ = z.object({
 export async function placeOrderAction(brand: string, input: unknown): Promise<ActionResult<{ redirect: string }>> {
   try {
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
-    const d = contactZ.extend({ method: z.string().refine(isPaymentMethod), consent: z.boolean(), channel: z.enum(['web', 'app']).default('web') }).parse(input);
+    const d = contactZ.extend({ method: z.string().refine(isPaymentMethod), consent: z.boolean(), channel: z.enum(['web', 'app']).default('web'), expectedTotal: z.number().int().min(0).max(10_000_000_000).optional() }).parse(input);
     if (d.method === 'salary_advance') throw new CheckoutError('Use the Salary Advance application for this payment method');
     const customer = await currentCustomer();
     const r = await placeOrder(b, { ...d, method: d.method as 'card' | 'azania_account' | 'pay_on_delivery', region: '', customerId: customer?.id });

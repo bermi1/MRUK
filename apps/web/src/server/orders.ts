@@ -17,6 +17,7 @@ import {
   initialOrderStatus,
   isAdvanceTerm,
   monthlyInstalment,
+  needsAzania,
   normaliseNida,
   normalizeTzPhone,
   orderNumber,
@@ -32,13 +33,16 @@ import {
 } from '@bt/core';
 import { contractPdf, invoicePdf } from '@bt/integrations';
 import type { BrandKey } from '@/lib/types';
-import { getCart, clearCart, flashDiscounts } from './cart';
+import { cartId, getCart, clearCart, flashDiscounts } from './cart';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
 import { payLaterLive } from './paylater';
 import { sign } from './session';
 import { checkOrderStock, checkStock, emitTaskEvent } from './tasks';
+
+const AZANIA_OFF_MESSAGE = 'Payment through Azania Bank is not available at the moment. Please pay by card or on delivery.';
+const ALREADY_PLACED_MESSAGE = 'This order has already been placed. Check your SMS or your account for the order number.';
 
 export class CheckoutError extends Error {
   constructor(
@@ -132,6 +136,8 @@ function validateContact(c: ContactInput) {
 export interface PlaceOrderInput extends ContactInput {
   method: Exclude<PaymentMethod, 'salary_advance'>;
   consent: boolean;
+  /** The total the customer saw on the button; the order is refused if the cart now prices differently. */
+  expectedTotal?: number;
   channel: 'web' | 'app';
   customerId?: string | null;
 }
@@ -142,11 +148,22 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
   const cart = await getCart(brand);
   if (!cart.lines.length) throw new CheckoutError('Your cart is empty');
   if (!input.consent) throw new CheckoutError('Please accept the privacy notice to continue', 'consent');
+  // A code that expired, a price edit or a flash deal ending since the page loaded: never charge more than was shown.
+  if (input.expectedTotal !== undefined && input.expectedTotal !== cart.total) {
+    throw new CheckoutError(`Your total has changed to ${fmtTZS(cart.total)}${cart.discountError ? ` (${cart.discountError.toLowerCase()})` : ''}. Check the summary and place the order again.`, 'total');
+  }
   const c = validateContact({ ...input, region: cart.region });
   if (!paymentAllowed(input.method, cart.region)) throw new CheckoutError('Pay on delivery is only available in Dar es Salaam', 'method');
+  // Azania Bank account payment follows the Pay Later switch (bank integration off until Azania's final flow).
+  if (needsAzania(input.method) && !(await payLaterLive(brand))) throw new CheckoutError(AZANIA_OFF_MESSAGE, 'method');
   const status: OrderStatus = initialOrderStatus(input.method, false);
+  const cid = await cartId(brand);
 
   const order = await prisma.$transaction(async (tx) => {
+    // Claim the cart first: a second submit of the same cart (double click, retried request) waits on these
+    // rows, then finds them gone and stops, so one cart can only ever become one order.
+    const claimed = cid ? await tx.cartItem.deleteMany({ where: { cartId: cid } }) : { count: 0 };
+    if (claimed.count === 0) throw new CheckoutError(ALREADY_PLACED_MESSAGE);
     await reserveStock(tx, cart.lines);
     const seq = await nextNumber(tx, `order:${brand}`, brand === 'mruk' ? 10_500 : 20_400);
     const o = await tx.order.create({
@@ -374,6 +391,7 @@ async function issueInvoice(tx: Prisma.TransactionClient, orderId: string, amoun
 export async function capturePayment(number: string, method: 'card' | 'azania_account', details: { cardNumber?: string; expiry?: string; cvc?: string; account?: string; pin?: string }) {
   const order = await prisma.order.findUnique({ where: { number } });
   if (!order || order.status !== 'placed' || order.paymentMethod !== method) throw new CheckoutError('This order is not awaiting payment');
+  if (needsAzania(method) && !(await payLaterLive(order.brandKey as BrandKey))) throw new CheckoutError(AZANIA_OFF_MESSAGE);
   if (order.reservedUntil && order.reservedUntil < new Date()) {
     await releaseExpiredReservations();
     throw new CheckoutError('This payment window has expired and the items were released. Please place the order again.');
@@ -443,6 +461,8 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
     if (releasesStock(to)) {
       await restock(tx, o.id);
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'captured' }, data: { status: 'refunded' } });
+      // Nothing was collected (e.g. pay on delivery): the open payment is closed, as when a reservation expires.
+      await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'failed' } });
       await tx.invoice.updateMany({ where: { orderId: o.id }, data: { status: 'void' } });
     }
     if (to === 'approved' && o.status === 'placed') {
