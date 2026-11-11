@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { prisma } from '@bt/db';
-import { isPaymentMethod, sameCategory, type VerdictView } from '@bt/core';
+import { isPaymentMethod, normalizeTzPhone, sameCategory, type VerdictView } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
 import { AuthError, requestOtp, verifyOtp } from '@/server/auth';
 import { COMPARE_MAX, addToCart, clearCompare, getCart, restartCompare, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
@@ -13,8 +13,8 @@ import { getProducts, getProductsLive, isBrandKey } from '@/server/catalog';
 import { payLaterOn } from '@/server/paylater';
 import { LOCALE_COOKIE } from '@/server/locale';
 import { capturePayment, CheckoutError, confirmationPath, confirmationToken, placeAdvanceOrder, placeOrder } from '@/server/orders';
-import { clientIp, RateLimitError } from '@/server/ratelimit';
-import { CUSTOMER_COOKIE, currentCustomer, endSession } from '@/server/session';
+import { clientIp, limit, RateLimitError } from '@/server/ratelimit';
+import { CUSTOMER_COOKIE, currentCustomer, endSession, verifySigned } from '@/server/session';
 import { aiAnswer, aiCompareVerdict, aiTips, createTicket } from '@/server/support';
 
 const brandZ = z.string().refine(isBrandKey, 'Unknown brand');
@@ -24,7 +24,8 @@ function fail(e: unknown): { ok: false; error: string; field?: string } {
   if (e instanceof CheckoutError) return { ok: false, error: e.message, field: e.field };
   if (e instanceof AuthError || e instanceof RateLimitError) return { ok: false, error: e.message };
   if (e instanceof z.ZodError) return { ok: false, error: e.issues[0]?.message ?? 'Check the form and try again', field: String(e.issues[0]?.path[0] ?? '') };
-  console.error('[action]', e instanceof Error ? e.message : e);
+  // No PII in logs: database errors can quote the submitted values, so log only the error type and code.
+  console.error('[action]', e instanceof Error ? e.name : typeof e, (e as { code?: string } | null)?.code ?? '');
   return { ok: false, error: e instanceof Error && e.message.length < 140 ? e.message : 'Something went wrong. Please try again.' };
 }
 
@@ -125,6 +126,8 @@ export async function placeOrderAction(brand: string, input: unknown): Promise<A
     const b = brandZ.parse(brand) as 'mruk' | 'skywood';
     const d = contactZ.extend({ method: z.string().refine(isPaymentMethod), consent: z.boolean(), channel: z.enum(['web', 'app']).default('web') }).parse(input);
     if (d.method === 'salary_advance') throw new CheckoutError('Use the Salary Advance application for this payment method');
+    // Checkout rate limit (CLAUDE.md quality gate): per phone, and per IP (3x).
+    await limit('checkout', 10, 10 * 60, normalizeTzPhone(d.phone) ?? d.phone);
     const customer = await currentCustomer();
     const r = await placeOrder(b, { ...d, method: d.method as 'card' | 'azania_account' | 'pay_on_delivery', region: '', customerId: customer?.id });
     revalidatePath(`/${b}`, 'layout');
@@ -160,9 +163,12 @@ export async function placeAdvanceOrderAction(brand: string, input: unknown): Pr
   }
 }
 
-export async function payAction(number: string, method: 'card' | 'azania_account', details: Record<string, string>): Promise<ActionResult> {
+export async function payAction(number: string, token: string, method: 'card' | 'azania_account', details: Record<string, string>): Promise<ActionResult> {
   try {
     const n = z.string().regex(/^(MU|SW)-\d{4,7}$/).parse(number);
+    // Only the holder of the order's signed link (or the page rendered for its owner) may pay or try cards/PINs on it.
+    if (!verifySigned(`order:${n}`, z.string().max(64).parse(token))) throw new CheckoutError('This payment link is not valid. Open the link from your order again.');
+    await limit('pay', 10, 15 * 60, n);
     const d = z.object({ cardNumber: z.string().max(24).optional(), expiry: z.string().max(5).optional(), cvc: z.string().max(4).optional(), account: z.string().max(24).optional(), pin: z.string().max(6).optional() }).parse(details);
     await capturePayment(n, z.enum(['card', 'azania_account']).parse(method), d);
     return { ok: true };

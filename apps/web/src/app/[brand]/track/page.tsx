@@ -16,7 +16,7 @@ export default async function TrackPage({ params, searchParams }: { params: Prom
   if (q) {
     try {
       await limit('track', 30, 600);
-      tr = await trackView(q);
+      tr = await trackView(q, key);
       if (!tr) err = "We couldn't find that order number. Check the SMS we sent you, or contact support.";
     } catch (e) {
       err = e instanceof RateLimitError ? e.message : 'Something went wrong. Try again.';

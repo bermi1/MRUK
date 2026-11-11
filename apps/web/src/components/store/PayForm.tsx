@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { payAction } from '@/app/actions/store';
 
 /** Mock hosted payment page (replaced by the gateway / Azania redirect in production). */
-export function PayForm({ number, method, done }: { number: string; method: 'card' | 'azania_account'; done: string }) {
+export function PayForm({ number, token, method, done }: { number: string; token: string; method: 'card' | 'azania_account'; done: string }) {
   const [f, setF] = useState({ cardNumber: '', expiry: '', cvc: '', account: '', pin: '' });
   const [err, setErr] = useState('');
   const [pending, start] = useTransition();
@@ -16,7 +16,7 @@ export function PayForm({ number, method, done }: { number: string; method: 'car
         e.preventDefault();
         setErr('');
         start(async () => {
-          const r = await payAction(number, method, method === 'card' ? { cardNumber: f.cardNumber, expiry: f.expiry, cvc: f.cvc } : { account: f.account, pin: f.pin });
+          const r = await payAction(number, token, method, method === 'card' ? { cardNumber: f.cardNumber, expiry: f.expiry, cvc: f.cvc } : { account: f.account, pin: f.pin });
           if (!r.ok) return setErr(r.error);
           router.push(done);
         });

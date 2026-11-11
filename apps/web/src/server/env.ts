@@ -1,5 +1,6 @@
 import 'server-only';
 import { z } from 'zod';
+import { mockGatewayAllowed } from '@bt/core';
 
 // `next build` loads server modules to collect page data; real settings are only
 // required when the site runs, so the build never depends on secrets being present.
@@ -46,4 +47,6 @@ export const env = {
   showOtp: parsed.SMS_ADAPTER === 'mock' && ((parsed.DEV_SHOW_OTP === 'true' && parsed.NODE_ENV !== 'production') || parsed.DEMO_MODE === 'true'),
   /** UAT/staging with mock adapters: enables the mock-SSO demo sign-in. Never with live adapters. */
   demo: parsed.DEMO_MODE === 'true' && parsed.AZANIA_ADAPTER === 'mock',
+  /** The mock card / bank gateways may take payments (development, or a DEMO_MODE UAT site); never on a real production store. */
+  mockPayments: mockGatewayAllowed({ production: parsed.NODE_ENV === 'production', demo: parsed.DEMO_MODE === 'true' }),
 };

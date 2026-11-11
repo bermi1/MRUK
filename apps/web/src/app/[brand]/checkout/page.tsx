@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { isPaymentMethod, type PaymentMethod } from '@bt/core';
+import { checkoutMethods, isPaymentMethod, type PaymentMethod } from '@bt/core';
 import { CheckoutFlow } from '@/components/store/CheckoutFlow';
 import { formatTzPhone } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
@@ -15,8 +15,9 @@ export default async function CheckoutPage({ params, searchParams }: { params: P
   const { brand: key } = (await params) as { brand: BrandKey };
   const sp = await searchParams;
   const [brand, cart, customer, t, payLater] = await Promise.all([getBrand(key), getCart(key), currentCustomer(), getT(), payLaterOn(key)]);
-  const asked: PaymentMethod = sp.method && isPaymentMethod(sp.method) ? sp.method : payLater ? 'salary_advance' : 'azania_account';
-  const method: PaymentMethod = asked === 'salary_advance' && !payLater ? 'azania_account' : asked;
+  const asked: PaymentMethod = sp.method && isPaymentMethod(sp.method) ? sp.method : payLater ? 'salary_advance' : 'card';
+  // With Azania switched off, a link asking for an Azania method (?method=azania_account) falls back to card.
+  const method: PaymentMethod = checkoutMethods(payLater).includes(asked) ? asked : 'card';
   return (
     <div className="wrap page-top" style={{ maxWidth: 1200 }}>
       <h1 className="h1 no-print" style={{ marginTop: 0 }}>

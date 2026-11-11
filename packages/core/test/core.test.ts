@@ -40,6 +40,7 @@ import {
   normalizeTzPhone,
   orderNumber,
   parseAmount,
+  mockGatewayAllowed,
   paymentAllowed,
   paymentLabel,
   priceCart,
@@ -223,6 +224,12 @@ describe('payments', () => {
     expect(paymentAllowed('pay_on_delivery', 'Dar es Salaam')).toBe(true);
     expect(paymentAllowed('pay_on_delivery', 'Arusha')).toBe(false);
     expect(paymentAllowed('card', 'Arusha')).toBe(true);
+  });
+
+  it('mock payment gateways never take payments on a production store unless it is a demo site', () => {
+    expect(mockGatewayAllowed({ production: false, demo: false })).toBe(true);
+    expect(mockGatewayAllowed({ production: true, demo: true })).toBe(true);
+    expect(mockGatewayAllowed({ production: true, demo: false })).toBe(false);
   });
 });
 

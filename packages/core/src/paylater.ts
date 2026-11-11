@@ -43,9 +43,17 @@ export function payLaterValue(enabled: boolean, updatedBy: string, at = new Date
   return { enabled, updatedBy: updatedBy.slice(0, 160), at: at.toISOString() };
 }
 
-/** Payment methods a customer may choose; Salary Advance only while Pay Later is on. */
+/**
+ * Payment methods a customer may choose. Every Azania Bank method (Pay Later and the Azania account
+ * payment) follows the brand's switch: while it is off, only card and pay on delivery are offered.
+ */
 export function checkoutMethods(payLater: boolean): PaymentMethod[] {
-  return PAYMENT_METHODS.filter((m) => payLater || m !== 'salary_advance');
+  return PAYMENT_METHODS.filter((m) => payLater || !azaniaMethod(m));
+}
+
+/** Methods that need Azania Bank (Salary Advance / Pay Later and the direct Azania account payment). */
+export function azaniaMethod(m: PaymentMethod): boolean {
+  return m === 'salary_advance' || m === 'azania_account';
 }
 
 /** The Azania mini app sells only on Pay Later: it is open while either brand has it on. */

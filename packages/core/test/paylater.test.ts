@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   answerFromCatalogue,
+  azaniaMethod,
   checkoutMethods,
   compareVerdict,
   mentionsPayLater,
@@ -44,7 +45,16 @@ describe('Pay Later switch', () => {
   it('offers Salary Advance at checkout only when on', () => {
     expect(checkoutMethods(true)).toContain('salary_advance');
     expect(checkoutMethods(false)).not.toContain('salary_advance');
-    expect(checkoutMethods(false)).toEqual(['azania_account', 'card', 'pay_on_delivery']);
+    expect(checkoutMethods(false)).toEqual(['card', 'pay_on_delivery']);
+  });
+
+  it('switches the Azania account payment off with Pay Later (security: no Azania method while off)', () => {
+    expect(checkoutMethods(false)).not.toContain('azania_account');
+    expect(checkoutMethods(true)).toEqual(['salary_advance', 'azania_account', 'card', 'pay_on_delivery']);
+    expect(azaniaMethod('azania_account')).toBe(true);
+    expect(azaniaMethod('salary_advance')).toBe(true);
+    expect(azaniaMethod('card')).toBe(false);
+    expect(azaniaMethod('pay_on_delivery')).toBe(false);
   });
 
   it('opens the Azania mini app while either brand has Pay Later', () => {

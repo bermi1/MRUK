@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PayForm } from '@/components/store/PayForm';
 import { fmt } from '@/lib/format';
-import { confirmationPath } from '@/server/orders';
+import { confirmationPath, confirmationToken } from '@/server/orders';
 import { orderForOwner } from '@/server/orderview';
 
 export const metadata: Metadata = { title: 'Payment', robots: { index: false } };
@@ -30,7 +30,7 @@ export default async function PayPage({ params, searchParams }: { params: Promis
         </div>
         {o.status === 'placed' ? (
           <>
-            <PayForm number={o.number} method={method} done={done} />
+            <PayForm number={o.number} token={confirmationToken(o.number)} method={method} done={done} />
             {o.reservedUntil && <div className="note">Your items are reserved until {o.reservedUntil.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Dar_es_Salaam' })}.</div>}
           </>
         ) : (
