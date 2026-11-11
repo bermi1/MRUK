@@ -63,6 +63,11 @@ export function defaultCheckoutMethod(payLater: boolean, region: string, asked?:
   return want ?? offered[0] ?? 'card';
 }
 
+/** Methods that need Azania Bank (same as needsAzania; kept for the security checks that use this name). */
+export function azaniaMethod(m: PaymentMethod): boolean {
+  return needsAzania(m);
+}
+
 /** The Azania mini app sells only on Pay Later: it is open while either brand has it on. */
 export function miniAppOpen(states: Record<PayLaterBrand, Pick<PayLaterState, 'enabled'>>): boolean {
   return PAY_LATER_BRANDS.some((b) => states[b].enabled);

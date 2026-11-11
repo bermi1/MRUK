@@ -6,6 +6,7 @@ import {
   assertAdvanceTransition,
   assertOrderTransition,
   assessAffordability,
+  azaniaMethod,
   buildSchedule,
   CONTRACT_CONSENTS,
   contractNumber,
@@ -17,7 +18,6 @@ import {
   initialOrderStatus,
   isAdvanceTerm,
   monthlyInstalment,
-  needsAzania,
   normaliseNida,
   normalizeTzPhone,
   orderNumber,
@@ -33,7 +33,8 @@ import {
 } from '@bt/core';
 import { contractPdf, invoicePdf } from '@bt/integrations';
 import type { BrandKey } from '@/lib/types';
-import { cartId, getCart, clearCart, flashDiscounts } from './cart';
+import { getCart, clearCart, consumeCart, flashDiscounts } from './cart';
+import { env } from './env';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
@@ -41,8 +42,6 @@ import { payLaterLive } from './paylater';
 import { sign } from './session';
 import { checkOrderStock, checkStock, emitTaskEvent } from './tasks';
 
-const AZANIA_OFF_MESSAGE = 'Payment through Azania Bank is not available at the moment. Please pay by card or on delivery.';
-const ALREADY_PLACED_MESSAGE = 'This order has already been placed. Check your SMS or your account for the order number.';
 
 export class CheckoutError extends Error {
   constructor(
@@ -94,9 +93,11 @@ interface ContactInput {
 }
 
 /** Reserve stock for the cart lines; throws if any line can't be filled. */
-async function reserveStock(tx: Prisma.TransactionClient, lines: { productId: string; qty: number; name: string }[]) {
+async function reserveStock(tx: Prisma.TransactionClient, brand: BrandKey, lines: { productId: string; qty: number; name: string }[]) {
   for (const l of lines) {
-    const r = await tx.product.updateMany({ where: { id: l.productId, stock: { gte: l.qty }, hidden: false }, data: { stock: { decrement: l.qty } } });
+    if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > 20) throw new CheckoutError('Please update your cart.');
+    // Only this brand's live, priced products (never a hidden price-0 draft or the sister brand's stock).
+    const r = await tx.product.updateMany({ where: { id: l.productId, brandKey: brand, stock: { gte: l.qty }, hidden: false, price: { gt: 0 } }, data: { stock: { decrement: l.qty } } });
     if (r.count !== 1) throw new CheckoutError(`Sorry, ${l.name} no longer has enough stock. Please update your cart.`);
   }
   stockChanged();
@@ -142,6 +143,21 @@ export interface PlaceOrderInput extends ContactInput {
   customerId?: string | null;
 }
 
+const AZANIA_OFF_MESSAGE = 'Azania Bank payments are not available at the moment. Please pay by card or on delivery.';
+
+/**
+ * Server-side gate for a payment method (never trust the page the customer had open): Azania Bank
+ * methods only while the brand's Azania switch is on, and the mock gateways only where they may take
+ * payments (development or a DEMO_MODE site, see env.mockPayments).
+ */
+async function assertMethodOpen(brand: BrandKey, method: PaymentMethod) {
+  if (azaniaMethod(method) && !(await payLaterLive(brand))) throw new CheckoutError(AZANIA_OFF_MESSAGE, 'method');
+  const gatewayLive = method === 'azania_account' && env.AZANIA_ADAPTER === 'live';
+  if ((method === 'card' || method === 'azania_account') && !gatewayLive && !env.mockPayments) {
+    throw new CheckoutError('Online payment is not available yet. Please choose pay on delivery or contact us.', 'method');
+  }
+}
+
 /** Pay in full: card, Azania account or pay on delivery. */
 export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
   await releaseExpiredReservations();
@@ -154,17 +170,13 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
   }
   const c = validateContact({ ...input, region: cart.region });
   if (!paymentAllowed(input.method, cart.region)) throw new CheckoutError('Pay on delivery is only available in Dar es Salaam', 'method');
-  // Azania Bank account payment follows the Pay Later switch (bank integration off until Azania's final flow).
-  if (needsAzania(input.method) && !(await payLaterLive(brand))) throw new CheckoutError(AZANIA_OFF_MESSAGE, 'method');
+  await assertMethodOpen(brand, input.method);
   const status: OrderStatus = initialOrderStatus(input.method, false);
-  const cid = await cartId(brand);
 
   const order = await prisma.$transaction(async (tx) => {
-    // Claim the cart first: a second submit of the same cart (double click, retried request) waits on these
-    // rows, then finds them gone and stops, so one cart can only ever become one order.
-    const claimed = cid ? await tx.cartItem.deleteMany({ where: { cartId: cid } }) : { count: 0 };
-    if (claimed.count === 0) throw new CheckoutError(ALREADY_PLACED_MESSAGE);
-    await reserveStock(tx, cart.lines);
+    // First take the cart: a second, concurrent submit of the same cart waits here and finds it empty.
+    if ((await consumeCart(tx, brand)) === 0) throw new CheckoutError('This order has already been placed. Check your SMS or account for the order number.');
+    await reserveStock(tx, brand, cart.lines);
     const seq = await nextNumber(tx, `order:${brand}`, brand === 'mruk' ? 10_500 : 20_400);
     const o = await tx.order.create({
       data: {
@@ -274,7 +286,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   const consents = CONTRACT_CONSENTS.map((text) => ({ text, acceptedAt: signedAt.toISOString() }));
 
   const { order, app, cno } = await prisma.$transaction(async (tx) => {
-    await reserveStock(tx, lines);
+    await reserveStock(tx, brand, lines);
     const seq = await nextNumber(tx, `order:${brand}`, brand === 'mruk' ? 10_500 : 20_400);
     const cseq = await nextNumber(tx, 'contract', 88_100);
     const number = orderNumber(brand, seq);
@@ -391,7 +403,7 @@ async function issueInvoice(tx: Prisma.TransactionClient, orderId: string, amoun
 export async function capturePayment(number: string, method: 'card' | 'azania_account', details: { cardNumber?: string; expiry?: string; cvc?: string; account?: string; pin?: string }) {
   const order = await prisma.order.findUnique({ where: { number } });
   if (!order || order.status !== 'placed' || order.paymentMethod !== method) throw new CheckoutError('This order is not awaiting payment');
-  if (needsAzania(method) && !(await payLaterLive(order.brandKey as BrandKey))) throw new CheckoutError(AZANIA_OFF_MESSAGE);
+  await assertMethodOpen(order.brandKey as BrandKey, method);
   if (order.reservedUntil && order.reservedUntil < new Date()) {
     await releaseExpiredReservations();
     throw new CheckoutError('This payment window has expired and the items were released. Please place the order again.');
@@ -417,8 +429,11 @@ export async function capturePayment(number: string, method: 'card' | 'azania_ac
     throw new CheckoutError(message);
   }
   await prisma.$transaction(async (tx) => {
+    // Guarded: a replayed or concurrent capture of the same order finds it no longer 'placed'.
+    const r = await tx.order.updateMany({ where: { id: order.id, status: 'placed' }, data: { status: 'approved', reservedUntil: null } });
+    if (r.count !== 1) throw new CheckoutError('This order is not awaiting payment');
+    await tx.orderEvent.create({ data: { orderId: order.id, status: 'approved', note: `Payment confirmed (${paymentLabel(method)})`, actor: 'system' } });
     await tx.payment.updateMany({ where: { orderId: order.id, status: 'pending' }, data: { status: 'captured', reference } });
-    await tx.order.update({ where: { id: order.id }, data: { status: 'approved', reservedUntil: null, events: { create: { status: 'approved', note: `Payment confirmed (${paymentLabel(method)})`, actor: 'system' } } } });
     await issueInvoice(tx, order.id, order.total, 'paid');
   });
   await emitTaskEvent({ type: 'order.paid', brand: order.brandKey, number: order.number, method });

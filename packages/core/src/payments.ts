@@ -13,6 +13,15 @@ export function isPaymentMethod(v: string): v is PaymentMethod {
   return (PAYMENT_METHODS as readonly string[]).includes(v);
 }
 
+/**
+ * The built-in mock gateways (test card 4242…, mock Azania account charge) approve payments without
+ * moving money. They may only take payments outside production, or on a demo (UAT) site
+ * (DEMO_MODE=true); a production store would otherwise hand out goods for free.
+ */
+export function mockGatewayAllowed(o: { production: boolean; demo: boolean }): boolean {
+  return !o.production || o.demo;
+}
+
 /** Pay on delivery is only offered in Dar es Salaam. */
 export function paymentAllowed(method: PaymentMethod, region: string): boolean {
   if (method === 'pay_on_delivery') return region === 'Dar es Salaam';
