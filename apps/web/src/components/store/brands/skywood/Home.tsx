@@ -72,7 +72,9 @@ export function SkywoodHome(props: {
   const b = `/${brand.key}`;
   const perMonth = payLater ? t('perMonthShort') : '';
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
-  const reviews = reviewsFor('skywood', payLater);
+  const k = brand.key;
+  const mu = k === 'mruk';
+  const reviews = reviewsFor(k, payLater);
   // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
   const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
@@ -84,11 +86,11 @@ export function SkywoodHome(props: {
   };
 
   return (
-    <div className="sw-home">
-      <SkywoodHero slides={slides} labels={heroLabels} dealsHref={`${b}/deals`} />
+    <div className={mu ? "sw-home mu-sw" : "sw-home"}>
+      <SkywoodHero slides={slides} labels={heroLabels} dealsHref={`${b}/deals`} brand={k} />
 
       {/* Service promise */}
-      <section className="sw-promise" aria-label={t('swPromise')}>
+      <section className="sw-promise" aria-label={(mu ? t('muPromise') : t('swPromise'))}>
         <div className="wrap sw-promise-in">
           {(
             [
@@ -118,7 +120,7 @@ export function SkywoodHome(props: {
         <p className="sw-statement-t">
           {tag1} {tagRest.length > 0 && <em>{tagRest.join(' ')}</em>}
         </p>
-        <p className="sw-statement-s">{t('swIntro')}</p>
+        <p className="sw-statement-s">{(mu ? t('muIntro') : t('swIntro'))}</p>
         </div>
       </section>
 
@@ -163,7 +165,7 @@ export function SkywoodHome(props: {
           <Head eyebrow={t('newArrivals')} title={t('newArrivalsSub', { brand: brand.name })} action={<More href={`${b}/shop?sort=new`}>{t('seeAll')}</More>} />
           <Rail labels={{ prev: t('prev'), next: t('next') }} className="sw-rail">
             {newest.map((p) => (
-              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="skywood" badge={p.tag || undefined} perMonth={perMonth} />
+              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand={k} badge={p.tag || undefined} perMonth={perMonth} />
             ))}
           </Rail>
         </div>
@@ -176,9 +178,9 @@ export function SkywoodHome(props: {
             <div className="sw-offers-copy" data-reveal>
               <p className="sw-eyebrow light">
                 <span className="sw-rule" aria-hidden="true" />
-                {t('swOffers')}
+                {(mu ? t('flashDeals') : t('swOffers'))}
               </p>
-              <h2>{t('swOffersTitle')}</h2>
+              <h2>{(mu ? t('flashDealsSub') : t('swOffersTitle'))}</h2>
               <p className="sw-offers-sub">{t('flashDealsSub')}</p>
               <div className="sw-offers-timer">
                 <span>{t('endsIn')}</span>
@@ -207,7 +209,7 @@ export function SkywoodHome(props: {
                       <s>{fmt(p.price)}</s>
                       {perMonth && <span>{perMonth.replace('{amount}', fmt(p.dealPrice / 12))}</span>}
                     </div>
-                    {p.stock > 0 && <AddButton brand="skywood" id={p.id} name={p.name} className="sw-offer-add" />}
+                    {p.stock > 0 && <AddButton brand={k} id={p.id} name={p.name} className="sw-offer-add" />}
                   </div>
                 </article>
               ))}
@@ -246,7 +248,7 @@ export function SkywoodHome(props: {
                   {t('discover')}
                   <ArrowRightIcon size={18} strokeWidth={1.5} className="sw-btn-arrow" />
                 </Link>
-                {focus.stock > 0 && <AddButton brand="skywood" id={focus.id} name={focus.name} className="sw-btn sw-btn-ghost" label={t('addToCart')} />}
+                {focus.stock > 0 && <AddButton brand={k} id={focus.id} name={focus.name} className="sw-btn sw-btn-ghost" label={t('addToCart')} />}
               </div>
             </div>
           </div>
@@ -282,7 +284,7 @@ export function SkywoodHome(props: {
                     <b>{fmt(d.now)}</b>
                     {payLater && <span>{t('orPerMonth', { amount: fmt(d.now / 12) })}</span>}
                   </div>
-                  <AddBundleButton brand="skywood" ids={d.items.map((p) => p.id)} className="sw-btn sw-btn-sm" />
+                  <AddBundleButton brand={k} ids={d.items.map((p) => p.id)} className="sw-btn sw-btn-sm" />
                 </div>
               </article>
             ))}
@@ -363,9 +365,12 @@ export function SkywoodHome(props: {
         </section>
       )}
 
-      <section className="wrap sw-sec" data-reveal>
-        <Subscribe brand="skywood" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
-      </section>
+      {/* Mr UK already has the sign-up in its footer: one form per page. */}
+      {!mu && (
+        <section className="wrap sw-sec" data-reveal>
+          <Subscribe brand={k} source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
+        </section>
+      )}
 
       {/* Showrooms */}
       <section className="wrap sw-sec">

@@ -1,4 +1,3 @@
-import { MrukHome } from '@/components/store/brands/mruk/Home';
 import type { HeroLabels, HeroSlideView } from '@/components/store/brands/shared';
 import { SkywoodHome } from '@/components/store/brands/skywood/Home';
 import type { BrandKey } from '@/lib/types';
@@ -82,20 +81,13 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
 
   const ld = <JsonLd data={graph(organizationLd(brand, cms), websiteLd(brand))} />;
 
-  if (key === 'skywood') {
-    const heroIds = new Set(cms.hero.map((h) => h.pid));
-    const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
-    return (
-      <>
-        {ld}
-        <SkywoodHome {...common} flash={flash} focus={focus} />
-      </>
-    );
-  }
+  // Both brands share the gallery layout; Mr UK gets its own palette, type scale and grid (mruk.css, .mu-sw).
+  const heroIds = new Set(cms.hero.map((h) => h.pid));
+  const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
   return (
     <>
       {ld}
-      <MrukHome {...common} flash={flash} />
+      <SkywoodHome {...common} flash={flash} focus={focus} />
     </>
   );
 }
