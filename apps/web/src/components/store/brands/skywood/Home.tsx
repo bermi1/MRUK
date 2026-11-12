@@ -16,6 +16,7 @@ import { SafeImg } from '../../SafeImg';
 import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
+import { MrukHero } from '../mruk/Hero';
 import { SkywoodHero } from './Hero';
 import { productLabel } from '@/lib/site';
 
@@ -87,7 +88,7 @@ export function SkywoodHome(props: {
 
   return (
     <div className={mu ? "sw-home mu-sw" : "sw-home"}>
-      <SkywoodHero slides={slides} labels={heroLabels} dealsHref={`${b}/deals`} brand={k} />
+      {mu ? <MrukHero slides={slides} dealsHref={`${b}/deals`} labels={heroLabels} /> : <SkywoodHero slides={slides} labels={heroLabels} dealsHref={`${b}/deals`} brand={k} />}
 
       {/* Service promise */}
       <section className="sw-promise" aria-label={(mu ? t('muPromise') : t('swPromise'))}>

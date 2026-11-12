@@ -10,12 +10,13 @@ import { SkywoodMobileMenu } from '@/components/store/brands/skywood/MobileMenu'
 import { RevealObserver } from '@/components/store/Reveal';
 import { archivo, fraunces } from '@/fonts/brand';
 import '@/styles/pdp.css';
+import QRCode from 'qrcode';
+import { ContactFab } from '@/components/store/ContactFab';
 import '@/styles/mruk.css';
 import '@/styles/skywood.css';
 import { MessagesProvider } from '@/components/store/Messages';
 import { CompareTray, type TrayItem } from '@/components/store/CompareTray';
 import { ToastProvider } from '@/components/store/Toast';
-import { WhatsAppIcon } from '@/components/icons';
 import { waLink } from '@/lib/format';
 import { themeVars } from '@/lib/theme';
 import { COMPARE_MAX, getCartCount, getCompareIds } from '@/server/cart';
@@ -60,6 +61,8 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const { brand: key } = await params;
   if (!isBrandKey(key)) notFound();
   const [brand, cms, cats, products, cartCount, cmp, customer, t, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), getProducts(key), getCartCount(key), getCompareIds(key), currentCustomer(), getT(), payLaterOn(key)]);
+  // Instagram follow QR for the contact button (rendered on the server; no QR code in the browser bundle).
+  const igQr = cms.social.instagram ? await QRCode.toString(cms.social.instagram, { type: 'svg', margin: 0, errorCorrectionLevel: 'M', color: { dark: '#12164a', light: '#ffffff' } }) : '';
   const locale = await getLocale();
   // Only this brand's products that are still on sale count (stale or foreign ids in the cookie are ignored).
   const cmpItems: TrayItem[] = cmp.map((id) => products.find((p) => p.id === id)).filter((p): p is NonNullable<typeof p> => !!p).map((p) => ({ id: p.id, name: p.name, model: p.model, img: p.img }));
@@ -161,9 +164,13 @@ export default async function BrandLayout({ children, params }: { children: Reac
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
         <Footer brand={brand} cats={cats} t={t} social={cms.social} payLater={payLater} />
-        <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="wa-fab" aria-label="Chat on WhatsApp">
-          <WhatsAppIcon />
-        </a>
+        <ContactFab
+          brandName={brand.legal || brand.name}
+          waHref={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)}
+          instagram={cms.social.instagram}
+          qrSvg={igQr}
+          labels={{ open: t('contactOpen'), close: t('close'), title: t('contactTitle'), sub: t('contactSub'), chat: t('chatWhatsApp'), follow: t('followInstagram'), scan: t('scanToFollow'), openIg: t('openInstagram') }}
+        />
         <CompareTray brand={key} items={cmpItems} max={COMPARE_MAX} />
         <TabBar brand={key} cartCount={cartCount} labels={{ home: t('home'), shop: t('shop'), cart: t('cart'), account: t('account') }} />
         <RevealObserver />

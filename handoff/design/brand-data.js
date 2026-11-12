@@ -331,6 +331,8 @@
   ];
   const DEFAULT_CMS = {
     mruk: {
+      // Social profiles (Admin › CMS › Social links). Instagram handle to be confirmed by the client.
+      social: { instagram: 'https://www.instagram.com/mruklimited/', facebook: 'https://www.facebook.com/mruklimited/' },
       announcement: 'Take it home today, pay from your salary with Azania Bank Salary Advance',
       hero: [
         { pid: 'mruk-uk-f275-58-5di0wd', eyebrow: 'FRENCH STYLE SERIES', title: 'Freshness starts here.', sub: 'Multi-door cooling built for Tanzanian homes.', img: '' },

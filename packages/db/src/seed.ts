@@ -236,6 +236,19 @@ async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' |
   console.log(`${key === 'mruk' ? 'Mr UK' : 'Skywood'} drafts: ${created} created (hidden, no price), ${skipped} skipped, ${newCats} categor${newCats === 1 ? 'y' : 'ies'} and ${subs} sub-categor${subs === 1 ? 'y' : 'ies'} added.`);
 }
 
+/** Default social profiles on a live database: only when the brand has none yet (staff edits always win). */
+async function syncSocial(BT: ReturnType<typeof loadHandoff>) {
+  for (const key of ['mruk', 'skywood'] as const) {
+    const social = (BT.cms(key) as Record<string, unknown>).social;
+    if (!social) continue;
+    const row = await prisma.cmsBlock.findFirst({ where: { brandKey: key, key: 'social' }, select: { id: true } });
+    if (row) continue;
+    await prisma.cmsBlock.create({ data: { brandKey: key, key: 'social', json: social as object } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'cms.social.default', entity: 'CmsBlock', entityId: `${key}:social` } });
+    console.log(`  ${key} social links added.`);
+  }
+}
+
 /** Named dealers from brand-data.js on a live database: create the ones missing (matched by phone or name + city). Idempotent. */
 async function syncDealers(BT: ReturnType<typeof loadHandoff>) {
   // Placeholder showroom numbers (+255 700 000 3xx) were never real: blank them (the store shows "coming soon"),
@@ -268,6 +281,7 @@ async function syncTokens() {
   console.log('Brand design tokens refreshed.');
   await syncRolePermissions();
   await syncDealers(BT);
+  await syncSocial(BT);
   for (const key of ['mruk', 'skywood'] as const) {
     await syncBrandDrafts(BT, key);
     await syncBrandPhotos(BT, key);
@@ -380,6 +394,7 @@ async function main() {
       await prisma.cmsBlock.create({ data: { brandKey: key, key: k, json: cms[k] as object } });
     }
     await prisma.cmsBlock.create({ data: { brandKey: key, key: 'hot', json: [] } });
+    if ((cms as Record<string, unknown>).social) await prisma.cmsBlock.create({ data: { brandKey: key, key: 'social', json: (cms as Record<string, unknown>).social as object } });
   }
   console.log(`  ${products.length} products in 2 brands`);
 

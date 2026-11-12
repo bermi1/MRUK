@@ -1150,3 +1150,35 @@ textarea.input { resize: vertical; }
 .foot-social.mu a:hover { background: #0098da; border-color: #0098da; }
 .foot-social.sw a { border-radius: 2px; border-color: rgba(201, 169, 110, 0.45); color: #e2c891; }
 .foot-social.sw a:hover { background: #c9a96e; color: #1c1915; }
+
+/* Contact button with WhatsApp + Instagram card (ContactFab). The card sits above the round button. */
+.cfab { position: fixed; right: 28px; bottom: 28px; z-index: 61; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+.cfab .wa-fab { position: static; }
+.cfab.is-open .wa-fab { box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.25), 0 10px 26px rgba(0, 0, 0, 0.2); }
+.cfab-card { width: 300px; padding: 18px; border-radius: 18px; background: #fff; color: var(--text); box-shadow: 0 24px 60px rgba(11, 15, 51, 0.22), 0 0 0 1px rgba(11, 15, 51, 0.06); transform-origin: bottom right; animation: cfabIn 0.22s var(--ease) both; }
+@keyframes cfabIn { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cfab-card { animation: none; } }
+.cfab-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cfab-title { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.cfab-sub { margin: 2px 0 0; font-size: 12.5px; color: var(--muted2); }
+.cfab-x { flex: none; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted2); background: var(--surface); }
+.cfab-x:hover { color: var(--text); }
+.cfab-wa { margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 46px; border-radius: 12px; background: var(--wa); color: #fff; font-size: 14px; font-weight: 600; }
+.cfab-wa:hover { filter: brightness(0.96); }
+.cfab-ig { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; align-items: center; }
+.cfab-qr { width: 96px; height: 96px; padding: 6px; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--border); }
+.cfab-qr svg { display: block; width: 100%; height: 100%; }
+.cfab-ig-t { margin: 0; font-size: 13.5px; font-weight: 600; }
+.cfab-ig-h { margin: 2px 0 0; font-size: 13px; font-weight: 600; background: linear-gradient(90deg, #f58529, #dd2a7b 45%, #8134af 75%, #515bd4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cfab-ig-s { margin: 4px 0 0; font-size: 11.5px; color: var(--muted2); }
+.cfab-ig-link { margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; font-weight: 600; color: var(--text); }
+.cfab-ig-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.cfab-foot { margin: 12px 0 0; font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 0.04em; }
+[data-brand='mruk'] .cfab-card { font-family: inherit; }
+[data-brand='skywood'] .cfab-card { border-radius: 8px; }
+@media (max-width: 767px) {
+  .cfab { right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .cfab-card { width: min(300px, calc(100vw - 32px)); }
+}
+@media (max-width: 767px) { .cfab { display: none; } }
+@media print { .cfab { display: none !important; } }
