@@ -312,7 +312,22 @@
     { city: 'Dodoma', area: 'City Centre', type: 'Service centre', phone: '+255 700 000 306', hours: 'Mon–Fri 8:00–17:00', lat: -6.1630, lng: 35.7516, brands: ['mruk'] },
     { city: 'Mbeya', area: 'Mwanjelwa', type: 'Authorised retailer', phone: '+255 700 000 307', hours: 'Mon–Sat 8:30–18:00', lat: -8.9094, lng: 33.4608, brands: ['mruk', 'skywood'] },
     { city: 'Zanzibar', area: 'Stone Town', type: 'Authorised retailer', phone: '+255 700 000 308', hours: 'Mon–Sat 9:00–18:00', lat: -6.1659, lng: 39.2026, brands: ['skywood'] },
-    { city: 'Moshi', area: 'Town', type: 'Authorised retailer', phone: '+255 700 000 309', hours: 'Mon–Sat 8:30–18:00', lat: -3.3348, lng: 37.3404, brands: ['mruk'] }
+    { city: 'Moshi', area: 'Town', type: 'Authorised retailer', phone: '+255 700 000 309', hours: 'Mon–Sat 8:30–18:00', lat: -3.3348, lng: 37.3404, brands: ['mruk'] },
+    // Authorised dealers for both brands (client list, Nov 2026). Map pins are approximate town/landmark positions until exact Google Maps pins are supplied.
+    { name: 'Ngumba Household', city: 'Masasi', area: 'Mkuti, behind NBC Bank', type: 'Authorised dealer · free delivery', phone: '+255 621 591 191', hours: 'Call to confirm opening hours', lat: -10.727, lng: 38.7995, brands: ['mruk', 'skywood'] },
+    { name: 'Boys Electronics', city: 'Tunduru', area: 'Mkabara, near the old bus stand', type: 'Authorised dealer', phone: '+255 763 181 992', hours: 'Call to confirm opening hours', lat: -11.101, lng: 37.352, brands: ['mruk', 'skywood'] },
+    { name: 'SAS Electronics', city: 'Mtwara', area: 'Stand ya Zamani (old bus stand)', type: 'Authorised dealer', phone: '+255 717 211 176', hours: 'Call to confirm opening hours', lat: -10.2736, lng: 40.1828, brands: ['mruk', 'skywood'] },
+    { name: 'Chilindima (King Condo)', city: 'Mtwara', area: 'Soko Kuu (central market)', type: 'Authorised dealer', phone: '+255 787 062 511', hours: 'Call to confirm opening hours', lat: -10.2699, lng: 40.1843, brands: ['mruk', 'skywood'] },
+    { name: 'Real Electronic', city: 'Morogoro', area: 'Morogoro Mjini (town centre)', type: 'Authorised dealer', phone: '+255 718 809 672', hours: 'Call to confirm opening hours', lat: -6.8235, lng: 37.6612, brands: ['mruk', 'skywood'] },
+    { name: 'Tumain Electronics', city: 'Kilombero', area: 'Ruaha', type: 'Authorised dealer', phone: '+255 715 645 235', hours: 'Call to confirm opening hours', lat: -7.7, lng: 36.96, brands: ['mruk', 'skywood'] },
+    { name: 'Ngowi Electronics', city: 'Dodoma', area: 'One-way, Barabara ya Saba', type: 'Authorised dealer', phone: '0658 667 9998', hours: 'Call to confirm opening hours', lat: -6.1722, lng: 35.7419, brands: ['mruk', 'skywood'] },
+    { name: 'Lukona Electronics', city: 'Ifakara', area: 'Ifakara, Morogoro', type: 'Authorised dealer', phone: '+255 783 242 251', hours: 'Call to confirm opening hours', lat: -8.1333, lng: 36.6833, brands: ['mruk', 'skywood'] },
+    { name: 'Aisha Electronics', city: 'Igunga', area: 'Igunga, Tabora', type: 'Authorised dealer', phone: '+255 776 484 160', hours: 'Call to confirm opening hours', lat: -4.2833, lng: 33.8667, brands: ['mruk', 'skywood'] },
+    { name: 'Alex Electronics', city: 'Nzega', area: 'Nzega, Tabora', type: 'Authorised dealer', phone: '+255 756 802 632', hours: 'Call to confirm opening hours', lat: -4.2167, lng: 33.1833, brands: ['mruk', 'skywood'] },
+    { name: 'Jay Home of Electronic', city: 'Dodoma', area: 'Dodoma town', type: 'Authorised dealer', phone: '+255 672 207 510', hours: 'Call to confirm opening hours', lat: -6.173, lng: 35.747, brands: ['mruk', 'skywood'] },
+    { name: 'Mbango Music Sound', city: 'Kasulu', area: 'Kasulu, Kigoma', type: 'Authorised dealer', phone: '+255 766 095 331', hours: 'Call to confirm opening hours', lat: -4.5767, lng: 30.1, brands: ['mruk', 'skywood'] },
+    { name: 'Kweka Electronics', city: 'Dodoma', area: 'Mwangaza Road', type: 'Authorised dealer', phone: '+255 755 448 648', hours: 'Call to confirm opening hours', lat: -6.178, lng: 35.75, brands: ['mruk', 'skywood'] },
+    { name: 'George Matelephone Electronics', city: 'Tabora', area: 'Opposite Soko Kuu la Mbolea', type: 'Authorised dealer', phone: '+255 788 592 768', hours: 'Call to confirm opening hours', lat: -5.0206, lng: 32.805, brands: ['mruk', 'skywood'] }
   ];
   const DEFAULT_CMS = {
     mruk: {

@@ -71,7 +71,7 @@ function loadHandoff() {
   const BT = sandbox.BT as {
     BRANDS: Record<string, Record<string, string>>;
     CATS: Record<string, { id: string; name: string; short: string; img: string; subs: string[] }[]>;
-    SUPPLIERS: { city: string; area: string; type: string; phone: string; hours: string; lat: number; lng: number; brands: string[] }[];
+    SUPPLIERS: { name?: string; city: string; area: string; type: string; phone: string; hours: string; lat: number; lng: number; brands: string[] }[];
     cms: (b: string) => Record<string, unknown>;
     productsAll: (b: string) => RawProduct[];
   };
@@ -236,6 +236,19 @@ async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' |
   console.log(`${key === 'mruk' ? 'Mr UK' : 'Skywood'} drafts: ${created} created (hidden, no price), ${skipped} skipped, ${newCats} categor${newCats === 1 ? 'y' : 'ies'} and ${subs} sub-categor${subs === 1 ? 'y' : 'ies'} added.`);
 }
 
+/** Named dealers from brand-data.js on a live database: create the ones missing (matched by phone or name + city). Idempotent. */
+async function syncDealers(BT: ReturnType<typeof loadHandoff>) {
+  let created = 0;
+  for (const d of BT.SUPPLIERS.filter((x) => x.name)) {
+    const exists = await prisma.supplier.findFirst({ where: { OR: [{ phone: d.phone }, { name: d.name, city: d.city }] }, select: { id: true } });
+    if (exists) continue;
+    const row = await prisma.supplier.create({ data: { ...d, name: d.name! } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'supplier.create', entity: 'Supplier', entityId: row.id, diff: { name: d.name, city: d.city } } });
+    created++;
+  }
+  console.log(`Dealers: ${created} added.`);
+}
+
 /** `seed.ts --tokens`: refresh the brand design tokens, role permissions, drafts and brand photos (safe on a live database). */
 async function syncTokens() {
   // Dar es Salaam regional showroom: exact map position supplied by the client (Google Maps pin).
@@ -247,6 +260,7 @@ async function syncTokens() {
   for (const key of ['mruk', 'skywood'] as const) await prisma.brand.updateMany({ where: { key }, data: { tokens: brandTokens(BT.BRANDS[key]!, key) } });
   console.log('Brand design tokens refreshed.');
   await syncRolePermissions();
+  await syncDealers(BT);
   for (const key of ['mruk', 'skywood'] as const) {
     await syncBrandDrafts(BT, key);
     await syncBrandPhotos(BT, key);

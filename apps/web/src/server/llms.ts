@@ -94,7 +94,7 @@ async function brandSection(key: BrandKey, full: boolean, nested: boolean): Prom
     L.push('');
   }
   L.push(`${h} Showrooms and dealers`, '');
-  for (const s of suppliers) L.push(`- ${md(s.city)}, ${md(s.area)} (${md(s.type)}): ${md(s.phone)}, ${md(s.hours)}`);
+  for (const s of suppliers) L.push(`- ${s.name ? `${md(s.name)}, ` : ""}${md(s.city)}, ${md(s.area)} (${md(s.type)}): ${md(s.phone)}, ${md(s.hours)}`);
   L.push('');
   return L.join('\n');
 }

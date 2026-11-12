@@ -308,6 +308,7 @@ model Invoice {
 
 model Supplier {
   id     String   @id @default(cuid())
+  name   String   @default("") // dealer / shop name (empty for brand showrooms)
   city   String
   area   String
   type   String

@@ -17,7 +17,7 @@ export default async function SuppliersPage({ params }: { params: Promise<{ bran
   const [brand, list] = await Promise.all([getBrand(key), getSuppliers(key)]);
   return (
     <div className="wrap page-top">
-      <Suppliers list={list.map((s) => ({ id: s.id, city: s.city, area: s.area, type: s.type, phone: s.phone, hours: s.hours, lat: s.lat, lng: s.lng }))} brandName={brand.name} />
+      <Suppliers list={list.map((s) => ({ id: s.id, name: s.name, city: s.city, area: s.area, type: s.type, phone: s.phone, hours: s.hours, lat: s.lat, lng: s.lng }))} brandName={brand.name} />
     </div>
   );
 }

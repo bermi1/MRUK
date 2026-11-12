@@ -4,6 +4,8 @@ import { LocateIcon } from '../icons';
 
 export interface SupplierRow {
   id: string;
+  /** Dealer / shop name; empty for the brand's own showrooms. */
+  name: string;
   city: string;
   area: string;
   type: string;
@@ -33,7 +35,11 @@ export function Suppliers({ list, brandName }: { list: SupplierRow[]; brandName:
     return r;
   }, [list, city, loc]);
   const s = rows[Math.min(sel, rows.length - 1)];
-  const dir = (x: SupplierRow) => `https://www.google.com/maps/dir/?api=1&destination=${x.lat},${x.lng}`;
+  // Named dealers: search Google Maps by shop name and landmark (their pins are approximate); showrooms use the exact pin.
+  const place = (x: SupplierRow) => (x.name ? encodeURIComponent(`${x.name}, ${x.area}, ${x.city}, Tanzania`) : `${x.lat},${x.lng}`);
+  const dir = (x: SupplierRow) => `https://www.google.com/maps/dir/?api=1&destination=${place(x)}`;
+  const label = (x: SupplierRow) => x.name || `${x.city} · ${x.area}`;
+  const sub = (x: SupplierRow) => (x.name ? `${x.city} · ${x.area}` : '');
   return (
     <>
       <div className="row" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
@@ -70,7 +76,8 @@ export function Suppliers({ list, brandName }: { list: SupplierRow[]; brandName:
           {rows.map((x, i) => (
             <div key={x.id} role="button" tabIndex={0} onClick={() => setSel(i)} onKeyDown={(e) => e.key === 'Enter' && setSel(i)} style={{ cursor: 'pointer', borderRadius: 20, border: x === s ? '2px solid var(--p)' : '1px solid var(--border)', padding: '16px 18px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '4px 12px' }}>
               <div style={{ fontSize: 16, fontWeight: 600 }}>
-                {x.city} · {x.area}
+                {label(x)}
+                {sub(x) && <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--muted2)', marginTop: 2 }}>{sub(x)}</div>}
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--monthly)', textAlign: 'right' }}>{x.km != null ? (x.km < 1 ? '<1 km' : `${Math.round(x.km)} km`) : ''}</div>
               <div style={{ fontSize: 13, color: 'var(--muted2)' }}>{x.type}</div>
@@ -91,13 +98,11 @@ export function Suppliers({ list, brandName }: { list: SupplierRow[]; brandName:
         </div>
         {s && (
           <div style={{ borderRadius: 24, overflow: 'hidden', border: '1px solid var(--border)', position: 'sticky', top: 20 }}>
-            <iframe src={`https://maps.google.com/maps?q=${s.lat},${s.lng}&z=14&output=embed`} title={`Map of ${s.city} ${s.area}`} style={{ width: '100%', height: 460, border: 0, display: 'block', background: 'var(--surface)' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+            <iframe src={`https://maps.google.com/maps?q=${place(s)}&z=14&output=embed`} title={`Map of ${label(s)}, ${s.city}`} style={{ width: '100%', height: 460, border: 0, display: 'block', background: 'var(--surface)' }} loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
             <div className="row" style={{ padding: '16px 18px' }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>
-                  {s.city} · {s.area}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--muted2)' }}>{s.hours}</div>
+                <div style={{ fontSize: 16, fontWeight: 600 }}>{label(s)}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted2)' }}>{sub(s) ? `${sub(s)} · ${s.hours}` : s.hours}</div>
               </div>
               <a href={dir(s)} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
                 Open in Maps
