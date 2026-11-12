@@ -656,261 +656,56 @@
 }
 
 /* =====================================================================================
-   Mr UK home on the shared gallery layout (Nov 2026). The page reuses the Skywood home
-   structure and motion (components/store/brands/skywood/Home.tsx with .mu-sw on the root);
-   this layer gives it the Mr UK identity: iconic navy and sky blue, Archivo at a standard
-   type scale, rounded cards, and mirrored grid placements so the two brands stay distinct.
+   Mr UK home, calm type (Nov 2026): the original layout and colours, with a smaller,
+   lighter type scale and slightly roomier spacing. Medium weights, no heavy bold.
    ===================================================================================== */
-[data-brand='mruk'] .mu-sw {
-  --sw-ink: #12164a;
-  --sw-espresso: #0b0f33;
-  --sw-gold: #0098da;
-  --sw-gold-hi: #7fd3f7;
-  --sw-bronze: #0071a8;
-  --sw-ivory: #f3f5fa;
-  --sw-stone: #e9edf5;
-  --sw-plaster: #e7ecf4;
-  --sw-paper: #ffffff;
-  --sw-display: var(--mu-display);
-  --sw-slow: cubic-bezier(0.22, 0.61, 0.12, 1);
-  --sw-r-btn: 12px;
-  --sw-r-card: 18px;
-  --muted2: #4a4f6a;
-  --line: #e4e7f0;
-}
-[data-brand='mruk'] .mu-sw :is(h1, h2, h3) { font-family: var(--mu-display); }
-
-/* Buttons: Mr UK rounded, sky primary on navy, navy primary on light */
-[data-brand='mruk'] .mu-sw .sw-btn { border-radius: 12px; background: var(--mu-navy); color: #fff; font-family: inherit; font-size: 14px; font-weight: 700; letter-spacing: 0; text-transform: none; gap: 12px; }
-[data-brand='mruk'] .mu-sw .sw-btn:hover { background: var(--mu-navy-d); gap: 14px; }
-[data-brand='mruk'] .mu-sw .sw-btn-ghost { background: transparent; color: var(--mu-navy); box-shadow: inset 0 0 0 1.5px var(--mu-line); }
-[data-brand='mruk'] .mu-sw .sw-btn-ghost:hover { background: #fff; box-shadow: inset 0 0 0 1.5px var(--mu-navy); }
-[data-brand='mruk'] .mu-sw .sw-btn.light { color: #fff; background: transparent; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.45); }
-[data-brand='mruk'] .mu-sw .sw-eyebrow { letter-spacing: 0.16em; font-weight: 700; color: var(--mu-sky-d); }
-[data-brand='mruk'] .mu-sw .sw-eyebrow.light { color: var(--mu-sky-l); }
-[data-brand='mruk'] .mu-sw .sw-rule { height: 2px; width: 22px; border-radius: 2px; background: var(--mu-sky); }
-[data-brand='mruk'] .mu-sw .sw-link { color: var(--mu-navy); letter-spacing: 0.04em; text-transform: none; font-weight: 700; }
-
-/* Hero: the gallery room, lit in navy (combines the navy stage with the gallery composition) */
-[data-brand='mruk'] .mu-sw .sw-hero { color: #fff; background: var(--mu-navy-d); margin-top: 0; padding-top: 0; }
-[data-brand='mruk'] .mu-sw .sw-wall { background: radial-gradient(55% 75% at 72% 32%, rgba(0, 152, 218, 0.32) 0%, rgba(0, 152, 218, 0) 70%), linear-gradient(118deg, #0b0f33 0%, #12164a 38%, #1d2366 76%, #262f86 100%); }
-[data-brand='mruk'] .mu-sw .sw-beam { background: radial-gradient(38% 50% at 64% 26%, rgba(127, 211, 247, 0.28) 0%, rgba(127, 211, 247, 0) 70%), linear-gradient(112deg, rgba(255, 255, 255, 0) 40%, rgba(127, 211, 247, 0.16) 50%, rgba(255, 255, 255, 0) 60%); mix-blend-mode: screen; }
-[data-brand='mruk'] .mu-sw .sw-floor { background: linear-gradient(180deg, #161b55 0%, #0e1240 100%); box-shadow: 0 -1px 0 rgba(127, 211, 247, 0.18); }
-[data-brand='mruk'] .mu-sw .sw-ghost { color: rgba(255, 255, 255, 0.045); font-weight: 800; }
-[data-brand='mruk'] .mu-sw .sw-arch { border-radius: 26px 26px 6px 6px; }
-[data-brand='mruk'] .mu-sw .sw-arch.back { background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%); }
-[data-brand='mruk'] .mu-sw .sw-arch.front { background: linear-gradient(180deg, #232b7c 0%, #171d5c 100%); box-shadow: -40px 50px 90px rgba(4, 6, 30, 0.45), inset 0 -50px 80px rgba(0, 0, 0, 0.18); }
-[data-brand='mruk'] .mu-sw .sw-arch.front::after { border-color: rgba(127, 211, 247, 0.45); border-radius: 20px 20px 0 0; }
-[data-brand='mruk'] .mu-sw .sw-plinth { background: radial-gradient(ellipse at 50% 35%, #2f3a9c 0%, #141a55 72%); box-shadow: 0 22px 34px rgba(0, 0, 0, 0.4), inset 0 -6px 12px rgba(0, 0, 0, 0.25), 0 0 40px rgba(0, 152, 218, 0.25); }
-[data-brand='mruk'] .mu-sw .sw-hero-img { filter: drop-shadow(0 30px 34px rgba(0, 0, 0, 0.45)); }
-[data-brand='mruk'] .mu-sw .sw-obj .hero-glyph { color: var(--mu-sky-l); }
-[data-brand='mruk'] .mu-sw .sw-detail { border-radius: 16px; background: rgba(255, 255, 255, 0.95); color: var(--mu-ink); box-shadow: 0 30px 60px rgba(4, 6, 30, 0.35); }
-[data-brand='mruk'] .mu-sw .sw-detail-h { font-weight: 700; font-size: 15px; }
-[data-brand='mruk'] .mu-sw .sw-detail li { color: #3c4160; border-top-color: var(--mu-line); }
-[data-brand='mruk'] .mu-sw .sw-hero .sw-eyebrow { color: var(--mu-sky-l); }
-[data-brand='mruk'] .mu-sw .sw-hero-idx { color: #fff; font-family: var(--font-geist-mono), monospace; font-size: 13px; }
-[data-brand='mruk'] .mu-sw .sw-hero h1 { font-size: clamp(34px, 3.6vw, 54px); font-weight: 760; line-height: 1.04; letter-spacing: -0.03em; }
-[data-brand='mruk'] .mu-sw .sw-line:last-child > span { color: var(--mu-sky-l); }
-[data-brand='mruk'] .mu-sw .sw-line:only-child > span { color: inherit; }
-[data-brand='mruk'] .mu-sw .sw-hero-sub { font-size: 16px; color: rgba(255, 255, 255, 0.78); }
-[data-brand='mruk'] .mu-sw .sw-hero-amt { font-size: 26px; font-weight: 750; }
-[data-brand='mruk'] .mu-sw .sw-hero-mo { border-radius: 999px; color: var(--mu-sky-l); background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(127, 211, 247, 0.4); }
-[data-brand='mruk'] .mu-sw .sw-hero-mo em { color: rgba(255, 255, 255, 0.75); }
-[data-brand='mruk'] .mu-sw .sw-hero .sw-btn:not(.sw-btn-ghost) { background: var(--mu-sky); color: var(--mu-ink); }
-[data-brand='mruk'] .mu-sw .sw-hero .sw-btn:not(.sw-btn-ghost):hover { background: #22b0ee; }
-[data-brand='mruk'] .mu-sw .sw-hero .sw-btn-ghost { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.45); }
-[data-brand='mruk'] .mu-sw .sw-hero .sw-btn-ghost:hover { background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1.5px #fff; }
-[data-brand='mruk'] .mu-sw .sw-thumbs button { border-radius: 12px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
-[data-brand='mruk'] .mu-sw .sw-thumbs button:hover, [data-brand='mruk'] .mu-sw .sw-thumbs button.on { background: rgba(255, 255, 255, 0.16); }
-[data-brand='mruk'] .mu-sw .sw-thumb-art { border-radius: 8px; background: rgba(255, 255, 255, 0.9); }
-[data-brand='mruk'] .mu-sw .sw-thumb-n { color: var(--mu-sky-l); font-family: var(--font-geist-mono), monospace; }
-[data-brand='mruk'] .mu-sw .sw-thumb-l { color: rgba(255, 255, 255, 0.7); }
-[data-brand='mruk'] .mu-sw .sw-thumbs button.on .sw-thumb-l { color: #fff; }
-[data-brand='mruk'] .mu-sw .sw-thumb-bar { background: rgba(255, 255, 255, 0.16); }
-[data-brand='mruk'] .mu-sw .sw-thumb-fill { background: var(--mu-sky); }
-[data-brand='mruk'] .mu-sw .sw-pause { border-radius: 50%; color: #fff; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
-[data-brand='mruk'] .mu-sw .sw-pause:hover { background: rgba(255, 255, 255, 0.16); }
-[data-brand='mruk'] .mu-sw .sw-photo-shade { background: linear-gradient(90deg, rgba(11, 15, 51, 0.78) 0%, rgba(11, 15, 51, 0.3) 55%, rgba(11, 15, 51, 0.05) 100%); }
-@media (min-width: 768px) {
-  [data-brand='mruk'] .mu-sw .sw-hero { height: clamp(520px, calc(76svh - 120px), 640px); }
-  [data-brand='mruk'] .mu-sw .sw-stage { top: 36px; bottom: 64px; }
-}
-
-/* Section rhythm and type scale: standard sizes, not oversized */
-[data-brand='mruk'] .mu-sw .sw-sec { margin-top: 88px; }
-[data-brand='mruk'] .mu-sw .sw-sec-tight { margin-top: 72px; }
-[data-brand='mruk'] .mu-sw .sw-head h2 { font-size: clamp(26px, 2.8vw, 40px); font-weight: 760; letter-spacing: -0.03em; line-height: 1.08; color: var(--mu-ink); }
-[data-brand='mruk'] .mu-sw .sw-head.light h2 { color: #fff; }
-
-/* Promise band: navy with sky line icons */
-[data-brand='mruk'] .mu-sw .sw-promise { background: var(--mu-navy); color: #fff; }
-[data-brand='mruk'] .mu-sw .sw-promise-item { border-left-color: rgba(255, 255, 255, 0.1); }
-[data-brand='mruk'] .mu-sw .sw-promise-item:hover { background: rgba(255, 255, 255, 0.04); }
-[data-brand='mruk'] .mu-sw .sw-promise-ico { border-radius: 14px; color: var(--mu-sky-l); box-shadow: inset 0 0 0 1px rgba(127, 211, 247, 0.35); }
-[data-brand='mruk'] .mu-sw .sw-promise-item b { font-family: var(--mu-display); font-size: 15px; font-weight: 700; }
-[data-brand='mruk'] .mu-sw .sw-promise-item b + span { color: rgba(255, 255, 255, 0.66); }
-
-/* Statement band */
-[data-brand='mruk'] .mu-sw .sw-statement { background: var(--mu-navy-d); }
-[data-brand='mruk'] .mu-sw .sw-statement-t { font-size: clamp(26px, 3vw, 42px); font-weight: 760; letter-spacing: -0.03em; }
-[data-brand='mruk'] .mu-sw .sw-statement-t em { color: var(--mu-sky-l); font-style: normal; }
-
-/* Collections: cool tones, rounded tiles, mirrored first row (5 + 7 instead of 7 + 5) */
-[data-brand='mruk'] .mu-sw .sw-col { --tile: #eef1f7; --arch: linear-gradient(180deg, #ffffff, #e6ebf4); --tx: var(--mu-ink); --sub: #4a4f6a; --acc: var(--mu-sky-d); border-radius: 22px; }
-[data-brand='mruk'] .mu-sw .sw-col.tone1 { --tile: #e8edf6; }
-[data-brand='mruk'] .mu-sw .sw-col.tone2 { --tile: #f2f5fa; --arch: linear-gradient(180deg, #ffffff, #eaeff7); }
-[data-brand='mruk'] .mu-sw .sw-col.tone3 { --tile: #e3e9f3; --arch: linear-gradient(180deg, #f7f9fc, #dde4f0); }
-[data-brand='mruk'] .mu-sw .sw-col.tone0 { --tile: #12164a; --arch: radial-gradient(70% 60% at 50% 40%, #2c3796 0%, #161b55 80%); --tx: #fff; --sub: rgba(255, 255, 255, 0.7); --acc: var(--mu-sky-l); }
-[data-brand='mruk'] .mu-sw .sw-col-arch { border-radius: 22px 22px 0 0; }
-[data-brand='mruk'] .mu-sw .sw-col-glow { background: radial-gradient(40% 30% at 50% 22%, rgba(0, 152, 218, 0.25), rgba(0, 152, 218, 0) 70%); }
-[data-brand='mruk'] .mu-sw .sw-col-art img { filter: drop-shadow(0 22px 22px rgba(11, 15, 51, 0.22)); }
-[data-brand='mruk'] .mu-sw .sw-col-name { font-size: clamp(18px, 1.6vw, 24px); font-weight: 740; letter-spacing: -0.02em; }
-[data-brand='mruk'] .mu-sw .sw-col.c0 .sw-col-name, [data-brand='mruk'] .mu-sw .sw-col.c1 .sw-col-name { font-size: clamp(22px, 2.2vw, 32px); }
-@media (min-width: 768px) {
-  [data-brand='mruk'] .mu-sw .sw-col.c0 { grid-column: span 5; height: 520px; }
-  [data-brand='mruk'] .mu-sw .sw-col.c1 { grid-column: span 7; height: 520px; }
-}
-
-/* Private offers -> deals band: navy, copy on the right (mirrored), rounded cards */
-[data-brand='mruk'] .mu-sw .sw-offers { background: radial-gradient(50% 70% at 15% 0%, rgba(0, 152, 218, 0.22), rgba(0, 152, 218, 0) 70%), var(--mu-navy-d); color: #fff; }
-[data-brand='mruk'] .mu-sw .sw-offers-copy h2 { color: #fff; font-size: clamp(26px, 2.8vw, 40px); font-weight: 760; }
-[data-brand='mruk'] .mu-sw .sw-offers-sub { color: rgba(255, 255, 255, 0.72); }
-[data-brand='mruk'] .mu-sw .sw-cd .cd-u { border-left-color: rgba(127, 211, 247, 0.3); }
-[data-brand='mruk'] .mu-sw .sw-cd b { color: #fff; font-size: 34px; font-weight: 700; }
-[data-brand='mruk'] .mu-sw .sw-cd small { color: rgba(255, 255, 255, 0.6); }
-[data-brand='mruk'] .mu-sw .sw-offer-arch { border-radius: 18px; background: radial-gradient(70% 60% at 50% 35%, #2c3796 0%, #161b55 85%); box-shadow: inset 0 0 0 1px rgba(127, 211, 247, 0.25); }
-[data-brand='mruk'] .mu-sw .sw-offer-seal { background: var(--mu-sky); color: var(--mu-ink); }
-[data-brand='mruk'] .mu-sw .sw-offer h3 { color: #fff; font-size: 17px; font-weight: 700; }
-[data-brand='mruk'] .mu-sw .sw-offer-foot { border-top-color: rgba(255, 255, 255, 0.12); }
-[data-brand='mruk'] .mu-sw .sw-offer-price s { color: rgba(255, 255, 255, 0.55); }
-[data-brand='mruk'] .mu-sw .sw-offer-add { color: var(--mu-ink); background: var(--mu-sky); box-shadow: none; }
-@media (min-width: 1101px) {
-  [data-brand='mruk'] .mu-sw .sw-offers-in { grid-template-columns: minmax(0, 2.2fr) minmax(0, 0.8fr); }
-  [data-brand='mruk'] .mu-sw .sw-offers-copy { order: 2; }
-}
-
-/* In focus, curated sets, Pay Later band, reviews: cool surfaces, rounded */
-[data-brand='mruk'] .mu-sw .sw-story-media { border-radius: 24px; background: #eef1f7; }
-[data-brand='mruk'] .mu-sw .sw-story-arch { border-radius: 20px; background: radial-gradient(60% 55% at 50% 38%, #2c3796 0%, #161b55 70%, #0e1240 100%); }
-[data-brand='mruk'] .mu-sw .sw-story-copy li { color: #3c4160; }
-[data-brand='mruk'] .mu-sw .sw-set { border-radius: 20px; overflow: hidden; background: #f3f5fa; box-shadow: inset 0 0 0 1px var(--mu-line); }
-[data-brand='mruk'] .mu-sw .sw-set-stack { background: linear-gradient(180deg, #e8edf6 0%, #f3f5fa 100%); }
-[data-brand='mruk'] .mu-sw .sw-set-piece { border-radius: 14px; background: #fff; box-shadow: 0 18px 30px rgba(11, 15, 51, 0.12); }
-[data-brand='mruk'] .mu-sw .sw-set-copy li { color: #4a4f6a; }
-[data-brand='mruk'] .mu-sw .sw-pl { background: #eef1f7; }
-[data-brand='mruk'] .mu-sw .sw-review { border-radius: 20px; background: #f3f5fa; }
-[data-brand='mruk'] .mu-sw .sw-review.lead { background: var(--mu-navy); color: #fff; }
-[data-brand='mruk'] .mu-sw .sw-review figcaption { color: #4a4f6a; }
-[data-brand='mruk'] .mu-sw .sw-review.lead figcaption { color: rgba(255, 255, 255, 0.7); }
-[data-brand='mruk'] .mu-sw .sw-review.lead figcaption b { color: #fff; }
-
+.mu-hero h1 { font-size: clamp(34px, 3.8vw, 56px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
+.mu-hero-sub { font-size: 16px; }
+.mu-hero-eyebrow { font-size: 11.5px; font-weight: 600; }
+.mu-hero-amt { font-size: 24px; font-weight: 600; }
+.mu-hero-chip { font-weight: 500; }
+.mu-specs li { font-size: 12.5px; font-weight: 500; }
+.mu-tab-label { font-size: 11px; font-weight: 600; }
+.mu-btn { font-weight: 600; font-size: 14.5px; min-height: 48px; }
+.mu-btn-sm { font-size: 13.5px; min-height: 42px; }
+.mu-kicker { font-size: 11.5px; font-weight: 600; letter-spacing: 0.14em; }
+.mu-link { font-size: 14px; font-weight: 600; }
+.mu-sec { margin-top: 84px; }
+.mu-head { margin-bottom: 26px; }
+.mu-head h2, .mu-flash-head h2 { font-size: clamp(24px, 2.4vw, 34px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.mu-head-sub { font-size: 15px; }
+.mu-trust-item b { font-size: 14px; font-weight: 600; }
+.mu-cat-name { font-size: 14.5px; font-weight: 600; }
+.mu-need-title { font-size: clamp(20px, 1.9vw, 26px); font-weight: 600; letter-spacing: -0.02em; }
+.mu-need.n0 .mu-need-title { font-size: clamp(24px, 2.5vw, 34px); }
+.mu-need-go { font-weight: 600; }
+.mu-bundle-top h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.mu-bundle-foot b { font-size: 19px; font-weight: 600; }
+.mu-advance h2 { font-size: clamp(24px, 2.6vw, 36px); font-weight: 600; }
+.mu-steps b { font-size: 15px; font-weight: 600; }
+.mu-review blockquote { font-size: 14.5px; }
+.mu-review figcaption b { font-size: 13.5px; font-weight: 600; }
+.mu-showrooms b { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.mu-flash-timer { font-weight: 500; }
 @media (max-width: 767px) {
-  [data-brand='mruk'] .mu-sw .sw-floor { background: linear-gradient(180deg, #161b55 0%, #12164a 40%, #0e1240 100%); box-shadow: none; }
-  [data-brand='mruk'] .mu-sw .sw-hero h1 { font-size: 28px; }
-  [data-brand='mruk'] .mu-sw .sw-hero-amt { font-size: 22px; }
-  [data-brand='mruk'] .mu-sw .sw-head h2 { font-size: 24px; }
-  [data-brand='mruk'] .mu-sw .sw-promise-item { border-left-color: rgba(255, 255, 255, 0.1); }
+  .mu-hero h1 { font-size: 28px; }
+  .mu-hero-amt { font-size: 21px; }
+  .mu-head h2, .mu-flash-head h2 { font-size: 22px; }
+  .mu-sec { margin-top: 60px; }
 }
-/* Mr UK type weights on the gallery layout: bold Archivo, never hairline display weights */
-[data-brand='mruk'] .mu-sw :is(.sw-story-copy h2, .sw-pl-copy h2, .sw-offers-copy h2) { font-size: clamp(26px, 2.8vw, 40px); font-weight: 760; letter-spacing: -0.03em; }
-[data-brand='mruk'] .mu-sw :is(.sw-set-copy h3) { font-size: 20px; font-weight: 740; letter-spacing: -0.02em; }
-[data-brand='mruk'] .mu-sw :is(.sw-story-price, .sw-set-price b, .sw-pl-amt) { font-weight: 750; letter-spacing: -0.02em; }
-[data-brand='mruk'] .mu-sw .sw-story-price { font-size: 26px; }
-[data-brand='mruk'] .mu-sw .sw-set-price b { font-size: 20px; }
-[data-brand='mruk'] .mu-sw :is(.sw-visit-t) { font-size: clamp(22px, 2.2vw, 32px); font-weight: 740; letter-spacing: -0.02em; }
-[data-brand='mruk'] .mu-sw .sw-visit-cities li { font-family: inherit; font-weight: 600; font-size: 15px; }
-[data-brand='mruk'] .mu-sw .sw-review blockquote { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-[data-brand='mruk'] .mu-sw .sw-review.lead blockquote { font-size: 21px; }
-[data-brand='mruk'] .mu-sw :is(.sw-pl-n, .sw-pl-step) { font-weight: 760; color: var(--mu-sky-d); }
-[data-brand='mruk'] .mu-sw .sw-pl-steps b { font-weight: 700; }
-[data-brand='mruk'] .mu-sw .sw-offer-seal b { font-weight: 800; }
-[data-brand='mruk'] .mu-sw .sw-offers .sw-link { color: #fff; }
-[data-brand='mruk'] .mu-sw .sw-ghost { font-size: clamp(80px, 8.5vw, 140px); color: rgba(255, 255, 255, 0.035); }
-
-/* Mr UK refinement 2 (Nov 2026): lighter, smaller type; free-standing hero products;
-   flat, clean sections in the spirit of large electronics brands (white space, light
-   grey product tiles, big photography, minimal decoration). */
-[data-brand='mruk'] .mu-sw { --mu-tile: #f4f5f8; }
-
-/* Type: medium weights, modest sizes */
-[data-brand='mruk'] .mu-sw .sw-hero h1 { font-size: clamp(30px, 3.1vw, 46px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.08; }
-[data-brand='mruk'] .mu-sw .sw-hero-sub { font-size: 15.5px; font-weight: 400; }
-[data-brand='mruk'] .mu-sw .sw-hero-amt { font-size: 22px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-head h2,
-[data-brand='mruk'] .mu-sw :is(.sw-story-copy h2, .sw-pl-copy h2, .sw-offers-copy h2) { font-size: clamp(22px, 2.2vw, 32px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
-[data-brand='mruk'] .mu-sw .sw-statement-t { font-size: clamp(22px, 2.4vw, 34px); font-weight: 600; letter-spacing: -0.02em; }
-[data-brand='mruk'] .mu-sw .sw-statement-s { font-size: 15.5px; }
-[data-brand='mruk'] .mu-sw .sw-col-name, [data-brand='mruk'] .mu-sw .sw-col.c0 .sw-col-name, [data-brand='mruk'] .mu-sw .sw-col.c1 .sw-col-name { font-size: clamp(17px, 1.5vw, 22px); font-weight: 600; letter-spacing: -0.01em; }
-[data-brand='mruk'] .mu-sw .sw-set-copy h3 { font-size: 17px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw :is(.sw-story-price, .sw-set-price b, .sw-pl-amt) { font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-story-price { font-size: 22px; }
-[data-brand='mruk'] .mu-sw .sw-set-price b { font-size: 18px; }
-[data-brand='mruk'] .mu-sw .sw-visit-t { font-size: clamp(20px, 2vw, 28px); font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-visit-cities li { font-weight: 500; font-size: 14.5px; }
-[data-brand='mruk'] .mu-sw .sw-review blockquote, [data-brand='mruk'] .mu-sw .sw-review.lead blockquote { font-size: 16px; font-weight: 500; line-height: 1.5; }
-[data-brand='mruk'] .mu-sw .sw-offer h3 { font-size: 15.5px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-cd b { font-size: 28px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-promise-item b { font-size: 14.5px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-btn { font-weight: 600; font-size: 13.5px; min-height: 46px; }
-[data-brand='mruk'] .mu-sw .sw-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; }
-
-/* Hero: free-standing product on the navy stage (no frame, arch or plinth), soft sky glow */
-[data-brand='mruk'] .mu-sw :is(.sw-arch, .sw-plinth) { display: none; }
-[data-brand='mruk'] .mu-sw .sw-ghost { display: none; }
-[data-brand='mruk'] .mu-sw .sw-floor { background: linear-gradient(180deg, rgba(14, 18, 64, 0) 0%, rgba(14, 18, 64, 0.6) 100%); box-shadow: none; }
-[data-brand='mruk'] .mu-sw .sw-stage::before { content: ''; position: absolute; left: 12%; right: 16%; top: 6%; bottom: 8%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 152, 218, 0.34), rgba(0, 152, 218, 0.1) 55%, rgba(0, 152, 218, 0) 75%); filter: blur(6px); }
-[data-brand='mruk'] .mu-sw .sw-stage::after { content: ''; position: absolute; left: 26%; right: 30%; bottom: 7%; height: 26px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0)); }
-[data-brand='mruk'] .mu-sw .sw-obj { left: 10%; right: 20%; top: 6%; bottom: 9%; z-index: 1; }
-[data-brand='mruk'] .mu-sw .sw-hero-img { max-width: 92%; filter: drop-shadow(0 34px 40px rgba(0, 0, 0, 0.5)); }
-[data-brand='mruk'] .mu-sw .sw-detail { width: 210px; padding: 14px 16px; border-radius: 14px; background: rgba(255, 255, 255, 0.1); color: #fff; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
-[data-brand='mruk'] .mu-sw .sw-detail-h { font-size: 13.5px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .sw-detail li { color: rgba(255, 255, 255, 0.82); border-top-color: rgba(255, 255, 255, 0.14); font-size: 12.5px; }
-[data-brand='mruk'] .mu-sw .sw-detail li::before { background: var(--mu-sky-l); }
-
-/* Promise band: lighter */
-[data-brand='mruk'] .mu-sw .sw-promise-ico { border-radius: 50%; }
-
-/* Collections: flat light-grey product tiles, big photography, one navy accent tile */
-[data-brand='mruk'] .mu-sw .sw-col { --tile: var(--mu-tile); --arch: none; border-radius: 16px; }
-[data-brand='mruk'] .mu-sw :is(.sw-col.tone1, .sw-col.tone2, .sw-col.tone3) { --tile: var(--mu-tile); }
-[data-brand='mruk'] .mu-sw .sw-col-arch, [data-brand='mruk'] .mu-sw .sw-col-glow { display: none; }
-[data-brand='mruk'] .mu-sw .sw-col-art img { inset: 12% 14% 28%; width: 72%; height: 60%; filter: drop-shadow(0 18px 20px rgba(11, 15, 51, 0.16)); }
-[data-brand='mruk'] .mu-sw .sw-col.tone0 .sw-col-art img { filter: drop-shadow(0 22px 26px rgba(0, 0, 0, 0.45)); }
-[data-brand='mruk'] .mu-sw .sw-col-cap { background: none; }
-[data-brand='mruk'] .mu-sw .sw-col-go { font-size: 12px; letter-spacing: 0.06em; }
-
-/* Deals band: navy kept, cards flatter */
-[data-brand='mruk'] .mu-sw .sw-offer-arch { border-radius: 14px; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
-[data-brand='mruk'] .mu-sw .sw-offer-seal { width: 52px; height: 52px; }
-
-/* In focus + sets + reviews: white space, light grey panels */
-[data-brand='mruk'] .mu-sw .sw-story-media { border-radius: 16px; background: var(--mu-tile); }
-[data-brand='mruk'] .mu-sw .sw-story-arch { display: none; }
-[data-brand='mruk'] .mu-sw .sw-story-media .pimg > img { filter: drop-shadow(0 26px 30px rgba(11, 15, 51, 0.2)); }
-[data-brand='mruk'] .mu-sw .sw-set { border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px var(--mu-line); }
-[data-brand='mruk'] .mu-sw .sw-set-stack { background: var(--mu-tile); }
-[data-brand='mruk'] .mu-sw .sw-set-piece { border-radius: 12px; box-shadow: 0 10px 22px rgba(11, 15, 51, 0.08); }
-[data-brand='mruk'] .mu-sw .sw-review { border-radius: 16px; background: var(--mu-tile); }
-
+/* Shop by need: keep photos clear of the copy on the two small tiles */
+.mu-need.n1 .mu-need-art, .mu-need.n2 .mu-need-art { left: auto; right: 4%; top: 8%; width: 40%; height: 58%; }
+.mu-need.n1 .mu-need-copy, .mu-need.n2 .mu-need-copy { max-width: 58%; }
+.mu-need.n3 .mu-need-art { width: 34%; right: 4%; }
+.mu-need.n3 .mu-need-copy { max-width: 56%; }
 @media (max-width: 767px) {
-  [data-brand='mruk'] .mu-sw .sw-hero h1 { font-size: 26px; }
-  [data-brand='mruk'] .mu-sw .sw-hero-amt { font-size: 20px; }
-  [data-brand='mruk'] .mu-sw .sw-head h2 { font-size: 22px; }
-  [data-brand='mruk'] .mu-sw .sw-obj { left: 18%; right: 18%; top: 8%; bottom: 6%; }
-  [data-brand='mruk'] .mu-sw .sw-stage::after { bottom: 4%; }
+  .mu-need.n1 .mu-need-art, .mu-need.n2 .mu-need-art { width: 44%; height: 70%; }
 }
-
-/* Mr UK hero restored inside the gallery home (interactive navy hero), at a calmer type scale */
-[data-brand='mruk'] .mu-sw .mu-hero h1 { font-size: clamp(34px, 3.8vw, 56px); font-weight: 650; letter-spacing: -0.03em; line-height: 1.04; }
-[data-brand='mruk'] .mu-sw .mu-hero-sub { font-size: 16px; }
-[data-brand='mruk'] .mu-sw .mu-hero-amt { font-size: 24px; font-weight: 650; }
-[data-brand='mruk'] .mu-sw .mu-hero-eyebrow { font-size: 11.5px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .mu-specs li { font-size: 12.5px; font-weight: 500; }
-[data-brand='mruk'] .mu-sw .mu-hero .mu-btn { min-height: 48px; font-size: 14px; font-weight: 600; }
-[data-brand='mruk'] .mu-sw .mu-tab-label { font-size: 11px; font-weight: 600; }
-/* Fewer icons: the promise band is text-only on Mr UK */
-[data-brand='mruk'] .mu-sw .sw-promise-ico { display: none; }
-[data-brand='mruk'] .mu-sw .sw-promise-item { padding-top: 22px; padding-bottom: 22px; }
 @media (max-width: 767px) {
-  [data-brand='mruk'] .mu-sw .mu-hero h1 { font-size: 28px; }
+  .mu-need.n1 .mu-need-art, .mu-need.n2 .mu-need-art { top: 10px; right: 10px; width: 52%; height: 40%; }
+  .mu-need.n1 .mu-need-copy, .mu-need.n2 .mu-need-copy { max-width: 100%; }
+  .mu-need.n1 .mu-need-title, .mu-need.n2 .mu-need-title { font-size: 17px; line-height: 1.15; }
+  .mu-need.n1 .mu-need-subs, .mu-need.n2 .mu-need-subs { display: none; }
+  .mu-need.n1 .mu-need-go, .mu-need.n2 .mu-need-go { font-size: 12px; padding: 7px 10px; }
 }
+@media (max-width: 767px) { .mu-need.n1 .mu-need-go, .mu-need.n2 .mu-need-go { white-space: nowrap; font-size: 11.5px; } }

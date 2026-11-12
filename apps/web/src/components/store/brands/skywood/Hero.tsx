@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
-import type { BrandKey } from '@/lib/types';
 import { ArrowRightIcon, PauseIcon, PlayIcon } from '../../../icons';
 import { AddButton } from '../../CartButtons';
 import { PImg } from '../../PImg';
@@ -18,7 +17,7 @@ import { fill, headlineLines, type HeroLabels, type HeroSlideView } from '../sha
  * animation drives auto-advance, so hover, focus and the pause button freeze it, and with
  * reduced motion there is no animation and no auto-advance.
  */
-export function SkywoodHero({ slides, labels, dealsHref, brand = 'skywood' }: { slides: HeroSlideView[]; labels: HeroLabels; dealsHref: string; brand?: BrandKey }) {
+export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideView[]; labels: HeroLabels; dealsHref: string }) {
   const [i, setI] = useState(0);
   const [moved, setMoved] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -115,7 +114,7 @@ export function SkywoodHero({ slides, labels, dealsHref, brand = 'skywood' }: { 
               <ArrowRightIcon size={18} strokeWidth={1.5} className="sw-btn-arrow" />
             </Link>
             {s.pid ? (
-              <AddButton brand={brand} id={s.pid} name={s.name} className="sw-btn sw-btn-ghost" label={labels.addToCart} />
+              <AddButton brand="skywood" id={s.pid} name={s.name} className="sw-btn sw-btn-ghost" label={labels.addToCart} />
             ) : (
               <Link href={dealsHref} className="sw-btn sw-btn-ghost">
                 {labels.seeDeals}

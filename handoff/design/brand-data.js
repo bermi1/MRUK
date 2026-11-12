@@ -331,7 +331,7 @@
   ];
   const DEFAULT_CMS = {
     mruk: {
-      // Social profiles (Admin › CMS › Social links). Instagram handle to be confirmed by the client.
+      // Social profiles (Admin › CMS › Social links), confirmed by the client.
       social: { instagram: 'https://www.instagram.com/mruklimited/', facebook: 'https://www.facebook.com/mruklimited/' },
       announcement: 'Take it home today, pay from your salary with Azania Bank Salary Advance',
       hero: [
@@ -349,6 +349,7 @@
       overrides: {}, custom: []
     },
     skywood: {
+      social: { instagram: 'https://www.instagram.com/skywood_tz/' },
       announcement: 'Beyond limits: pay monthly with Azania Bank Salary Advance',
       hero: [
         { pid: 'skywood-sk6031ges', eyebrow: 'KITCHEN', title: 'Modern living, redefined.', sub: 'Standing cookers with a built-in oven.', img: '' },
