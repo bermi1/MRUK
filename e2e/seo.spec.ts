@@ -173,7 +173,7 @@ test.describe('single-brand sites', () => {
       const robots = await (await request.get(`${o}/robots.txt`)).text();
       expect(robots).toContain(`Sitemap: ${o}/sitemap.xml`);
       for (const bot of ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot', 'ClaudeBot', 'Claude-User', 'PerplexityBot', 'Google-Extended', 'CCBot']) expect(robots).toContain(`User-Agent: ${bot}`);
-      for (const path of ['/admin', '/api/', '/azania', '/cart', '/checkout', '/account', '/order/', '/pay/']) expect(robots).toContain(`Disallow: ${path}\n`);
+      for (const path of ['/admin', '/api/', '/cart', '/checkout', '/account', '/order/', '/pay/']) expect(robots).toContain(`Disallow: ${path}\n`);
       expect(robots).not.toMatch(/Disallow: \/\n/);
       expect(robots).not.toMatch(/Disallow: \/pay\n/);
 

@@ -266,7 +266,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
             payLater={payLater}
-            labels={{ payInFull: t('payInFull'), payInFullSub: t('payInFullSub'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
+            labels={{ payInFull: t('payInFull'), payInFullSub: payLater ? t('payInFullSub') : t('payInFullSubCard'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
           />
           <div id="pdp-buy-sentinel" aria-hidden="true" />
           <div className="perks">

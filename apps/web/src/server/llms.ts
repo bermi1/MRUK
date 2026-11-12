@@ -56,7 +56,7 @@ async function brandSection(key: BrandKey, full: boolean, nested: boolean): Prom
   if (payLater) {
     L.push(`- Payment: pay in full (Azania Bank account or card) or monthly with ${t('salaryAdvance')}.`);
     L.push(`- Pay Later: ${t('payLaterIntro')} ${t('plEligNote')} Details: ${publicUrl(key, '/pay-later')}`);
-  } else L.push('- Payment: pay in full (Azania Bank account or card).');
+  } else L.push('- Payment: pay in full by card, or pay on delivery in Dar es Salaam.');
   L.push(`- Support and warranty claims: ${publicUrl(key, '/support')}`);
   L.push(`- Showrooms and dealers: ${suppliers.length} locations, ${publicUrl(key, '/suppliers')}`);
   L.push(`- Privacy: ${absUrl('/privacy')}`, '');

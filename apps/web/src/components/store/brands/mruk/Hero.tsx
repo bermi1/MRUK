@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { fmt } from '@/lib/format';
 import { AddButton } from '../../CartButtons';
@@ -9,8 +9,10 @@ import { fill, type HeroLabels, type HeroSlideView } from '../shared';
 import { ArrowRightIcon } from '@/components/icons';
 
 /**
- * Mr UK kinetic hero: full-bleed navy stage, product on a lit plinth with depth layers,
- * copy that rises in per slide, and segmented progress bars that double as slide tabs.
+ * Mr UK hero: a calm, light retail stage. Copy on the left (eyebrow, headline, three key
+ * features, price, two actions), the product on a clean white card on the right, and
+ * numbered slide tabs with a thin progress line underneath. CMS photo/video slides keep
+ * their full-bleed layout.
  * The progress bar's CSS animation drives auto-advance (animationend → next), so pausing
  * (hover, focus, the pause button) freezes both together; with reduced motion there is no
  * animation and therefore no auto-advance.
@@ -27,7 +29,6 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
     setMoved(true);
     setI(((k % n) + n) % n);
   };
-  const words = s.title.split(/\s+/);
   // A slide with a background video behaves like a full-bleed photo slide (the image is its fallback).
   const photo = s.layout === 'photo' || !!s.video;
   return (
@@ -40,11 +41,6 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
     >
-      <div className="mu-hero-bg" aria-hidden="true">
-        <span className="mu-hero-grid" />
-        <span className="mu-hero-glow" />
-        <span className="mu-hero-arc" />
-      </div>
       {photo && (
         <div className="mu-hero-photo" key={`p${i}`}>
           <HeroImage src={s.video ? s.videoPoster || s.img : s.img} mobileSrc={s.imgMobile} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="100vw" w1={1080} w2={1920} focal={s.focal} className="mu-hero-photo-img" />
@@ -53,21 +49,16 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
       )}
       <div className="wrap mu-hero-in">
         <div className="mu-hero-copy" key={`c${i}`} aria-live={paused ? 'polite' : 'off'}>
-          <p className="mu-hero-eyebrow">
-            <span>{String(i + 1).padStart(2, '0')}</span>
-            {s.eyebrow}
-          </p>
-          <h1>
-            {words.map((w, k) => (
-              <Fragment key={k}>
-                <span className="mu-w" style={{ ['--k' as string]: k }}>
-                  {w}
-                </span>
-                {k < words.length - 1 ? ' ' : ''}
-              </Fragment>
-            ))}
-          </h1>
-          <p className="mu-hero-sub">{s.sub}</p>
+          {s.eyebrow && <p className="mu-hero-eyebrow">{s.eyebrow}</p>}
+          <h1>{s.title}</h1>
+          {s.sub && <p className="mu-hero-sub">{s.sub}</p>}
+          {!photo && s.features.length > 0 && (
+            <ul className="mu-hero-feats">
+              {s.features.slice(0, 3).map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          )}
           {s.showPrice && (
             <div className="mu-hero-price">
               <span className="mu-hero-amt">{fmt(s.price)}</span>
@@ -79,13 +70,13 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
             </div>
           )}
           <div className="mu-hero-cta">
-            <Link href={s.href} className="mu-btn mu-btn-sky">
+            <Link href={s.href} className={`mu-btn ${photo ? 'mu-btn-sky' : 'mu-btn-navy'}`}>
               {s.cta || labels.shopNow} <ArrowRightIcon size={16} className="i-arrow" />
             </Link>
             {s.pid ? (
-              <AddButton brand="mruk" id={s.pid} name={s.name} className="mu-btn mu-btn-ghost" label={labels.addToCart} />
+              <AddButton brand="mruk" id={s.pid} name={s.name} className={`mu-btn ${photo ? "mu-btn-ghost" : "mu-btn-line"}`} label={labels.addToCart} />
             ) : (
-              <Link href={dealsHref} className="mu-btn mu-btn-ghost">
+              <Link href={dealsHref} className={`mu-btn ${photo ? "mu-btn-ghost" : "mu-btn-line"}`}>
                 {labels.seeDeals}
               </Link>
             )}
@@ -93,17 +84,10 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
         </div>
         {!photo && (
         <div className="mu-hero-stage" key={`s${i}`}>
-          <span className="mu-ring r1" aria-hidden="true" />
-          <span className="mu-ring r2" aria-hidden="true" />
-          <span className="mu-plinth" aria-hidden="true" />
-          <HeroImage src={s.img} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="(max-width: 767px) 70vw, 560px" w1={640} w2={1080} className="mu-hero-img" />
-          <ul className="mu-specs" aria-label={s.name}>
-            {s.features.slice(0, 3).map((f, k) => (
-              <li key={f} style={{ ['--k' as string]: k }}>
-                {f}
-              </li>
-            ))}
-          </ul>
+          <div className="mu-hero-card">
+            {s.model && <span className="mu-hero-model">{s.model}</span>}
+            <HeroImage src={s.img} alt={s.name} kind={`${s.kind} ${s.name}`} first={i === 0 && !moved} sizes="(max-width: 767px) 80vw, 560px" w1={640} w2={1080} className="mu-hero-img" />
+          </div>
         </div>
         )}
       </div>
@@ -113,7 +97,9 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
           <div className="mu-tabs" role="tablist" aria-label={labels.slideN.replace('{n}', '').trim()}>
             {slides.map((x, k) => (
               <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={fill(labels.slideN, { n: k + 1 })} className={k === i ? 'on' : ''} onClick={() => go(k)}>
-                <span className="mu-tab-label">{x.eyebrow}</span>
+                <span className="mu-tab-label">
+                  <em>{String(k + 1).padStart(2, '0')}</em> {x.eyebrow}
+                </span>
                 <span className="mu-tab-bar">{k === i && <span className="mu-tab-fill" key={`f${i}`} onAnimationEnd={() => go(i + 1)} />}</span>
               </button>
             ))}

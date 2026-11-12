@@ -11,8 +11,8 @@ import { payLaterOn } from '@/server/paylater';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const brand = await getBrand(key);
-  return pageMeta({ brand, path: '/support', title: brandTitle('Customer support and warranty help', brand.name), description: `Help with a ${brand.name} order, delivery, warranty or Pay Later: chat on WhatsApp, email ${brand.supportEmail} or open a support ticket.` });
+  const [brand, payLater] = await Promise.all([getBrand(key), payLaterOn(key)]);
+  return pageMeta({ brand, path: '/support', title: brandTitle('Customer support and warranty help', brand.name), description: `Help with a ${brand.name} order, delivery${payLater ? ', warranty or Pay Later' : ' or warranty'}: chat on WhatsApp, email ${brand.supportEmail} or open a support ticket.` });
 }
 
 export default async function SupportPage({ params }: { params: Promise<{ brand: string }> }) {

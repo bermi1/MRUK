@@ -87,10 +87,11 @@ function MrukFooter({ brand, cats, t, social, payLater }: { brand: BrandView; ca
         <div className="foot-col">
           <p className="mu-foot-h">{t('weAccept')}</p>
           <div className="mu-accept">
-            <span>Azania Bank</span>
+            {payLater && <span>Azania Bank</span>}
             {payLater && <span>{t('payLater')}</span>}
             <span>Visa</span>
             <span>Mastercard</span>
+            <span>{t('payOnDelivery')}</span>
           </div>
         </div>
       </div>
@@ -177,7 +178,7 @@ function SkywoodFooter({ brand, cats, t, social, payLater }: { brand: BrandView;
             © {new Date().getFullYear()} {brand.legal}
           </span>
           <span className="sw-foot-pay" aria-label={t('weAccept')}>
-            {['Azania Bank', ...(payLater ? [t('payLater')] : []), 'Visa', 'Mastercard'].map((x) => (
+            {[...(payLater ? ['Azania Bank', t('payLater')] : []), 'Visa', 'Mastercard', t('payOnDelivery')].map((x) => (
               <span key={x}>{x}</span>
             ))}
           </span>

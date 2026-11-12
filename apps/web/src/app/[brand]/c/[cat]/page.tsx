@@ -64,7 +64,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
             <Link href={`/${key}`}>Home</Link> / {cat?.name ?? 'All products'}
           </nav>
           <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(26px, 3.4vw, 44px)', fontWeight: 600, letterSpacing: '-.03em' }}>{cat?.name ?? 'All products'}</h1>
-          <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{list.length} products · Pay Later on every item</div>
+          <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{list.length} products{payLater ? ' · Pay Later on every item' : ''}</div>
         </div>
         <div className="art">
           <CatGlyph kind={glyphKind(cat?.id ?? 'all', cat?.name)} className="cathero-glyph" strokeWidth={1} />

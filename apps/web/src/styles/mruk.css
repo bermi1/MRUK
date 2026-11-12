@@ -654,3 +654,127 @@
   [data-brand='mruk'] .pdx-l { font-size: 17px; }
   [data-brand='mruk'] .pdx-body { padding: 0 14px 20px; }
 }
+
+/* =====================================================================================
+   Mr UK, refined (Nov 2026): a calm, light, product-first retail look. Navy type and
+   actions, sky blue only as an accent, white cards on a cool grey stage, no decorative
+   glows, rings or floating labels. Distinct from Skywood (warm stone, gold, editorial
+   serif rhythm) while sharing the same level of restraint.
+   ===================================================================================== */
+[data-brand='mruk'] { --mu-stage: #f2f4f9; --mu-card-shadow: 0 1px 2px rgba(11, 15, 51, 0.04), 0 18px 40px rgba(11, 15, 51, 0.08); }
+
+/* Buttons */
+.mu-btn { min-height: 50px; border-radius: 12px; font-weight: 700; letter-spacing: 0; }
+.mu-btn-navy { background: var(--mu-navy); color: #fff; box-shadow: none; }
+.mu-btn-navy:hover { background: var(--mu-navy-d); }
+.mu-btn-navy span, .mu-btn-navy svg { transition: transform 0.2s var(--ease); }
+.mu-btn-navy:hover svg { transform: translateX(3px); }
+.mu-btn-line { color: var(--mu-navy); background: #fff; box-shadow: inset 0 0 0 1.5px var(--mu-line); }
+.mu-btn-line:hover { box-shadow: inset 0 0 0 1.5px var(--mu-navy); }
+.mu-hero button.mu-btn-line { background: #fff; }
+.mu-btn-sky { box-shadow: none; }
+.mu-btn-sky:hover { box-shadow: none; }
+
+/* Hero (product layout) */
+.mu-hero:not(.is-photo) { color: var(--mu-ink); background: var(--mu-stage); }
+.mu-hero:not(.is-photo) .mu-hero-in { height: auto; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; padding-top: 48px; padding-bottom: 28px; align-items: center; }
+.mu-hero:not(.is-photo) .mu-hero-ctrl { margin-top: 0; }
+.mu-hero:not(.is-photo) .mu-hero-card { max-height: 460px; aspect-ratio: auto; height: clamp(340px, 34vw, 460px); }
+.mu-hero-copy { gap: 18px; padding: 0; max-width: 560px; }
+.mu-hero-eyebrow { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mu-sky-d); }
+.mu-hero h1 { font-size: clamp(38px, 4.4vw, 64px); font-weight: 780; letter-spacing: -0.035em; line-height: 1.02; color: inherit; text-wrap: balance; }
+.mu-hero:not(.is-photo) .mu-hero-sub { font-size: 17px; line-height: 1.55; color: #4a4f6a; max-width: 480px; }
+.mu-hero-feats { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mu-hero-feats li { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; color: var(--mu-ink); }
+.mu-hero-feats li::before { content: ''; flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--mu-navy) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.2l2.6 2.6L13 6.4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px no-repeat; }
+.mu-hero:not(.is-photo) .mu-hero-amt { font-size: 28px; color: var(--mu-navy); }
+.mu-hero:not(.is-photo) .mu-hero-chip { background: #fff; color: var(--mu-sky-d); box-shadow: inset 0 0 0 1px var(--mu-line); }
+.mu-hero:not(.is-photo) .mu-hero-chip em { color: var(--muted); }
+.mu-hero-cta { margin-top: 6px; }
+.mu-hero-stage { height: auto; display: block; }
+.mu-hero-card { position: relative; aspect-ratio: 5 / 4; border-radius: 28px; background: #fff; box-shadow: var(--mu-card-shadow); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.mu-hero-model { position: absolute; left: 22px; top: 18px; font-family: var(--font-geist-mono), monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.mu-hero-card .mu-hero-img, .mu-hero-card picture { max-width: 72%; max-height: 82%; object-fit: contain; filter: none; }
+.mu-hero-card picture img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.mu-hero-card .hero-glyph { width: 46%; height: auto; color: #c9cfe0; }
+.mu-hero:not(.is-photo) .mu-hero-ctrl { padding-bottom: 36px; }
+.mu-hero:not(.is-photo) .mu-tabs { gap: 20px; }
+.mu-hero:not(.is-photo) .mu-tabs button { color: var(--muted); }
+.mu-hero:not(.is-photo) .mu-tabs button:hover, .mu-hero:not(.is-photo) .mu-tabs button.on { color: var(--mu-ink); }
+.mu-tab-label em { font-style: normal; font-family: var(--font-geist-mono), monospace; margin-right: 4px; color: var(--mu-sky-d); }
+.mu-hero:not(.is-photo) .mu-tab-bar { height: 2px; background: #d9deea; }
+.mu-hero:not(.is-photo) .mu-tab-fill { background: var(--mu-navy); }
+.mu-hero:not(.is-photo) .mu-pause { color: var(--mu-navy); box-shadow: inset 0 0 0 1.5px var(--mu-line); background: #fff; }
+.mu-hero:not(.is-photo) .mu-pause:hover { box-shadow: inset 0 0 0 1.5px var(--mu-navy); }
+/* Quiet entrance: a short fade/rise, no per-word motion, no floating. */
+@media (prefers-reduced-motion: no-preference) {
+  .mu-hero-copy > *, .mu-hero-card { animation: muCalm 0.55s var(--ease) both; }
+  .mu-hero-copy > :nth-child(2) { animation-delay: 0.05s; }
+  .mu-hero-copy > :nth-child(3) { animation-delay: 0.1s; }
+  .mu-hero-copy > :nth-child(n + 4) { animation-delay: 0.15s; }
+  .mu-hero-card { animation-delay: 0.08s; }
+  .mu-hero.is-first .mu-hero-copy > *, .mu-hero.is-first .mu-hero-card { animation: none; }
+  .mu-hero-card .mu-hero-img { animation: none; }
+}
+@keyframes muCalm { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Trust strip: line icons, no tinted squares */
+.mu-trust .wrap { padding-top: 6px; padding-bottom: 6px; }
+.mu-trust-icon { width: 36px; height: 36px; border-radius: 0; background: none; color: var(--mu-navy); }
+
+/* Section rhythm */
+.mu-sec { margin-top: 80px; }
+.mu-kicker::before { width: 14px; height: 2px; }
+.mu-head h2 { font-size: clamp(26px, 3vw, 42px); font-weight: 760; letter-spacing: -0.03em; }
+
+/* Category tiles: white cards on the stage colour */
+.mu-cat-art { border-radius: 20px; background: var(--mu-stage); box-shadow: none; }
+.mu-cat:hover .mu-cat-art { transform: none; box-shadow: inset 0 0 0 1.5px var(--mu-line); }
+.mu-cat:hover .mu-cat-art img { transform: scale(1.04); }
+
+/* Flash deals: light band instead of a dark gradient */
+.mu-flash { margin-top: 80px; background: var(--mu-stage); color: var(--mu-ink); padding: 64px 0; }
+.mu-flash-head h2 { color: var(--mu-ink); font-size: clamp(26px, 3vw, 40px); font-weight: 760; }
+.mu-flash .mu-kicker.light { color: var(--mu-sky-d); }
+.mu-flash-timer { color: var(--muted); }
+.mu-flash .cd, .mu-flash .cd-box, .mu-flash [class*='cd-'] { color: var(--mu-navy); }
+.mu-flash .pc-mruk { background: #fff; }
+
+/* Shop by need: equal, quiet tiles (photo right, copy left) */
+.mu-needs { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: 230px; }
+.mu-need, .mu-need.n0, .mu-need.n1, .mu-need.n2, .mu-need.n3 { grid-row: auto; grid-column: auto; background: var(--mu-stage); color: var(--mu-ink); border-radius: 24px; }
+.mu-need:hover { transform: none; box-shadow: inset 0 0 0 1.5px var(--mu-line); }
+.mu-need-art, .mu-need.n0 .mu-need-art, .mu-need.n3 .mu-need-art { left: auto; right: 4%; top: 8%; width: 46%; height: 84%; }
+.mu-need-art img { filter: none; }
+.mu-need-glyph { opacity: 0.08; }
+.mu-need-title, .mu-need.n0 .mu-need-title { font-size: clamp(22px, 2.2vw, 30px); font-weight: 760; }
+.mu-need-copy { max-width: 52%; }
+.mu-need-subs { opacity: 1; color: var(--muted); }
+.mu-need-go, .mu-need.n2 .mu-need-go { background: var(--mu-navy); color: #fff; box-shadow: none; }
+
+/* Bundles, reviews, showrooms */
+.mu-bundle:hover { transform: none; box-shadow: var(--mu-card-shadow); }
+.mu-showrooms { background: var(--mu-navy); }
+.mu-showrooms:hover { transform: none; background: var(--mu-navy-d); }
+
+/* Footer: solid navy */
+.mu-foot { background: var(--mu-navy-d); }
+
+@media (max-width: 1100px) {
+  .mu-hero:not(.is-photo) .mu-hero-in { gap: 32px; }
+}
+@media (max-width: 767px) {
+  .mu-hero:not(.is-photo) .mu-hero-in { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-top: 18px; padding-bottom: 8px; }
+  .mu-hero:not(.is-photo) .mu-hero-stage { order: -1; height: auto; margin: 0; animation: none; }
+  .mu-hero:not(.is-photo) .mu-hero-card { height: auto; aspect-ratio: 16 / 10; border-radius: 20px; }
+  .mu-hero-card .mu-hero-img, .mu-hero-card picture { max-height: 86%; max-width: 70%; margin: 0; }
+  .mu-hero-model { left: 14px; top: 12px; font-size: 11px; }
+  .mu-hero h1 { font-size: 30px; }
+  .mu-hero-feats { display: none; }
+  .mu-hero-copy { gap: 10px; }
+  .mu-hero:not(.is-photo) .mu-hero-ctrl { padding-bottom: 14px; }
+  .mu-sec { margin-top: 56px; }
+  .mu-flash { margin-top: 56px; padding: 40px 0; }
+  .mu-needs { grid-template-columns: minmax(0, 1fr); grid-auto-rows: 170px; }
+  .mu-need-copy { max-width: 58%; }
+}
