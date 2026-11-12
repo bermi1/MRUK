@@ -303,16 +303,16 @@
     else if (p.img) p.images = [p.img];
     else p.images = [];
   });
+  // Brand showrooms: phone '' until the client confirms the number (the store shows "Phone number coming soon").
   const SUPPLIERS = [
-    { city: 'Dar es Salaam', area: 'Kariakoo', type: 'Regional showroom and service centre', phone: '+255 700 000 301', hours: 'Mon–Sat 8:00–19:00', lat: -6.822768, lng: 39.272055, brands: ['mruk', 'skywood'] },
-    { city: 'Dar es Salaam', area: 'Mikocheni', type: 'Authorised dealer', phone: '+255 700 000 302', hours: 'Mon–Sat 9:00–18:00', lat: -6.7615, lng: 39.2447, brands: ['skywood'] },
-    { city: 'Dar es Salaam', area: 'Mbagala', type: 'Authorised dealer', phone: '+255 700 000 303', hours: 'Mon–Sat 8:30–18:30', lat: -6.9043, lng: 39.2755, brands: ['mruk'] },
-    { city: 'Arusha', area: 'Central', type: 'Showroom and service centre', phone: '+255 700 000 304', hours: 'Mon–Sat 8:30–18:00', lat: -3.3869, lng: 36.6830, brands: ['mruk', 'skywood'] },
-    { city: 'Mwanza', area: 'Nyamagana', type: 'Showroom', phone: '+255 700 000 305', hours: 'Mon–Sat 8:30–18:00', lat: -2.5164, lng: 32.9175, brands: ['mruk', 'skywood'] },
-    { city: 'Dodoma', area: 'City Centre', type: 'Service centre', phone: '+255 700 000 306', hours: 'Mon–Fri 8:00–17:00', lat: -6.1630, lng: 35.7516, brands: ['mruk'] },
-    { city: 'Mbeya', area: 'Mwanjelwa', type: 'Authorised retailer', phone: '+255 700 000 307', hours: 'Mon–Sat 8:30–18:00', lat: -8.9094, lng: 33.4608, brands: ['mruk', 'skywood'] },
-    { city: 'Zanzibar', area: 'Stone Town', type: 'Authorised retailer', phone: '+255 700 000 308', hours: 'Mon–Sat 9:00–18:00', lat: -6.1659, lng: 39.2026, brands: ['skywood'] },
-    { city: 'Moshi', area: 'Town', type: 'Authorised retailer', phone: '+255 700 000 309', hours: 'Mon–Sat 8:30–18:00', lat: -3.3348, lng: 37.3404, brands: ['mruk'] },
+    { city: 'Dar es Salaam', area: 'Kariakoo', type: 'Regional showroom and service centre', phone: '', hours: 'Mon–Sat 8:00–19:00', lat: -6.822768, lng: 39.272055, brands: ['mruk', 'skywood'] },
+    { city: 'Dar es Salaam', area: 'Mikocheni', type: 'Authorised dealer', phone: '', hours: 'Mon–Sat 9:00–18:00', lat: -6.7615, lng: 39.2447, brands: ['skywood'] },
+    { city: 'Dar es Salaam', area: 'Mbagala', type: 'Authorised dealer', phone: '', hours: 'Mon–Sat 8:30–18:30', lat: -6.9043, lng: 39.2755, brands: ['mruk'] },
+    { city: 'Arusha', area: 'Central', type: 'Showroom and service centre', phone: '', hours: 'Mon–Sat 8:30–18:00', lat: -3.3869, lng: 36.6830, brands: ['mruk', 'skywood'] },
+    { city: 'Mwanza', area: 'Nyamagana', type: 'Showroom', phone: '', hours: 'Mon–Sat 8:30–18:00', lat: -2.5164, lng: 32.9175, brands: ['mruk', 'skywood'] },
+    { city: 'Mbeya', area: 'Mwanjelwa', type: 'Authorised retailer', phone: '', hours: 'Mon–Sat 8:30–18:00', lat: -8.9094, lng: 33.4608, brands: ['mruk', 'skywood'] },
+    { city: 'Zanzibar', area: 'Stone Town', type: 'Authorised retailer', phone: '', hours: 'Mon–Sat 9:00–18:00', lat: -6.1659, lng: 39.2026, brands: ['skywood'] },
+    { city: 'Moshi', area: 'Town', type: 'Authorised retailer', phone: '', hours: 'Mon–Sat 8:30–18:00', lat: -3.3348, lng: 37.3404, brands: ['mruk'] },
     // Authorised dealers for both brands (client list, Nov 2026). Map pins are approximate town/landmark positions until exact Google Maps pins are supplied.
     { name: 'Ngumba Household', city: 'Masasi', area: 'Mkuti, behind NBC Bank', type: 'Authorised dealer · free delivery', phone: '+255 621 591 191', hours: 'Call to confirm opening hours', lat: -10.727, lng: 38.7995, brands: ['mruk', 'skywood'] },
     { name: 'Boys Electronics', city: 'Tunduru', area: 'Mkabara, near the old bus stand', type: 'Authorised dealer', phone: '+255 763 181 992', hours: 'Call to confirm opening hours', lat: -11.101, lng: 37.352, brands: ['mruk', 'skywood'] },

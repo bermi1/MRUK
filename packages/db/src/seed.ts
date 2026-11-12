@@ -238,6 +238,13 @@ async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' |
 
 /** Named dealers from brand-data.js on a live database: create the ones missing (matched by phone or name + city). Idempotent. */
 async function syncDealers(BT: ReturnType<typeof loadHandoff>) {
+  // Placeholder showroom numbers (+255 700 000 3xx) were never real: blank them (the store shows "coming soon"),
+  // and drop the Dodoma placeholder now that real Dodoma dealers are listed. Staff-entered numbers are untouched.
+  const blanked = await prisma.supplier.updateMany({ where: { phone: { startsWith: '+255 700 000 3' } }, data: { phone: '' } });
+  const dodoma = await prisma.supplier.deleteMany({ where: { city: 'Dodoma', area: 'City Centre', name: '' } });
+  if (blanked.count || dodoma.count) {
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'supplier.cleanup', entity: 'Supplier', entityId: 'placeholders', diff: { phonesBlanked: blanked.count, dodomaPlaceholderRemoved: dodoma.count } } });
+  }
   let created = 0;
   for (const d of BT.SUPPLIERS.filter((x) => x.name)) {
     const exists = await prisma.supplier.findFirst({ where: { OR: [{ phone: d.phone }, { name: d.name, city: d.city }] }, select: { id: true } });
