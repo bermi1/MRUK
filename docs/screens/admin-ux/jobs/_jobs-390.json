@@ -1,0 +1,115 @@
+[
+  {
+    "name": "Receive a new pay-on-delivery order and deliver it (warehouse)",
+    "width": 390,
+    "clicks": 7,
+    "typed": 0,
+    "pages": 3,
+    "notes": [
+      "No new-order banner on the dashboard",
+      "Order detail starts 519 px down the page after tapping the order",
+      "DB: status=delivered, payment=captured/POD-CASH, invoice=paid"
+    ],
+    "ok": true,
+    "ms": 2930
+  },
+  {
+    "name": "Find the order invoice and download the PDF (finance)",
+    "width": 390,
+    "clicks": 4,
+    "typed": 1,
+    "pages": 2,
+    "notes": [
+      "Download PDF → HTTP 200 application/pdf"
+    ],
+    "ok": true,
+    "ms": 1620
+  },
+  {
+    "name": "See low stock and receive a delivery of 5 units (warehouse)",
+    "width": 390,
+    "clicks": 4,
+    "typed": 1,
+    "pages": 2,
+    "notes": [
+      "Stock 0 → 5",
+      "Remove 1 unit (miscount/damaged) → \"−1 · now 2\" stock 3 → 2"
+    ],
+    "ok": true,
+    "ms": 13087
+  },
+  {
+    "name": "Price and publish a Mr UK draft (manager)",
+    "width": 390,
+    "clicks": 6,
+    "typed": 1,
+    "pages": 3,
+    "notes": [
+      "DB: hidden=false price=1250000"
+    ],
+    "ok": true,
+    "ms": 1226
+  },
+  {
+    "name": "Add a new product with a photo (catalogue editor, Skywood)",
+    "width": 390,
+    "clicks": 6,
+    "typed": 4,
+    "pages": 2,
+    "notes": [
+      "Created skywood-sky-uxa-01 hidden=true images=1"
+    ],
+    "ok": true,
+    "ms": 4501
+  },
+  {
+    "name": "Edit the announcement bar and see it live (manager)",
+    "width": 390,
+    "clicks": 3,
+    "typed": 1,
+    "pages": 1,
+    "notes": [
+      "Store shows new text: true"
+    ],
+    "ok": true,
+    "ms": 3467
+  },
+  {
+    "name": "Create a 10% promo code (catalogue editor)",
+    "width": 390,
+    "clicks": 4,
+    "typed": 2,
+    "pages": 1,
+    "notes": [
+      "Created code active=true brand=skywood; feedback: \"Code UXAUDIT10 saved\""
+    ],
+    "ok": true,
+    "ms": 2423
+  },
+  {
+    "name": "Answer a support ticket and resolve it (support)",
+    "width": 390,
+    "clicks": 4,
+    "typed": 1,
+    "pages": 1,
+    "notes": [
+      "Feedback after send: \"Internal note added\"",
+      "Resolve needs one more click (\"Mark resolved\"); not pressed to keep demo data. Ticket TK-4122"
+    ],
+    "ok": true,
+    "ms": 1947
+  },
+  {
+    "name": "Open last month report, export CSV, open audit log (owner)",
+    "width": 390,
+    "clicks": 6,
+    "typed": 0,
+    "pages": 3,
+    "notes": [
+      "CSV → HTTP 200 text/csv; charset=utf-8",
+      "Audit log heading is 412 px down the Settings page (scroll needed)"
+    ],
+    "ok": true,
+    "ms": 1069
+  }
+]

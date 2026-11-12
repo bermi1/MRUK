@@ -193,35 +193,35 @@ export async function Overview({ ctx, f }: { ctx: StaffContext; f: AdminFilters 
             )}
           </div>
           <div className="ad-scroll">
-            <table className="ad-table" style={{ marginTop: 10 }}>
+            <table className="ad-table cards" style={{ marginTop: 10 }}>
               <thead>
                 <tr>
                   <th>Order</th>
                   <th>Customer</th>
-                  <th>Channel</th>
-                  <th>Payment</th>
+                  <th className="hide-sm">Channel</th>
+                  <th className="hide-sm">Payment</th>
                   <th>Status</th>
                   <th className="r">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {recent.map((o) => (
-                  <tr key={o.id}>
-                    <td>
-                      <Link className="num" href={`/admin/orders?o=${o.number}`} style={{ textDecoration: 'none' }}>
+                  <tr key={o.id} className="link">
+                    <td className="ca">
+                      <Link className="num stretch" href={`/admin/orders?o=${o.number}`} style={{ textDecoration: 'none' }}>
                         {o.number}
                       </Link>
                       <div style={{ marginTop: 3 }}>
                         <BrandChip brand={o.brandKey} />
                       </div>
                     </td>
-                    <td>{o.contactName}</td>
-                    <td className="ad-muted2">{CHANNEL[o.channel] ?? o.channel}</td>
-                    <td className="ad-muted2">{paymentLabel(o.paymentMethod as PaymentMethod)}</td>
-                    <td>
+                    <td className="cc">{o.contactName}</td>
+                    <td className="ad-muted2 hide-sm">{CHANNEL[o.channel] ?? o.channel}</td>
+                    <td className="ad-muted2 hide-sm">{paymentLabel(o.paymentMethod as PaymentMethod)}</td>
+                    <td className="cd">
                       <OrderPill status={o.status} />
                     </td>
-                    <td className="r" style={{ fontWeight: 500 }}>
+                    <td className="r cb" style={{ fontWeight: 500 }}>
                       {fmtTZS(o.total)}
                     </td>
                   </tr>

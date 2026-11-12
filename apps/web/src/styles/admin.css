@@ -531,3 +531,62 @@ a.ad-stat:hover { background: #eceef4; }
   .ad-note { padding: 0; }
   .ad-neworder { display: none !important; }
 }
+
+/* UX tidy-up (admin audit) ------------------------------------------------------------- */
+/* The storefront brand themes are scoped to [data-brand]; inside the admin that attribute only marks the
+   selected store, so keep the admin's own type and surfaces (the page title no longer changes font per store). */
+.ad [data-brand] { background: transparent; }
+.ad .ad-top[data-brand] { background: #fff; }
+.ad [data-brand] :is(h1, h2, h3, .h1) { font-family: inherit; font-weight: 600; letter-spacing: normal; }
+.ad-bank.off small { color: var(--side-fg); }
+
+/* Tables: money and counts never wrap; the whole row opens the record */
+.ad-table .nw, .ad-table td.r { white-space: nowrap; }
+.ad-table tr.link { position: relative; }
+.ad-table tr.link a.stretch::after { content: ''; position: absolute; inset: 0; }
+.ad-table th.r { text-align: right; }
+.ad-table th.c { text-align: center; }
+
+/* Inline number editors: right-aligned digits with thousands separators */
+.ad-inline { text-align: right; font-variant-numeric: tabular-nums; }
+.ad-inlinewrap { display: inline-flex; flex-direction: column; gap: 2px; align-items: flex-end; }
+.ad-inlinewrap .ad-msg { min-height: 0; font-size: 11.5px; }
+
+/* One-line forms (quick restock) */
+.ad-aform-inline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ad-aform-inline .ad-msg { flex-basis: 100%; min-height: 0; font-size: 11.5px; }
+
+/* Hot picks: brand chip and status always share one footer line at the bottom of the card */
+.ad-hot { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.ad-hot button .ft { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: auto; width: 100%; flex-wrap: nowrap; }
+.ad-sp { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  /* Touch targets of at least 44 px on phones */
+  .ad-branch, .ad-search { height: 44px; }
+  .ad-inline, .ad-input, .ad-table button.ad-pill, .ad-check { min-height: 44px; }
+  .ad-table button.ad-pill { padding: 6px 12px; }
+  .ad-task .ttl { min-height: 44px; display: flex; align-items: center; margin-top: 2px; }
+  .ad-rowlink { min-height: 52px; }
+
+  /* Orders list as cards: number + amount, then customer + status. Region and payment are in the detail. */
+  .ad-table.cards thead { display: none; }
+  .ad-table.cards, .ad-table.cards tbody { display: block; }
+  .ad-table.cards tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 4px; border-bottom: 1px solid var(--bd2); align-items: center; min-height: 64px; }
+  .ad-table.cards td { display: block; border: 0; padding: 0 !important; }
+  .ad-table.cards td.hide-sm { display: none; }
+  .ad-table.cards td.r, .ad-table.cards td.end { justify-self: end; text-align: right; }
+  .ad-table.cards tr.sel { background: #f6f8ff; border-radius: 12px; }
+  .ad-table.cards tr.sel td { background: transparent; }
+  .ad-table.cards td.ad-empty { grid-column: 1 / -1; }
+  .ad-table.cards td.ca { grid-area: 1 / 1; }
+  .ad-table.cards td.cb { grid-area: 1 / 2; justify-self: end; text-align: right; }
+  .ad-table.cards td.cc { grid-area: 2 / 1; justify-self: start; text-align: left; }
+  .ad-table.cards td.cd { grid-area: 2 / 2; justify-self: end; }
+  .ad-table.cards td.ce { grid-column: 1 / -1; justify-self: end; }
+  .ad-table.cards td[data-l]::before { content: attr(data-l); color: var(--mut2); font-size: 12px; font-weight: 400; margin-right: 6px; }
+  .ad-table.cards td.cc[data-l], .ad-table.cards td.cd[data-l] { display: flex; align-items: center; }
+
+  /* With an order picked, its detail comes first on a phone; the list follows */
+  .ad-detail.picked > aside { order: -1; }
+}

@@ -9,6 +9,7 @@ import { heroDefaults } from '@/server/catalog';
 import type { CmsView } from '@/lib/types';
 import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
+import { payLaterLive } from '@/server/paylater';
 
 export const metadata = { title: 'Website CMS' };
 
@@ -19,11 +20,12 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
   const f = await adminFilters(ctx);
   const brand = pickBrand(ctx, f, sp.b);
   if (!brand) return <Forbidden what="any brand website" />;
-  const [b, blocks, products, cats] = await Promise.all([
+  const [b, blocks, products, cats, payLater] = await Promise.all([
     prisma.brand.findUniqueOrThrow({ where: { key: brand } }),
     prisma.cmsBlock.findMany({ where: { brandKey: brand } }),
     prisma.product.findMany({ where: { brandKey: brand }, orderBy: [{ hidden: 'asc' }, { name: 'asc' }], select: { id: true, model: true, name: true, images: true, hidden: true } }),
     prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, select: { slug: true, name: true } }),
+    payLaterLive(brand),
   ]);
   const m = Object.fromEntries(blocks.map((x) => [x.key, x.json])) as Record<string, unknown>;
   const cms: CmsView = {
@@ -49,6 +51,8 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
       {p.hidden ? ' (hidden)' : ''}
     </option>
   ));
+  // Pay Later off: the store drops copy that promises it, so tell staff why their wording may not show.
+  const plCopy = !payLater && /pay later|azania|salary|monthly|kwa mwezi/i.test([cms.announcement, cms.seo.title, cms.seo.desc, ...cms.hero.map((h) => `${h.title} ${h.sub}`)].join(' '));
   const ro = !write ? <p className="ad-muted2" style={{ fontSize: 12.5 }}>Read-only: your role cannot publish website changes.</p> : null;
 
   return (
@@ -81,6 +85,11 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
           </a>
         </div>
       </div>
+      {plCopy && (
+        <div className="ad-alert warn" role="note" data-testid="cms-paylater-note">
+          Pay Later by Azania Bank is <b>off</b> on the {BRAND_NAME[brand]} store. Sentences about Pay Later, salary or monthly payments in the announcement, hero, mega menu promo and SEO description are left out on the live site until it is switched back on in Settings. Edit them if you want different text to show now.
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr)', gap: 14, alignItems: 'start' }} className="ad-cmsgrid">
         <div className="ad-stack" style={{ gap: 14 }}>
           <section className="ad-card">

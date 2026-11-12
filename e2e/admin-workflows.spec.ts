@@ -16,6 +16,8 @@ const png = (color: string) => sharp({ create: { width: 120, height: 90, channel
 test('add a product: one form with features, specs, photos (reorder, main), preview, then edit with the same form', async ({ page }) => {
   await signIn(page, 'halima@skywood.co.tz');
   const c = db();
+  // A product left by an earlier run would trip the "nothing saved yet" check below (and shows on the store).
+  await c.product.deleteMany({ where: { name: 'QA Air Fryer 5L', orderItems: { none: {} } } });
   await page.goto('/admin/products?b=skywood');
   await page.getByRole('link', { name: '+ Add product' }).click();
   const form = page.getByRole('form', { name: 'Add a product' });

@@ -3,6 +3,7 @@ import { prisma } from '@bt/db';
 import { fmtDate, fmtTZS } from '@bt/core';
 import { createFlashAction, deleteDiscountAction, deleteFlashAction, saveDiscountAction, toggleDiscountAction, toggleFlashAction, toggleHotAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
+import { ThumbImg } from '@/components/admin/ThumbImg';
 import { AForm } from '@/components/admin/AForm';
 import { BrandChip, Forbidden, Kpi, Pill } from '@/components/admin/ui';
 import { adminFilters, BRAND_NAME, isoDayEAT, monthName, orderWhere, startOfMonthEAT } from '@/server/admin/context';
@@ -97,9 +98,9 @@ export default async function PromosPage() {
               const on = hot.has(p.id);
               const body = (
                 <>
-                  <span className="im">{p.images[0] ? <img src={p.images[0]} alt="" loading="lazy" /> : p.model.slice(0, 10)}</span>
+                  <span className="im">{p.images[0] ? <ThumbImg src={p.images[0]} label={p.model.slice(0, 10)} /> : p.model.slice(0, 10)}</span>
                   <span className="nm">{p.name}</span>
-                  <span className="ad-between" style={{ width: '100%' }}>
+                  <span className="ft">
                     <BrandChip brand={p.brandKey} />
                     <span className={`ad-pill ${on ? 'pill-hot' : 'pill-grey'}`} style={{ fontSize: 10.5, padding: '2px 8px' }}>
                       {on ? 'HOT' : 'Off'}
@@ -133,7 +134,7 @@ export default async function PromosPage() {
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '2px 10px', padding: '10px 0', borderBottom: '1px solid #F0F1F5' }}>
                 <span style={{ fontSize: 14, fontWeight: 600 }}>{c.title}</span>
                 <Pill cls="pill-green">−{c.save}%</Pill>
-                <span className="ad-muted" style={{ fontSize: 12 }}>
+                <span className="ad-muted ad-sp" style={{ fontSize: 12 }}>
                   <BrandChip brand={c.brand} /> {c.items.map((id) => byId.get(id)?.name).filter(Boolean).join(' + ')}
                 </span>
                 <span className="ad-ok" style={{ fontSize: 12, textAlign: 'right' }}>
@@ -153,7 +154,7 @@ export default async function PromosPage() {
                     <tr key={pr.id}>
                       <td>
                         <div style={{ fontWeight: 500 }}>{p?.name ?? pr.productId ?? pr.title}</div>
-                        <div className="ad-muted" style={{ fontSize: 11.5 }}>
+                        <div className="ad-muted ad-sp" style={{ fontSize: 11.5, marginTop: 3 }}>
                           <BrandChip brand={pr.brandKey} /> −{pr.percent}%{p ? ` · ${fmtTZS(Math.round((p.price * (100 - pr.percent)) / 100))}` : ''}
                         </div>
                       </td>
@@ -204,8 +205,19 @@ export default async function PromosPage() {
       </div>
       <section className="ad-card">
         <div className="ad-between">
-          <h2 className="ad-h">Discount codes</h2>
+          <div>
+            <h2 className="ad-h">Discount codes</h2>
+            <p className="ad-sub">Customers type these at checkout. Tap a status to pause or activate a code.</p>
+          </div>
         </div>
+        {write && (
+          <details className="ad-more" style={{ marginTop: 10 }}>
+            <summary className="ad-btn sm">+ New discount code</summary>
+            <AForm action={saveDiscountAction} submit="Create code" className="ad-form three" resetOnOk>
+              <CodeFields allowed={f.allowed} />
+            </AForm>
+          </details>
+        )}
         <div className="ad-scroll">
           <table className="ad-table" style={{ marginTop: 10 }}>
             <thead>
@@ -274,14 +286,6 @@ export default async function PromosPage() {
             </tbody>
           </table>
         </div>
-        {write && (
-          <details className="ad-more" style={{ marginTop: 10 }}>
-            <summary>+ New discount code</summary>
-            <AForm action={saveDiscountAction} submit="Create code" className="ad-form three" resetOnOk>
-              <CodeFields allowed={f.allowed} />
-            </AForm>
-          </details>
-        )}
       </section>
     </div>
   );

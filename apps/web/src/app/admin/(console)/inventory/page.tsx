@@ -51,7 +51,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <div className="ad-between">
           <div>
             <h2 className="ad-h">Stock by SKU</h2>
-            <p className="ad-sub">Available = can still be sold. Reserved = held for unpaid orders (awaiting payment, or Pay Later waiting for Azania Bank); it returns to available if the order is cancelled or not paid in 30 minutes. Quick restock adds to available. Per-branch stock is not tracked yet.</p>
+            <p className="ad-sub">Available = can still be sold. Reserved = held for unpaid orders (awaiting payment, or Pay Later waiting for Azania Bank); it returns to available if the order is cancelled or not paid in 30 minutes. Add / remove units: type 5 and press Add for a delivery, or −2 to take out damaged or miscounted units (every change is in the audit log). Per-branch stock is not tracked yet.</p>
           </div>
           <nav className="ad-tabs" aria-label="Stock filter">
             <Link className="ad-tab" href="/admin/inventory" aria-current={show === 'all' ? 'true' : undefined}>
@@ -63,17 +63,17 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           </nav>
         </div>
         <div className="ad-scroll">
-          <table className="ad-table" style={{ marginTop: 12 }}>
+          <table className="ad-table cards" style={{ marginTop: 12 }}>
             <thead>
               <tr>
                 <th>Product</th>
-                <th>SKU</th>
-                <th className="r">Price</th>
+                <th className="hide-sm">SKU</th>
+                <th className="r hide-sm">Price</th>
                 <th className="c">Available</th>
-                <th className="c">Reserved</th>
-                <th className="r">Value</th>
+                <th className="c hide-sm">Reserved</th>
+                <th className="r hide-sm">Value</th>
                 <th>Status</th>
-                <th>Quick restock</th>
+                <th title="Type units received, or a minus number to remove damaged or miscounted units">Add / remove units</th>
               </tr>
             </thead>
             <tbody>
@@ -81,8 +81,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                 const l = level(p.stock);
                 return (
                   <tr key={p.id} data-product={p.id}>
-                    <td>
-                      <div className="ad-row">
+                    <td className="ca">
+                      <div className="ad-row" style={{ flexWrap: 'nowrap' }}>
                         <Thumb src={p.images[0]} model={p.model} />
                         <div>
                           <div style={{ fontWeight: 500 }}>{p.name}</div>
@@ -93,23 +93,23 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                         </div>
                       </div>
                     </td>
-                    <td className="mono ad-muted2" style={{ fontSize: 11.5 }}>
+                    <td className="mono ad-muted2 hide-sm" style={{ fontSize: 11.5 }}>
                       {p.model}
                     </td>
-                    <td className="r">{fmtTZS(p.price)}</td>
-                    <td className="c" style={{ fontWeight: 600 }} data-testid="stock-available">
+                    <td className="r hide-sm">{fmtTZS(p.price)}</td>
+                    <td className="c cc" style={{ fontWeight: 600 }} data-testid="stock-available" data-l="Available">
                       {p.stock}
                     </td>
-                    <td className="c ad-muted2" data-testid="stock-reserved">
+                    <td className="c ad-muted2 hide-sm" data-testid="stock-reserved">
                       {reservedOf.get(p.id) ?? 0}
                     </td>
-                    <td className="r ad-muted2">{fmtTZS(p.stock * p.price)}</td>
-                    <td>
+                    <td className="r ad-muted2 hide-sm">{fmtTZS(p.stock * p.price)}</td>
+                    <td className="cb">
                       <Pill cls={l.cls}>{l.label}</Pill>
                     </td>
-                    <td>
-                      <AForm action={restockAction.bind(null, p.id)} submit="Add" submitClass="ad-btn sm" className="ad-row">
-                        <input className="ad-inline" name="qty" inputMode="numeric" defaultValue="10" aria-label={`Units to add for ${p.name}`} style={{ width: 64 }} />
+                    <td className="cd">
+                      <AForm action={restockAction.bind(null, p.id)} submit="Add" submitClass="ad-btn sm" inline>
+                        <input className="ad-inline" name="qty" inputMode="text" defaultValue="10" aria-label={`Units to add for ${p.name}`} style={{ width: 64 }} />
                       </AForm>
                     </td>
                   </tr>

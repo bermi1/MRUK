@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ThumbImg } from './ThumbImg';
 import { ADVANCE_STATUS_LABEL, ORDER_STATUS_LABEL, type AdvanceStatus, type OrderStatus } from '@bt/core';
 
 export const ORDER_PILL: Record<string, string> = {
@@ -63,7 +64,8 @@ export function Forbidden({ what }: { what: string }) {
 }
 
 export function Thumb({ src, model, dark }: { src?: string; model: string; dark?: boolean }) {
-  return <div className={`ad-thumb ${dark ? 'dark' : ''}`}>{src ? <img src={src} alt="" loading="lazy" /> : <span>{model.replace(/^(UK|SKY)[-\s]*/i, '').slice(0, 8) || 'NO IMG'}</span>}</div>;
+  const label = model.replace(/^(UK|SKY)[-\s]*/i, '').slice(0, 8) || 'NO IMG';
+  return <div className={`ad-thumb ${dark ? 'dark' : ''}`}>{src ? <ThumbImg src={src} label={label} /> : <span>{label}</span>}</div>;
 }
 
 export function Meter({ pct, color = '#283A6E', lg }: { pct: number; color?: string; lg?: boolean }) {

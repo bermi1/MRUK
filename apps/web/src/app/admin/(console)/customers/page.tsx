@@ -67,38 +67,40 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
         </form>
       </div>
       <div className="ad-scroll">
-        <table className="ad-table" style={{ marginTop: 12 }}>
+        <table className="ad-table cards" style={{ marginTop: 12 }}>
           <thead>
             <tr>
               <th>Customer</th>
               <th>Phone</th>
-              <th>Region</th>
-              <th>Channel</th>
-              <th className="c">Orders</th>
+              <th className="hide-sm">Region</th>
+              <th className="hide-sm">Channel</th>
+              <th className="c hide-sm">Orders</th>
               <th>Salary Advance</th>
               <th className="r">Lifetime value</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(({ c, ltv, adv, brands, region, channel }) => (
-              <tr key={c.id}>
-                <td>
-                  <div className="ad-row">
+              <tr key={c.id} className="link">
+                <td className="ca">
+                  <div className="ad-row" style={{ flexWrap: 'nowrap' }}>
                     <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#E8EAF4', color: '#12164A', fontSize: 11.5, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>{initials(c.name || '?')}</span>
-                    <Link href={`/admin/customers/${c.id}`} style={{ fontWeight: 500, color: '#12152B', textDecoration: 'none' }}>
-                      {c.name || 'Unnamed'}
-                    </Link>
-                    {brands.map((b) => (
-                      <BrandChip key={b} brand={b} />
-                    ))}
+                    <span className="ad-sp">
+                      <Link href={`/admin/customers/${c.id}`} className="stretch" style={{ fontWeight: 500, color: '#12152B', textDecoration: 'none' }}>
+                        {c.name || 'Unnamed'}
+                      </Link>
+                      {brands.map((b) => (
+                        <BrandChip key={b} brand={b} />
+                      ))}
+                    </span>
                   </div>
                 </td>
-                <td className="ad-muted2">{formatTzPhone(c.phone)}</td>
-                <td>{region}</td>
-                <td className="ad-muted2">{channel}</td>
-                <td className="c">{c.orders.length}</td>
-                <td style={{ color: adv.color, fontWeight: 500 }}>{adv.text}</td>
-                <td className="r" style={{ fontWeight: 600 }}>
+                <td className="ad-muted2 cc nw">{formatTzPhone(c.phone)}</td>
+                <td className="hide-sm">{region}</td>
+                <td className="ad-muted2 hide-sm">{channel}</td>
+                <td className="c hide-sm">{c.orders.length}</td>
+                <td className="cd" style={{ color: adv.color, fontWeight: 500 }}>{adv.text}</td>
+                <td className="r cb" style={{ fontWeight: 600 }}>
                   {fmtTZS(ltv)}
                 </td>
               </tr>

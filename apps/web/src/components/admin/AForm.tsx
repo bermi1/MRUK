@@ -18,6 +18,7 @@ export function AForm({
   confirm,
   extra,
   label,
+  inline = false,
 }: {
   action: FormAct;
   children: React.ReactNode;
@@ -28,6 +29,8 @@ export function AForm({
   confirm?: string;
   extra?: React.ReactNode;
   label?: string;
+  /** Field, button and message on one line (table rows). */
+  inline?: boolean;
 }) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -49,8 +52,23 @@ export function AForm({
         });
       }}
     >
-      <div className={className}>{children}</div>
-      {(submit || extra || msg) && (
+      {inline ? (
+        <div className={`ad-aform-inline ${className ?? ''}`}>
+          {children}
+          {submit && (
+            <button type="submit" className={submitClass} disabled={pending} aria-busy={pending}>
+              {pending ? 'Saving…' : submit}
+            </button>
+          )}
+          {extra}
+          <span role={msg?.ok === false ? 'alert' : 'status'} className={`ad-msg ${msg?.ok ? 'ok' : 'err'}`} style={{ userSelect: 'text' }}>
+            {msg?.text}
+          </span>
+        </div>
+      ) : (
+        <div className={className}>{children}</div>
+      )}
+      {!inline && (submit || extra || msg) && (
         <div className="ad-row" style={{ marginTop: 12, flexWrap: 'wrap' }}>
           {submit && (
             <button type="submit" className={submitClass} disabled={pending} aria-busy={pending}>
