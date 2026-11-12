@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { DB_URL, setPayLater, signInOwner, togglePayLater } from './paylater';
 
-const PRODUCT = '/skywood/p/skywood-s-06';
+const PRODUCT = '/skywood/p/skywood-sk-g05';
 const PL = /Pay Later|Lipa Baadaye|\/mo\b|\/mwezi|salary/i;
 
 /** All text in the rendered page (visible or not), scripts and styles excluded. */

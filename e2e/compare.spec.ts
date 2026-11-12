@@ -5,7 +5,7 @@ import { setPayLater } from './paylater';
 
 const db = new PrismaClient();
 const DEAL = 'mruk-uk-f215-30-4dl-wd'; // fridge with a seeded 15% flash deal
-const FRIDGES = [DEAL, 'mruk-uk59', 'mruk-uk-f47-094i'];
+const FRIDGES = [DEAL, 'mruk-uk-f143-27-0wd', 'mruk-uk-f120-20-2diwd'];
 const FOURTH = 'mruk-uk-50';
 const OTHER_CAT = 'mruk-uk-g5500q'; // generator
 
@@ -70,7 +70,7 @@ test.describe('AI compare', () => {
     await expect(page.getByTestId('verdict')).toContainText('hakijaelezwa');
 
     // Staff add a spec in the admin: the next verdict uses it.
-    const before = await db.product.findUniqueOrThrow({ where: { id: 'mruk-uk-f47-094i' } });
+    const before = await db.product.findUniqueOrThrow({ where: { id: 'mruk-uk-f120-20-2diwd' } });
     try {
       await db.product.update({ where: { id: before.id }, data: { features: [...before.features, 'Whisper quiet compressor'] } });
       await page.getByTestId('verdict-lang-en').click();
@@ -83,7 +83,7 @@ test.describe('AI compare', () => {
     }
 
     // Skywood keeps its own list.
-    expect(await addFromPdp(page, 'skywood', 'skywood-r10')).toContain('added to compare');
+    expect(await addFromPdp(page, 'skywood', 'skywood-sk6031ges')).toContain('added to compare');
     await page.goto('/skywood/compare');
     await expect(page.getByTestId('compare-count')).toContainText('1 of 3');
     await expect(page.locator('[role=table]')).not.toContainText('Refrigerator');
@@ -101,7 +101,7 @@ test.describe('AI compare', () => {
 
   test('site language Kiswahili gives a Kiswahili verdict', async ({ page, context, baseURL }) => {
     await context.addCookies([{ name: 'bt_locale', value: 'sw', url: baseURL! }]);
-    await addFromPdp(page, 'skywood', 'skywood-r10');
+    await addFromPdp(page, 'skywood', 'skywood-sk6031ges');
     await addFromPdp(page, 'skywood', 'skywood-sk-g05');
     await page.goto('/skywood/compare');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Linganisha bidhaa');

@@ -93,6 +93,8 @@ function withArgs(c: Captured, f: (args: unknown[]) => unknown[]): string {
 }
 
 async function addProduct(page: Page, brand: 'mruk' | 'skywood', id: string) {
+  // Repeated runs buy the shared demo stock down: make sure there is some to add.
+  await db.product.updateMany({ where: { id, stock: { lt: 5 } }, data: { stock: 10 } });
   await page.goto(`/${brand}/p/${id}`);
   await page.getByRole('radio', { name: /Pay in full/ }).click();
   await page.getByRole('button', { name: 'Add to cart' }).click();

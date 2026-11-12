@@ -14,8 +14,8 @@ import { db, staffSignIn } from './staff';
 type Brand = 'mruk' | 'skywood';
 const SKY_WAREHOUSE = 'e2e.warehouse@skywood.co.tz';
 const BRANDS: { key: Brand; prefix: 'MU' | 'SW'; product: string; second: string; staff: string; otherStaff: string }[] = [
-  { key: 'mruk', prefix: 'MU', product: 'mruk-uk-t09', second: 'mruk-g-7302', staff: 'daudi@mruk.co.tz', otherStaff: SKY_WAREHOUSE },
-  { key: 'skywood', prefix: 'SW', product: 'skywood-skm-e9a', second: 'skywood-boombox-3', staff: SKY_WAREHOUSE, otherStaff: 'daudi@mruk.co.tz' },
+  { key: 'mruk', prefix: 'MU', product: 'mruk-uk-t09', second: 'mruk-uk-6134-ge', staff: 'daudi@mruk.co.tz', otherStaff: SKY_WAREHOUSE },
+  { key: 'skywood', prefix: 'SW', product: 'skywood-skm-e9a', second: 'skywood-b-09', staff: SKY_WAREHOUSE, otherStaff: 'daudi@mruk.co.tz' },
 ];
 const STOCK = 10;
 const tzs = (n: number) => `TZS ${Math.round(n).toLocaleString('en-US')}`;
@@ -519,7 +519,7 @@ test('edge: a promo code that expires after it was applied is not silently dropp
 test('edge: double submit of "Place order" creates one order and takes stock once', async ({ page }) => {
   await page.context().clearCookies();
   const phone = `07${rnd(8)}`;
-  await addToCart(page, 'mruk', 'mruk-g-7302');
+  await addToCart(page, 'mruk', 'mruk-uk-6134-ge');
   await fillCheckout(page, 'mruk', 'Double Click', phone);
   await page.getByTestId('pay-pay_on_delivery').click();
   // The same server action request sent twice at the same moment (double tap, flaky network retry).
@@ -538,5 +538,5 @@ test('edge: double submit of "Place order" creates one order and takes stock onc
   await duplicate;
   const orders = await c.order.findMany({ where: { contactPhone: `+255${phone.slice(1)}` } });
   expect(orders).toHaveLength(1);
-  expect(await stockOf('mruk-g-7302')).toBe(STOCK - 1);
+  expect(await stockOf('mruk-uk-6134-ge')).toBe(STOCK - 1);
 });
