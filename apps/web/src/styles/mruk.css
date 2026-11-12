@@ -384,7 +384,7 @@
 
 @media (max-width: 1240px) {
   .mu-act span { display: none; }
-  .mu-nav-end > a:not(.mu-deals) { display: none; }
+  .mu-nav-end > a:not(.mu-deals):not([data-testid="nav-all-products"]) { display: none; }
   .mu-mega-cat { grid-template-columns: 200px minmax(0, 1fr); }
   .mu-mega-cat .mu-promo { display: none; }
   .mu-mega-all { grid-template-columns: 1fr; }

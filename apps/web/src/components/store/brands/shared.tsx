@@ -22,6 +22,8 @@ export interface HeaderLabels {
   compare: string;
   cart: string;
   deals: string;
+  /** Desktop nav link to the full catalogue (/shop). */
+  allProducts: string;
   search: string;
   searchShort: string;
   allBrands: string;

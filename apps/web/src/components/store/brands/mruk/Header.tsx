@@ -143,6 +143,9 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                 </button>
               </span>
             )}
+            <Link href={`${b}/shop`} onMouseEnter={m.leave} className={on('shop') ? 'on' : ''} data-testid="nav-all-products">
+              {labels.allProducts}
+            </Link>
             <Link href={`${b}/deals`} onMouseEnter={m.leave} className={`mu-deals ${on('deals') ? 'on' : ''}`}>
               <span aria-hidden="true">%</span>
               {labels.deals}

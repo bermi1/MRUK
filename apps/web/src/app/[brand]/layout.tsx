@@ -97,6 +97,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
       compare: t('compare'),
       cart: t('cart'),
       deals: t('deals'),
+      allProducts: t('allProducts'),
       search: t('searchHint', { brand: brand.name }),
       searchShort: t('searchShort'),
       allBrands: sister ? sister.label : t('allBrands'),
