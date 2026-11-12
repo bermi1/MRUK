@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { fmt, waLink } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { getBrand } from '@/server/catalog';
@@ -16,12 +17,14 @@ export default async function TrackPage({ params, searchParams }: { params: Prom
   if (q) {
     try {
       await limit('track', 30, 600);
-      tr = await trackView(q);
+      tr = await trackView(q, key);
       if (!tr) err = "We couldn't find that order number. Check the SMS we sent you, or contact support.";
     } catch (e) {
       err = e instanceof RateLimitError ? e.message : 'Something went wrong. Try again.';
     }
   }
+  // A sister-brand order is shown in its own store (its branding, WhatsApp number and support).
+  if (tr && tr.brand !== key) redirect(`/${tr.brand}/track?o=${encodeURIComponent(tr.number)}`);
   return (
     <div className="wrap-narrow" style={{ paddingTop: 40 }}>
       <div className="eyebrow">Track order</div>

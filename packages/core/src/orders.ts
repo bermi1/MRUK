@@ -64,7 +64,9 @@ export interface TrackingStep {
 }
 
 export function trackingSteps(status: OrderStatus, method: PaymentMethod): TrackingStep[] {
-  const titles = ['Order placed', method === 'salary_advance' ? 'Azania Bank approval' : 'Payment confirmed', 'Packed at warehouse', 'Out for delivery', 'Delivered'];
+  // Pay on delivery is confirmed without a payment: the customer pays when the order arrives.
+  const second = method === 'salary_advance' ? 'Azania Bank approval' : method === 'pay_on_delivery' ? 'Order confirmed' : 'Payment confirmed';
+  const titles = ['Order placed', second, 'Packed at warehouse', 'Out for delivery', 'Delivered'];
   // How many steps are complete, and which step is in progress (-1 = none).
   const progress: Record<OrderStatus, [done: number, current: number]> = {
     placed: [1, 1],

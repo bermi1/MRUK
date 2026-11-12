@@ -6,7 +6,7 @@
  * The demo seed also writes OFF; e2e tests that exercise Pay Later switch it on first.
  */
 import type { PaymentMethod } from './payments';
-import { PAYMENT_METHODS } from './payments';
+import { PAYMENT_METHOD_INFO, PAYMENT_METHODS, paymentAllowed } from './payments';
 
 export const PAY_LATER_DEFAULT = false;
 export const PAY_LATER_BRANDS = ['mruk', 'skywood'] as const;
@@ -43,9 +43,29 @@ export function payLaterValue(enabled: boolean, updatedBy: string, at = new Date
   return { enabled, updatedBy: updatedBy.slice(0, 160), at: at.toISOString() };
 }
 
-/** Payment methods a customer may choose; Salary Advance only while Pay Later is on. */
+/**
+ * Methods that go through Azania Bank (Salary Advance and the direct Azania account payment). The bank
+ * integration is switched off until Azania provides the final flow, so they follow the Pay Later switch.
+ */
+export function needsAzania(method: PaymentMethod): boolean {
+  return PAYMENT_METHOD_INFO[method].azania;
+}
+
+/** Payment methods a customer may choose; the Azania Bank methods only while Pay Later is on. */
 export function checkoutMethods(payLater: boolean): PaymentMethod[] {
-  return PAYMENT_METHODS.filter((m) => payLater || m !== 'salary_advance');
+  return PAYMENT_METHODS.filter((m) => payLater || !needsAzania(m));
+}
+
+/** Method preselected at checkout: the one asked for when it is on offer here, else the first one that is. */
+export function defaultCheckoutMethod(payLater: boolean, region: string, asked?: string | null): PaymentMethod {
+  const offered = checkoutMethods(payLater).filter((m) => paymentAllowed(m, region));
+  const want = offered.find((m) => m === asked);
+  return want ?? offered[0] ?? 'card';
+}
+
+/** Methods that need Azania Bank (same as needsAzania; kept for the security checks that use this name). */
+export function azaniaMethod(m: PaymentMethod): boolean {
+  return needsAzania(m);
 }
 
 /** The Azania mini app sells only on Pay Later: it is open while either brand has it on. */

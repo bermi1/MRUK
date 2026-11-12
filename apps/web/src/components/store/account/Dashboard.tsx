@@ -18,9 +18,10 @@ const href = (brand: string, tab: string, extra = '') => `/${brand}/account?tab=
 
 // Building blocks ------------------------------------------------------------------------------
 
-export function Stepper({ steps, salaryAdvance, ctx }: { steps: StepperStep[]; salaryAdvance: boolean; ctx: Ctx }) {
+export function Stepper({ steps, salaryAdvance, payOnDelivery = false, ctx }: { steps: StepperStep[]; salaryAdvance: boolean; payOnDelivery?: boolean; ctx: Ctx }) {
   const { t, locale } = ctx;
-  const label = (s: StepperStep) => (s.key === 'confirmed' && salaryAdvance ? t('accStep_confirmedSa') : t(k(`accStep_${s.key}`)));
+  // Pay on delivery is confirmed before anything is paid: never show it as "Paid".
+  const label = (s: StepperStep) => (s.key === 'confirmed' && salaryAdvance ? t('accStep_confirmedSa') : s.key === 'confirmed' && payOnDelivery ? t('accStep_confirmedPod') : t(k(`accStep_${s.key}`)));
   return (
     <ol className="acc-steps" data-testid="order-stepper">
       {steps.map((s) => (
@@ -91,7 +92,7 @@ export function OrderItemCard({ o, ctx, full = false }: { o: OrderCard; ctx: Ctx
           {statusBadge(o, t)}
         </div>
       </header>
-      {o.steps ? (o.active || full ? <Stepper steps={o.steps} salaryAdvance={sa} ctx={ctx} /> : null) : <p className="acc-closed">{t('accClosed')}</p>}
+      {o.steps ? (o.active || full ? <Stepper steps={o.steps} salaryAdvance={sa} payOnDelivery={o.method === 'pay_on_delivery'} ctx={ctx} /> : null) : <p className="acc-closed">{t('accClosed')}</p>}
       {full ? (
         <ul className="acc-lines">
           {o.items.map((i) => (

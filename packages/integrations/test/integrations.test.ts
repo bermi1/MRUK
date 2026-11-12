@@ -1,6 +1,7 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { inflateSync } from 'node:zlib';
 import { buildSchedule, contractTerms } from '@bt/core';
 import { describe, expect, it } from 'vitest';
 import { contractPdf, invoicePdf, LocalStorage, lastMessageTo, mintMockSsoToken, MockAzaniaBank, MockSms } from '../src';
@@ -55,5 +56,49 @@ describe('pdf', () => {
     expect(Buffer.from(c.slice(0, 4)).toString()).toBe('%PDF');
     const i = await invoicePdf({ number: 'INV-1', issuedAt: signedAt, status: 'paid', seller: { legal: 'Skywood Tanzania', email: 'a@b.c' }, orderNumber: 'SW-1', customer: { name: 'A', phone: 'B', region: 'C' }, items: [{ name: 'Kettle', model: 'K', qty: 2, price: 65000 }], deliveryFee: 0, discount: 1000, total: 129000, paymentMethod: 'Card' });
     expect(i.length).toBeGreaterThan(1000);
+  });
+});
+
+/** Text drawn on a pdf-lib PDF: inflate each content stream and decode its hex strings. */
+function pdfText(pdf: Uint8Array): string {
+  const raw = Buffer.from(pdf).toString('latin1');
+  const out: string[] = [];
+  for (const m of raw.matchAll(/stream\r?\n([\s\S]*?)endstream/g)) {
+    let body: string;
+    try {
+      body = inflateSync(Buffer.from(m[1]!, 'latin1')).toString('latin1');
+    } catch {
+      continue; // images
+    }
+    for (const t of body.matchAll(/<([0-9A-Fa-f]+)> Tj/g)) out.push(Buffer.from(t[1]!, 'hex').toString('latin1'));
+  }
+  return out.join('\n');
+}
+
+describe('tax invoice PDF', () => {
+  it('lists every line, delivery, discount, VAT-inclusive totals and the payment method', async () => {
+    const pdf = await invoicePdf({
+      number: 'INV-2026-01501',
+      issuedAt: new Date(Date.UTC(2026, 10, 11)),
+      status: 'issued',
+      seller: { legal: 'Mr UK Tanzania Ltd', email: 'care@mruk.co.tz' },
+      orderNumber: 'MU-10501',
+      customer: { name: 'Salma Juma', phone: '+255754000214', region: 'Dar es Salaam' },
+      items: [
+        { name: 'Water Pump', model: 'UK-T09', qty: 2, price: 250_000 },
+        { name: 'Generator', model: 'G-7302', qty: 1, price: 260_000 },
+      ],
+      deliveryFee: 15_000,
+      discount: 76_000,
+      total: 699_000,
+      paymentMethod: 'Pay on delivery',
+    });
+    const text = pdfText(pdf);
+    for (const s of ['TAX INVOICE', 'INV-2026-01501', 'ISSUED', 'Salma Juma', 'Mr UK Tanzania Ltd', 'Order MU-10501 - Pay on delivery', 'Water Pump', 'UK-T09', 'TZS 500,000', 'Generator', 'TZS 260,000', 'Delivery', 'TZS 15,000', 'Discount', '-TZS 76,000']) expect(text).toContain(s);
+    // Prices are VAT inclusive (18%): net + VAT = total.
+    const net = Math.round(699_000 / 1.18);
+    expect(text).toContain(`Net of VAT\nTZS ${net.toLocaleString('en-US')}`);
+    expect(text).toContain(`VAT 18%\nTZS ${(699_000 - net).toLocaleString('en-US')}`);
+    expect(text).toContain('Total (VAT inclusive)\nTZS 699,000');
   });
 });

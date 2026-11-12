@@ -6,6 +6,7 @@ import {
   assertAdvanceTransition,
   assertOrderTransition,
   assessAffordability,
+  azaniaMethod,
   buildSchedule,
   CONTRACT_CONSENTS,
   contractNumber,
@@ -32,13 +33,15 @@ import {
 } from '@bt/core';
 import { contractPdf, invoicePdf } from '@bt/integrations';
 import type { BrandKey } from '@/lib/types';
-import { getCart, clearCart, flashDiscounts } from './cart';
+import { getCart, clearCart, consumeCart, flashDiscounts } from './cart';
+import { env } from './env';
 import { refreshCatalog } from './catalog';
 import { integrations } from './integrations';
 import { awardOrderPoints, reverseOrderPoints } from './loyalty';
 import { payLaterLive } from './paylater';
 import { sign } from './session';
 import { checkOrderStock, checkStock, emitTaskEvent } from './tasks';
+
 
 export class CheckoutError extends Error {
   constructor(
@@ -90,9 +93,11 @@ interface ContactInput {
 }
 
 /** Reserve stock for the cart lines; throws if any line can't be filled. */
-async function reserveStock(tx: Prisma.TransactionClient, lines: { productId: string; qty: number; name: string }[]) {
+async function reserveStock(tx: Prisma.TransactionClient, brand: BrandKey, lines: { productId: string; qty: number; name: string }[]) {
   for (const l of lines) {
-    const r = await tx.product.updateMany({ where: { id: l.productId, stock: { gte: l.qty }, hidden: false }, data: { stock: { decrement: l.qty } } });
+    if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > 20) throw new CheckoutError('Please update your cart.');
+    // Only this brand's live, priced products (never a hidden price-0 draft or the sister brand's stock).
+    const r = await tx.product.updateMany({ where: { id: l.productId, brandKey: brand, stock: { gte: l.qty }, hidden: false, price: { gt: 0 } }, data: { stock: { decrement: l.qty } } });
     if (r.count !== 1) throw new CheckoutError(`Sorry, ${l.name} no longer has enough stock. Please update your cart.`);
   }
   stockChanged();
@@ -132,8 +137,25 @@ function validateContact(c: ContactInput) {
 export interface PlaceOrderInput extends ContactInput {
   method: Exclude<PaymentMethod, 'salary_advance'>;
   consent: boolean;
+  /** The total the customer saw on the button; the order is refused if the cart now prices differently. */
+  expectedTotal?: number;
   channel: 'web' | 'app';
   customerId?: string | null;
+}
+
+const AZANIA_OFF_MESSAGE = 'Azania Bank payments are not available at the moment. Please pay by card or on delivery.';
+
+/**
+ * Server-side gate for a payment method (never trust the page the customer had open): Azania Bank
+ * methods only while the brand's Azania switch is on, and the mock gateways only where they may take
+ * payments (development or a DEMO_MODE site, see env.mockPayments).
+ */
+async function assertMethodOpen(brand: BrandKey, method: PaymentMethod) {
+  if (azaniaMethod(method) && !(await payLaterLive(brand))) throw new CheckoutError(AZANIA_OFF_MESSAGE, 'method');
+  const gatewayLive = method === 'azania_account' && env.AZANIA_ADAPTER === 'live';
+  if ((method === 'card' || method === 'azania_account') && !gatewayLive && !env.mockPayments) {
+    throw new CheckoutError('Online payment is not available yet. Please choose pay on delivery or contact us.', 'method');
+  }
 }
 
 /** Pay in full: card, Azania account or pay on delivery. */
@@ -142,12 +164,19 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
   const cart = await getCart(brand);
   if (!cart.lines.length) throw new CheckoutError('Your cart is empty');
   if (!input.consent) throw new CheckoutError('Please accept the privacy notice to continue', 'consent');
+  // A code that expired, a price edit or a flash deal ending since the page loaded: never charge more than was shown.
+  if (input.expectedTotal !== undefined && input.expectedTotal !== cart.total) {
+    throw new CheckoutError(`Your total has changed to ${fmtTZS(cart.total)}${cart.discountError ? ` (${cart.discountError.toLowerCase()})` : ''}. Check the summary and place the order again.`, 'total');
+  }
   const c = validateContact({ ...input, region: cart.region });
   if (!paymentAllowed(input.method, cart.region)) throw new CheckoutError('Pay on delivery is only available in Dar es Salaam', 'method');
+  await assertMethodOpen(brand, input.method);
   const status: OrderStatus = initialOrderStatus(input.method, false);
 
   const order = await prisma.$transaction(async (tx) => {
-    await reserveStock(tx, cart.lines);
+    // First take the cart: a second, concurrent submit of the same cart waits here and finds it empty.
+    if ((await consumeCart(tx, brand)) === 0) throw new CheckoutError('This order has already been placed. Check your SMS or account for the order number.');
+    await reserveStock(tx, brand, cart.lines);
     const seq = await nextNumber(tx, `order:${brand}`, brand === 'mruk' ? 10_500 : 20_400);
     const o = await tx.order.create({
       data: {
@@ -257,7 +286,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   const consents = CONTRACT_CONSENTS.map((text) => ({ text, acceptedAt: signedAt.toISOString() }));
 
   const { order, app, cno } = await prisma.$transaction(async (tx) => {
-    await reserveStock(tx, lines);
+    await reserveStock(tx, brand, lines);
     const seq = await nextNumber(tx, `order:${brand}`, brand === 'mruk' ? 10_500 : 20_400);
     const cseq = await nextNumber(tx, 'contract', 88_100);
     const number = orderNumber(brand, seq);
@@ -374,6 +403,7 @@ async function issueInvoice(tx: Prisma.TransactionClient, orderId: string, amoun
 export async function capturePayment(number: string, method: 'card' | 'azania_account', details: { cardNumber?: string; expiry?: string; cvc?: string; account?: string; pin?: string }) {
   const order = await prisma.order.findUnique({ where: { number } });
   if (!order || order.status !== 'placed' || order.paymentMethod !== method) throw new CheckoutError('This order is not awaiting payment');
+  await assertMethodOpen(order.brandKey as BrandKey, method);
   if (order.reservedUntil && order.reservedUntil < new Date()) {
     await releaseExpiredReservations();
     throw new CheckoutError('This payment window has expired and the items were released. Please place the order again.');
@@ -399,8 +429,11 @@ export async function capturePayment(number: string, method: 'card' | 'azania_ac
     throw new CheckoutError(message);
   }
   await prisma.$transaction(async (tx) => {
+    // Guarded: a replayed or concurrent capture of the same order finds it no longer 'placed'.
+    const r = await tx.order.updateMany({ where: { id: order.id, status: 'placed' }, data: { status: 'approved', reservedUntil: null } });
+    if (r.count !== 1) throw new CheckoutError('This order is not awaiting payment');
+    await tx.orderEvent.create({ data: { orderId: order.id, status: 'approved', note: `Payment confirmed (${paymentLabel(method)})`, actor: 'system' } });
     await tx.payment.updateMany({ where: { orderId: order.id, status: 'pending' }, data: { status: 'captured', reference } });
-    await tx.order.update({ where: { id: order.id }, data: { status: 'approved', reservedUntil: null, events: { create: { status: 'approved', note: `Payment confirmed (${paymentLabel(method)})`, actor: 'system' } } } });
     await issueInvoice(tx, order.id, order.total, 'paid');
   });
   await emitTaskEvent({ type: 'order.paid', brand: order.brandKey, number: order.number, method });
@@ -443,6 +476,8 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
     if (releasesStock(to)) {
       await restock(tx, o.id);
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'captured' }, data: { status: 'refunded' } });
+      // Nothing was collected (e.g. pay on delivery): the open payment is closed, as when a reservation expires.
+      await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'failed' } });
       await tx.invoice.updateMany({ where: { orderId: o.id }, data: { status: 'void' } });
     }
     if (to === 'approved' && o.status === 'placed') {

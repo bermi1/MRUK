@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { prisma } from '@bt/db';
+import { prisma, type Prisma } from '@bt/db';
 import { COMPARE_MAX, checkDiscount, isAdvanceTerm, isRegion, priceCart, salePrice } from '@bt/core';
 import type { BrandKey, CartView } from '@/lib/types';
 import { env } from './env';
@@ -9,17 +9,21 @@ import { sign, verifySigned } from './session';
 const cartCookie = (brand: BrandKey) => `bt_cart_${brand}`;
 const cmpCookie = (brand: BrandKey) => `bt_cmp_${brand}`;
 
-async function cartId(brand: BrandKey): Promise<string | null> {
+/** This browser's cart id for the brand (signed cookie), or null. */
+export async function cartId(brand: BrandKey): Promise<string | null> {
   const raw = (await cookies()).get(cartCookie(brand))?.value;
   if (!raw) return null;
   const [id, sig] = raw.split('.');
   return id && verifySigned(`cart:${id}`, sig) ? id : null;
 }
 
+/** Every cart query is also scoped to the brand: a Skywood cart cookie copied into bt_cart_mruk matches nothing. */
+const own = (brand: BrandKey, id: string) => ({ id, brandKey: brand });
+
 async function ensureCart(brand: BrandKey) {
   const id = await cartId(brand);
   if (id) {
-    const c = await prisma.cart.findUnique({ where: { id } });
+    const c = await prisma.cart.findFirst({ where: own(brand, id) });
     if (c) return c;
   }
   const c = await prisma.cart.create({ data: { brandKey: brand } });
@@ -36,10 +40,11 @@ export async function flashDiscounts(brand: BrandKey): Promise<(productId: strin
 
 export async function getCart(brand: BrandKey): Promise<CartView> {
   const id = await cartId(brand);
-  const cart = id ? await prisma.cart.findUnique({ where: { id }, include: { items: { include: { product: true }, orderBy: { id: 'asc' } } } }) : null;
+  const cart = id ? await prisma.cart.findFirst({ where: own(brand, id), include: { items: { include: { product: true }, orderBy: { id: 'asc' } } } }) : null;
   const off = await flashDiscounts(brand);
   const lines = (cart?.items ?? [])
-    .filter((i) => !i.product.hidden)
+    // Only this brand's live, priced products are ever sold (hidden drafts have price 0).
+    .filter((i) => !i.product.hidden && i.product.brandKey === brand && i.product.price > 0)
     .map((i) => ({ productId: i.productId, qty: i.qty, name: i.product.name, model: i.product.model, price: salePrice(i.product.price, off(i.productId)), listPrice: i.product.price, img: i.product.images[0] ?? '', stock: i.product.stock, sub: i.product.sub }));
   const region = cart?.region ?? 'Dar es Salaam';
   const months = cart?.months ?? 12;
@@ -108,13 +113,24 @@ export async function updateCartSettings(brand: BrandKey, patch: { region?: stri
 
 export async function clearCart(brand: BrandKey) {
   const id = await cartId(brand);
-  if (id) await prisma.cartItem.deleteMany({ where: { cartId: id } });
+  if (id) await prisma.cartItem.deleteMany({ where: { cartId: id, cart: { brandKey: brand } } });
+}
+
+/**
+ * Inside the order transaction: empty the cart and return how many lines it held. Two submits of the
+ * same cart (double click, replayed request) serialise on these rows: the second one finds the cart
+ * empty and is refused, so it can never create a second order.
+ */
+export async function consumeCart(tx: Prisma.TransactionClient, brand: BrandKey): Promise<number> {
+  const id = await cartId(brand);
+  if (!id) return 0;
+  return (await tx.cartItem.deleteMany({ where: { cartId: id, cart: { brandKey: brand } } })).count;
 }
 
 export async function getCartCount(brand: BrandKey): Promise<number> {
   const id = await cartId(brand);
   if (!id) return 0;
-  const r = await prisma.cartItem.aggregate({ where: { cartId: id }, _sum: { qty: true } });
+  const r = await prisma.cartItem.aggregate({ where: { cartId: id, cart: { brandKey: brand } }, _sum: { qty: true } });
   return r._sum.qty ?? 0;
 }
 
