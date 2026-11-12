@@ -66,7 +66,12 @@ function fields(fd: FormData): Record<string, string> {
 
 const brandZ = z.enum(['mruk', 'skywood']);
 const idZ = z.string().regex(/^[A-Za-z0-9_-]{1,80}$/, 'Invalid id');
-const intZ = (min: number, max: number) => z.coerce.number({ invalid_type_error: 'Enter a number' }).int('Whole numbers only').min(min).max(max);
+const intZ = (min: number, max: number) =>
+  z.coerce
+    .number({ invalid_type_error: 'Enter a number' })
+    .int('Whole numbers only')
+    .min(min, `Enter ${min.toLocaleString('en-US')} or more`)
+    .max(max, `Enter ${max.toLocaleString('en-US')} or less`);
 const textZ = (max: number, min = 0) => z.string().trim().min(min, min ? `Enter at least ${min} characters` : undefined).max(max, `Keep it under ${max} characters`);
 const checkbox = (v: string | undefined) => v === 'on' || v === 'true' || v === '1';
 
@@ -359,12 +364,14 @@ export async function uploadProductPhotoAction(id: string, fd: FormData): Promis
 export async function restockAction(id: string, fd: FormData): Promise<ActionResult<Msg>> {
   return run('inventory', async (ctx) => {
     const p = await loadProduct(ctx, id);
-    const qty = intZ(1, 10_000).parse(fields(fd).qty);
+    // Positive adds a delivery; negative removes units (damaged, miscount). Available stock never goes below 0.
+    const qty = intZ(-10_000, 10_000).refine((n) => n !== 0, 'Enter the units to add, or a minus number to remove').parse(String(fields(fd).qty ?? '').replace(/[\s,]/g, '').replace(/^[\u2212\u2013]/, '-'));
+    if (qty < 0 && p.stock + qty < 0) throw new Error(p.stock ? `Only ${p.stock} available to remove` : 'Nothing available to remove');
     const u = await prisma.product.update({ where: { id: p.id }, data: { stock: { increment: qty } } });
-    await audit(ctx.email, 'product.restock', 'Product', p.id, { add: qty, stock: u.stock });
+    await audit(ctx.email, qty > 0 ? 'product.restock' : 'product.stock_remove', 'Product', p.id, { add: qty, stock: u.stock });
     await checkStock([p.id]);
     revalidateStore();
-    return { message: `+${qty} · now ${u.stock}` };
+    return { message: `${qty > 0 ? '+' : '−'}${Math.abs(qty)} · now ${u.stock}` };
   });
 }
 

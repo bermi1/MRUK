@@ -96,13 +96,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           )}
         </form>
         <div className="ad-scroll">
-          <table className="ad-table" style={{ marginTop: 12 }}>
+          <table className="ad-table cards" style={{ marginTop: 12 }}>
             <thead>
               <tr>
                 <th>Photo</th>
-                <th>Model</th>
+                <th className="hide-sm">Model</th>
                 <th>Product</th>
-                <th>Price (TZS)</th>
+                <th className="r">Price (TZS)</th>
                 <th className="c" title="Units that can still be sold (unpaid orders already hold theirs)">Available</th>
                 <th>Status</th>
                 <th />
@@ -111,21 +111,21 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} data-product={p.id}>
-                  <td>
+                  <td className="hide-sm">
                     <Thumb src={p.images[0]} model={p.model} dark={!p.images[0]} />
                   </td>
-                  <td className="mono ad-muted2" style={{ fontSize: 11.5 }}>
+                  <td className="mono ad-muted2 hide-sm" style={{ fontSize: 11.5 }}>
                     {p.model}
                   </td>
-                  <td>
+                  <td className="ca">
                     <div style={{ fontWeight: 500 }}>{p.name}</div>
                     <div className="ad-muted" style={{ fontSize: 11.5 }}>
                       {p.category.name} · {p.sub}
                     </div>
                   </td>
-                  <td>{write ? <InlineNumber value={p.price} action={updateProductFieldAction.bind(null, p.id, 'price')} label={`Price of ${p.name}`} /> : p.price.toLocaleString('en-US')}</td>
-                  <td className="c">{write ? <InlineNumber value={p.stock} action={updateProductFieldAction.bind(null, p.id, 'stock')} label={`Stock of ${p.name}`} width={70} /> : p.stock}</td>
-                  <td>
+                  <td className="r cc" data-l="Price TZS">{write ? <InlineNumber value={p.price} action={updateProductFieldAction.bind(null, p.id, 'price')} label={`Price of ${p.name}`} grouped /> : p.price.toLocaleString('en-US')}</td>
+                  <td className="c cd" data-l="Stock">{write ? <InlineNumber value={p.stock} action={updateProductFieldAction.bind(null, p.id, 'stock')} label={`Stock of ${p.name}`} width={70} /> : p.stock}</td>
+                  <td className="cb">
                     {p.hidden && p.price <= 0 ? (
                       <span className="ad-row" style={{ flexWrap: 'wrap', gap: 4 }} data-testid="draft-pill">
                         {write ? (
@@ -146,14 +146,19 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                         <span className="ad-pill pill-grey">Hidden</span>
                       )
                     ) : write ? (
-                      <ActBtn action={toggleProductHiddenAction.bind(null, p.id)} className={`ad-pill ${p.hidden ? 'pill-grey' : 'pill-green'}`} label={`${p.hidden ? 'Hidden' : 'Live'}: toggle visibility of ${p.name}`}>
+                      <ActBtn
+                        action={toggleProductHiddenAction.bind(null, p.id)}
+                        className={`ad-pill ${p.hidden ? 'pill-grey' : 'pill-green'}`}
+                        label={`${p.hidden ? 'Hidden' : 'Live'}: toggle visibility of ${p.name}`}
+                        confirm={p.hidden ? undefined : `Hide ${p.name} from the ${BRAND_NAME[brand]} store? Customers will no longer see it.`}
+                      >
                         {p.hidden ? 'Hidden' : 'Live'}
                       </ActBtn>
                     ) : (
                       <span className={`ad-pill ${p.hidden ? 'pill-grey' : 'pill-green'}`}>{p.hidden ? 'Hidden' : 'Live'}</span>
                     )}
                   </td>
-                  <td className="r">
+                  <td className="r ce">
                     {write && (
                       <span className="ad-row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap' }}>
                         <PhotoUpload action={uploadProductPhotoAction.bind(null, p.id)} name={p.name} />
@@ -181,7 +186,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             Drafts are hidden from the store. Type the price (and stock) and press Enter, then press Publish. A product without a price cannot be published.
           </p>
         )}
-        {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or available stock (sets the exact number; use Inventory to add a delivery) and press Enter (or leave the field) to publish. Photos: JPG, PNG or WebP up to 5 MB.</p>}
+        {write && <p className="ad-muted" style={{ fontSize: 12 }}>Edit price or available stock (sets the exact number; use Inventory to add a delivery) and press Enter (or leave the field) to publish. Tap Live / Hidden to show or hide a product. Photos: JPG, PNG or WebP up to 5 MB.</p>}
       </section>
     </div>
   );

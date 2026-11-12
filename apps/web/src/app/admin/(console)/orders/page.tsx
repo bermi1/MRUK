@@ -97,8 +97,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <b>{queue('placed')}</b> Awaiting payment
         </Link>
       </nav>
-    <div className="ad-detail">
-      <section className="ad-card tight">
+    <div className={`ad-detail ${sp.o ? 'picked' : ''}`}>
+      <section className="ad-card tight" id="order-list">
         <div className="ad-between">
           <nav className="ad-tabs" aria-label="Order status">
             {TABS.map((t) => (
@@ -113,40 +113,40 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </form>
         </div>
         <div className="ad-scroll">
-          <table className="ad-table" style={{ marginTop: 14 }}>
+          <table className="ad-table cards" style={{ marginTop: 14 }}>
             <thead>
               <tr>
                 <th>Order</th>
                 <th>Customer</th>
-                <th>Region</th>
-                <th>Payment</th>
+                <th className="hide-sm">Region</th>
+                <th className="hide-sm">Payment</th>
                 <th>Status</th>
                 <th className="r">Amount</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((r) => (
-                <tr key={r.id} className={r.number === o?.number ? 'sel' : undefined}>
-                  <td>
-                    <Link href={qs({ o: r.number })} className="num" style={{ textDecoration: 'none' }} aria-label={`Open order ${r.number}`}>
+                <tr key={r.id} className={`link ${r.number === o?.number ? 'sel' : ''}`}>
+                  <td className="ca">
+                    <Link href={qs({ o: r.number })} className="num stretch" style={{ textDecoration: 'none' }} aria-label={`Open order ${r.number}`}>
                       {r.number}
                     </Link>
                     <div style={{ marginTop: 3 }}>
                       <BrandChip brand={r.brandKey} />
                     </div>
                   </td>
-                  <td>
+                  <td className="cc">
                     <div style={{ fontWeight: 500 }}>{r.contactName}</div>
                     <div style={{ fontSize: 11.5 }} className="ad-muted">
                       {CHANNEL[r.channel] ?? r.channel} · {fmtDateTime(r.createdAt)}
                     </div>
                   </td>
-                  <td className="ad-muted2">{r.region}</td>
-                  <td className="ad-muted2">{paymentLabel(r.paymentMethod as PaymentMethod)}</td>
-                  <td>
+                  <td className="ad-muted2 hide-sm nw">{r.region}</td>
+                  <td className="ad-muted2 hide-sm">{paymentLabel(r.paymentMethod as PaymentMethod)}</td>
+                  <td className="cd">
                     <OrderPill status={r.status} />
                   </td>
-                  <td className="r" style={{ fontWeight: 500 }}>
+                  <td className="r cb" style={{ fontWeight: 500 }}>
                     {fmtTZS(r.total)}
                   </td>
                 </tr>
@@ -183,7 +183,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
       </section>
 
       {o ? (
-        <aside className="ad-card ad-stack s12" aria-label={`Order ${o.number}`}>
+        <aside className="ad-card ad-stack s12" aria-label={`Order ${o.number}`} id="order-detail">
+          {sp.o && (
+            <a href="#order-list" className="ad-wlink ad-phone-only">
+              ← Back to the order list
+            </a>
+          )}
           <div className="ad-between">
             <span className="ad-row" style={{ gap: 8 }}>
               <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: '#12164A' }}>
@@ -214,7 +219,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                   Qty {it.qty} · {it.model}
                 </div>
               </div>
-              <span style={{ fontSize: 13.5, fontWeight: 600 }}>{fmtTZS(it.price * it.qty)}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtTZS(it.price * it.qty)}</span>
             </div>
           ))}
           <div style={{ borderTop: '1px solid #ECEDF2', paddingTop: 10 }}>
@@ -304,10 +309,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {ctx.can('orders.write') && forward && (
             <div className="ad-stack s8">
               <ActBtn action={transitionOrderAction.bind(null, o.number, forward)} className="ad-btn block ok" showOk>
-                {actionLabel(o.status, forward)}
+                {forward === 'delivered' && o.paymentMethod === 'pay_on_delivery' ? `Mark delivered · cash ${fmtTZS(o.total)} collected` : actionLabel(o.status, forward)}
               </ActBtn>
               <small className="ad-muted2" style={{ fontSize: 12 }}>
-                {forward === 'approved' ? 'Records the payment, issues the paid invoice and texts the customer.' : 'The customer gets an SMS with the new status.'}
+                {forward === 'approved'
+                  ? 'Records the payment, issues the paid invoice and texts the customer.'
+                  : forward === 'delivered' && o.paymentMethod === 'pay_on_delivery'
+                    ? 'Press when the driver hands over the cash: records the payment, marks the invoice paid and texts the customer.'
+                    : 'The customer gets an SMS with the new status.'}
               </small>
             </div>
           )}

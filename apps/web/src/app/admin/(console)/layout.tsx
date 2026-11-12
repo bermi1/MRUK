@@ -9,6 +9,7 @@ import { DotIcon } from '@/components/icons';
 import { adminFilters, branchOptions, navCounts, newOrdersSnapshot } from '@/server/admin/context';
 import { OrderAlert } from '@/components/admin/OrderAlert';
 import { bankMode } from '@/server/admin/files';
+import { getPayLaterStates } from '@/server/paylater';
 import { requireStaff } from '@/server/auth';
 import { myOpenTaskCount } from '@/server/tasks';
 
@@ -38,7 +39,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   // The password page lives inside this layout, so the layout itself must allow a pending password change.
   const ctx = await requireStaff(undefined, { allowPasswordChange: true });
   const f = await adminFilters(ctx);
-  const [counts, branches, myTasks, newOrders] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands), newOrdersSnapshot(ctx)]);
+  const [counts, branches, myTasks, newOrders, payLater] = await Promise.all([navCounts(ctx, f), branchOptions(), ctx.mustChangePassword ? 0 : myOpenTaskCount(ctx, f.brands), newOrdersSnapshot(ctx), getPayLaterStates()]);
   const nav: { group?: string; href: string; label: string; d: string; perm: string; alt?: string; badge?: number }[] = [
     { group: 'MY WORK', href: '/admin', label: 'Dashboard', d: ICON.dash, perm: 'dashboard' },
     { href: '/admin/tasks', label: 'My tasks', d: ICON.task, perm: 'dashboard', badge: myTasks },
@@ -65,6 +66,8 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     return '';
   };
   const mode = bankMode();
+  // Sidebar status reads the Pay Later switches, not just the adapter, so staff never see "Connected" while Pay Later is off.
+  const plOn = (['mruk', 'skywood'] as const).filter((b) => payLater[b].enabled).map((b) => (b === 'mruk' ? 'Mr UK' : 'Skywood'));
   return (
     <div className="ad-shell">
       <aside className="ad-side" aria-label="Admin navigation">
@@ -94,13 +97,15 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           })}
         </nav>
         <div className="ad-spacer" />
-        <div className="ad-bank">
+        <div className={`ad-bank ${plOn.length ? '' : 'off'}`} data-testid="side-paylater">
           <span className="ic">
             <img src="/brand/azania-mark.png" alt="" />
           </span>
           <span>
-            <b>Azania Bank link</b>
-            <small><DotIcon size={7} /> Connected · {mode === 'mock' ? 'mock' : 'live'}</small>
+            <b>Pay Later by Azania</b>
+            <small>
+              <DotIcon size={7} /> {plOn.length ? `On: ${plOn.join(' and ')}` : 'Off on both stores'} · {mode === 'mock' ? 'test link' : 'live link'}
+            </small>
           </span>
         </div>
         <div className="ad-user">

@@ -142,15 +142,21 @@ test('stock: restock adds, inline edit sets, never negative, reserved units show
   // Reserved = units in unpaid orders (awaiting payment or bank review), counted after expired holds are released.
   const reserved = (await c.orderItem.aggregate({ where: { productId: p.id, order: { status: { in: ['placed', 'bank_review'] } } }, _sum: { qty: true } }))._sum.qty ?? 0;
   await expect(row.getByTestId('stock-reserved')).toHaveText(String(reserved));
+  // A minus number removes units (damaged, miscount) but never below zero.
+  await row.locator('input[name=qty]').fill('-20');
+  await row.getByRole('button', { name: 'Add' }).click();
+  await expect(row.locator('.ad-msg.err')).toHaveText('Only 9 available to remove');
+  expect((await c.product.findUniqueOrThrow({ where: { id: p.id } })).stock).toBe(9);
   await row.locator('input[name=qty]').fill('-3');
   await row.getByRole('button', { name: 'Add' }).click();
-  await expect(row.locator('.ad-msg.err')).toBeVisible();
-  await row.locator('input[name=qty]').fill('6');
+  await expect(row.locator('.ad-msg.ok')).toContainText('now 6');
+  expect(await c.auditLog.findFirstOrThrow({ where: { action: 'product.stock_remove', entityId: p.id }, orderBy: { at: 'desc' } })).toMatchObject({ diff: { add: -3, stock: 6 } });
+  await row.locator('input[name=qty]').fill('9');
   await row.getByRole('button', { name: 'Add' }).click();
   await expect(row.locator('.ad-msg.ok')).toContainText('now 15');
   expect((await c.product.findUniqueOrThrow({ where: { id: p.id } })).stock).toBe(15);
   const log = await c.auditLog.findFirstOrThrow({ where: { action: 'product.restock', entityId: p.id }, orderBy: { at: 'desc' } });
-  expect(log.diff).toMatchObject({ add: 6, stock: 15 });
+  expect(log.diff).toMatchObject({ add: 9, stock: 15 });
 
   // Put the original number back.
   await page.goto(`/admin/products?b=mruk&q=${encodeURIComponent(p.model)}`);
