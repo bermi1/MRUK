@@ -16,7 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
   const [brand, cms, cats, payLater] = await Promise.all([getBrand(key), getCms(key), getCategories(key), payLaterOn(key)]);
   const title = cms.seo.title || `${brand.name} — ${brand.tagline}`;
   const desc = payLater ? cms.seo.desc : stripPayLater(cms.seo.desc);
-  const description = desc || `${brand.name}: ${cats.map((c) => c.name).join(', ')}. Delivered across Tanzania.`;
+  // With Pay Later off its sentence is stripped, which can leave a description too short for search results.
+  const base = desc || `${brand.name}: ${cats.map((c) => c.name).join(', ')}.`;
+  const description = base.length >= 70 || /delivered across tanzania/i.test(base) ? base : `${base} Delivered across Tanzania.`;
   return pageMeta({ brand, path: '', title, description, images: [{ url: brandImage(brand, cms), alt: brand.name }] });
 }
 

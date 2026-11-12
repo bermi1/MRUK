@@ -26,8 +26,9 @@ export async function orderForOwner(brand: string, number: string, token: string
 /** Public tracking view (order number only): status, items and masked contact, nothing sensitive. */
 export async function trackView(number: string, brand: string) {
   const o = await loadOrder(number);
-  // Each store tracks its own orders only (the sister brand's orders are "not found").
-  if (!o || o.brandKey !== brand) return null;
+  if (!o) return null;
+  // A sister-brand order is never rendered here: the page redirects it to its own store (its branding and support).
+  void brand;
   const method = o.paymentMethod as PaymentMethod;
   const status = o.status as OrderStatus;
   return {

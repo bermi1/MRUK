@@ -297,7 +297,7 @@ test('payment: another order number or a bad link token is refused; a paid order
 
 // 6. Tracking and order pages -------------------------------------------------------------------------
 
-test('tracking: masked phone only, no name or address; other brand orders are not shown', async ({ page, context }) => {
+test('tracking: masked phone only, no name or address; other brand orders open in their own store', async ({ page, context }) => {
   const number = await placedCardOrder(page);
   const o = await db.order.findUniqueOrThrow({ where: { number } });
   await context.clearCookies();
@@ -306,8 +306,9 @@ test('tracking: masked phone only, no name or address; other brand orders are no
   const html = await page.content();
   expect(html).not.toContain(o.contactPhone);
   expect(html).not.toContain(o.contactName);
+  // On the sister store it is never shown under the wrong brand: it opens in its own store instead.
   await page.goto(`/mruk/track?o=${number}`);
-  await expect(page.getByTestId('track-result')).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`/skywood/track\\?o=${number}`));
   // Order page and invoice need the signed token or the owner's session.
   expect((await page.goto(`/skywood/order/${number}`))!.status()).toBe(404);
   expect((await page.goto(`/skywood/order/${number}?t=${'A'.repeat(32)}`))!.status()).toBe(404);

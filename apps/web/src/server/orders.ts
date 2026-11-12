@@ -143,7 +143,7 @@ export interface PlaceOrderInput extends ContactInput {
   customerId?: string | null;
 }
 
-const AZANIA_OFF_MESSAGE = 'Azania Bank payments are not available at the moment. Please pay by card or on delivery.';
+const AZANIA_OFF_MESSAGE = 'Payment through Azania Bank is not available at the moment. Please pay by card or on delivery.';
 
 /**
  * Server-side gate for a payment method (never trust the page the customer had open): Azania Bank
