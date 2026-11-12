@@ -2,6 +2,7 @@ import 'server-only';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { decrypt, encrypt, prisma, sha256, type Prisma } from '@bt/db';
+import { LISTABLE } from './listable';
 import {
   assertAdvanceTransition,
   assertOrderTransition,
@@ -97,7 +98,7 @@ async function reserveStock(tx: Prisma.TransactionClient, brand: BrandKey, lines
   for (const l of lines) {
     if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > 20) throw new CheckoutError('Please update your cart.');
     // Only this brand's live, priced products (never a hidden price-0 draft or the sister brand's stock).
-    const r = await tx.product.updateMany({ where: { id: l.productId, brandKey: brand, stock: { gte: l.qty }, hidden: false, price: { gt: 0 } }, data: { stock: { decrement: l.qty } } });
+    const r = await tx.product.updateMany({ where: { id: l.productId, brandKey: brand, stock: { gte: l.qty }, ...LISTABLE, price: { gt: 0 } }, data: { stock: { decrement: l.qty } } });
     if (r.count !== 1) throw new CheckoutError(`Sorry, ${l.name} no longer has enough stock. Please update your cart.`);
   }
   stockChanged();
@@ -245,7 +246,7 @@ export async function placeAdvanceOrder(brand: BrandKey, input: AdvanceInput, ca
   let discount = 0;
   let discountCode: string | null = null;
   if (cartOverride) {
-    const ps = await prisma.product.findMany({ where: { id: { in: cartOverride.lines.map((l) => l.productId) }, brandKey: brand, hidden: false } });
+    const ps = await prisma.product.findMany({ where: { id: { in: cartOverride.lines.map((l) => l.productId) }, brandKey: brand, ...LISTABLE } });
     const off = await flashDiscounts(brand);
     lines = cartOverride.lines.map((l) => {
       const p = ps.find((x) => x.id === l.productId);

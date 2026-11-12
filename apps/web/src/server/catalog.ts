@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { revalidateTag, unstable_cache } from 'next/cache';
 import { prisma } from '@bt/db';
+import { LISTABLE, isListable } from './listable';
 import { bundlePrice, salePrice, type CompareFacts } from '@bt/core';
 import { SOCIAL_KEYS } from '@/lib/types';
 import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView , SocialLinks } from '@/lib/types';
@@ -54,7 +55,7 @@ export const getBrand = cache(async (key: string): Promise<BrandView> => {
 
 export const getCategories = cache(
   cached(async (brand: BrandKey): Promise<CategoryView[]> => {
-  const cats = await prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, include: { _count: { select: { products: { where: { hidden: false } } } } } });
+  const cats = await prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, include: { _count: { select: { products: { where: LISTABLE } } } } });
   // A category with no published products (e.g. one holding only drafts) stays out of the store until one goes live.
   return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img, subs: c.subs, count: c._count.products }));
   }, 'categories'),
@@ -90,7 +91,7 @@ export function toView(p: DbProduct): ProductView {
 }
 
 const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
-  const ps = await prisma.product.findMany({ where: { brandKey: brand, hidden: false }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] });
+  const ps = (await prisma.product.findMany({ where: { brandKey: brand, ...LISTABLE }, include: { category: true }, orderBy: [{ createdAt: 'asc' }] })).filter(isListable);
   return ps.map(toView);
 }, 'products');
 
@@ -101,7 +102,7 @@ const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
  */
 export async function getProductsLive(brand: BrandKey, ids: string[]): Promise<{ view: ProductView; updatedAt: Date }[]> {
   const [rows, promos] = await Promise.all([
-    prisma.product.findMany({ where: { id: { in: ids }, brandKey: brand, hidden: false }, include: { category: true } }),
+    prisma.product.findMany({ where: { id: { in: ids }, brandKey: brand, ...LISTABLE }, include: { category: true } }),
     loadFlashPromos(brand),
   ]);
   const deals = liveDeals(promos);

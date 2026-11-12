@@ -1,6 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { prisma, type Prisma } from '@bt/db';
+import { LISTABLE } from './listable';
 import { COMPARE_MAX, checkDiscount, isAdvanceTerm, isRegion, priceCart, salePrice } from '@bt/core';
 import type { BrandKey, CartView } from '@/lib/types';
 import { env } from './env';
@@ -77,7 +78,7 @@ export async function getCart(brand: BrandKey): Promise<CartView> {
 }
 
 export async function addToCart(brand: BrandKey, productId: string, qty = 1) {
-  const p = await prisma.product.findFirst({ where: { id: productId, brandKey: brand, hidden: false } });
+  const p = await prisma.product.findFirst({ where: { id: productId, brandKey: brand, ...LISTABLE } });
   if (!p) throw new Error('Product not found');
   if (p.stock <= 0) throw new Error('This product is out of stock');
   const cart = await ensureCart(brand);
@@ -165,7 +166,7 @@ export async function toggleCompare(brand: BrandKey, id: string): Promise<Compar
     return { ids, added: false, full: false, mixed: null };
   }
   // Drop ids that are no longer this brand's products (hidden or deleted) so they don't hold a slot.
-  const live = await prisma.product.findMany({ where: { id: { in: [...stored, id] }, brandKey: brand, hidden: false }, select: { id: true, categoryId: true, category: { select: { name: true } } } });
+  const live = await prisma.product.findMany({ where: { id: { in: [...stored, id] }, brandKey: brand, ...LISTABLE }, select: { id: true, categoryId: true, category: { select: { name: true } } } });
   const cur = stored.filter((x) => live.some((p) => p.id === x));
   const next = live.find((p) => p.id === id);
   if (!next) throw new Error('Product not found');
@@ -185,7 +186,7 @@ export async function toggleCompare(brand: BrandKey, id: string): Promise<Compar
 
 /** Start a new comparison with just this product (after a different-category add). */
 export async function restartCompare(brand: BrandKey, id: string): Promise<string[]> {
-  const p = await prisma.product.findFirst({ where: { id, brandKey: brand, hidden: false }, select: { id: true } });
+  const p = await prisma.product.findFirst({ where: { id, brandKey: brand, ...LISTABLE }, select: { id: true } });
   if (!p) throw new Error('Product not found');
   await saveCompare(brand, [p.id]);
   return [p.id];
