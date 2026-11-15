@@ -333,6 +333,30 @@
     mruk: {
       // Social profiles (Admin › CMS › Social links), confirmed by the client.
       social: { instagram: 'https://www.instagram.com/mruklimited/', facebook: 'https://www.facebook.com/mruklimited/' },
+      // About page (Admin › CMS › About). Story from the company's own published profile; awards from the client's awards sheet (Nov 2026).
+      about: {
+        headline: 'Proudly Tanzanian home appliances since 2011',
+        intro: 'Mr UK is a Tanzanian home appliance brand founded in Dar es Salaam in 2011. From our head office in Kariakoo we supply homes, farms and businesses across the country.',
+        story: 'Mr UK started in 2011 in Kariakoo, Dar es Salaam, with a simple aim: appliances that Tanzanian families can afford, rely on and get serviced close to home.\n\nToday we are among the leading distributors of home and domestic appliances in Tanzania. Our range covers refrigeration, kitchen and laundry appliances, televisions and sound systems, generators, and agricultural equipment such as water pumps and sprayers.\n\nOur head office is on Magila and Likoma Street in Kariakoo, with branches in Arusha, Dodoma, Mwanza and Kilimanjaro. Through authorised dealers our products also reach customers across Eastern and Central Africa.\n\nWe grow by keeping to the same priorities: good design and quality, integrity in how we trade, and customers who are satisfied long after the sale.',
+        facts: [
+          { label: 'Founded', value: '2011, Dar es Salaam' },
+          { label: 'Head office', value: 'Kariakoo, Dar es Salaam' },
+          { label: 'Branches', value: 'Arusha, Dodoma, Mwanza, Kilimanjaro' },
+          { label: 'Reach', value: 'Eastern and Central Africa' },
+        ],
+        activities: [
+          { title: 'Home appliances', text: 'Fridges, freezers, cookers, washing machines and small kitchen appliances for everyday family use.' },
+          { title: 'Entertainment systems', text: 'Televisions, speakers and sound systems for homes, events and businesses.' },
+          { title: 'Power and agriculture', text: 'Generators, water pumps, sprayers and engines that keep farms and small businesses working.' },
+          { title: 'Dealer network', text: 'Showrooms and authorised dealers across Tanzania, so customers can see products and collect close to home.' },
+          { title: 'After-sales service', text: 'Warranty, spare parts and support from our own team after you buy.' },
+        ],
+        awards: [
+          { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: 'MR UK Corporation', img: '/img/awards/africa-company-of-the-year-2026.webp' },
+          { title: 'Outstanding Home Appliance Brand of the Year', org: 'East Africa Building and Construction (EABC) Awards', year: '2025', recipient: 'Mr UK Tanzania Limited', img: '/img/awards/eabc-awards-2025.webp' },
+          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: 'Beda Masawe, MR UK Corporation', img: '/img/awards/top-100-awards-2025.webp' },
+        ],
+      },
       announcement: 'Take it home today, pay from your salary with Azania Bank Salary Advance',
       hero: [
         { pid: 'mruk-uk-f275-58-5di0wd', eyebrow: 'FRENCH STYLE SERIES', title: 'Freshness starts here.', sub: 'Multi-door cooling built for Tanzanian homes.', img: '' },
@@ -350,6 +374,15 @@
     },
     skywood: {
       social: { instagram: 'https://www.instagram.com/skywood_tz/' },
+      // About page (Admin › CMS › About). Placeholder story until the client supplies the Skywood profile; no awards listed.
+      about: {
+        headline: 'Home electronics for modern Tanzanian living',
+        intro: 'Skywood is a home electronics and appliance brand sold in Tanzania through showrooms and authorised dealers, alongside its sister brand Mr UK.',
+        story: '',
+        facts: [],
+        activities: [],
+        awards: [],
+      },
       announcement: 'Beyond limits: pay monthly with Azania Bank Salary Advance',
       hero: [
         { pid: 'skywood-sk6031ges', eyebrow: 'KITCHEN', title: 'Modern living, redefined.', sub: 'Standing cookers with a built-in oven.', img: '' },

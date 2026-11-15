@@ -238,14 +238,17 @@ async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' |
 
 /** Default social profiles on a live database: only when the brand has none yet (staff edits always win). */
 async function syncSocial(BT: ReturnType<typeof loadHandoff>) {
+  // Blocks added after launch: created once with their defaults, never overwritten (staff edit them in Admin › CMS).
   for (const key of ['mruk', 'skywood'] as const) {
-    const social = (BT.cms(key) as Record<string, unknown>).social;
-    if (!social) continue;
-    const row = await prisma.cmsBlock.findFirst({ where: { brandKey: key, key: 'social' }, select: { id: true } });
-    if (row) continue;
-    await prisma.cmsBlock.create({ data: { brandKey: key, key: 'social', json: social as object } });
-    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'cms.social.default', entity: 'CmsBlock', entityId: `${key}:social` } });
-    console.log(`  ${key} social links added.`);
+    for (const block of ['social', 'about'] as const) {
+      const json = (BT.cms(key) as Record<string, unknown>)[block];
+      if (!json) continue;
+      const row = await prisma.cmsBlock.findFirst({ where: { brandKey: key, key: block }, select: { id: true } });
+      if (row) continue;
+      await prisma.cmsBlock.create({ data: { brandKey: key, key: block, json: json as object } });
+      await prisma.auditLog.create({ data: { actor: 'system:deploy', action: `cms.${block}.default`, entity: 'CmsBlock', entityId: `${key}:${block}` } });
+      console.log(`  ${key} ${block} block added.`);
+    }
   }
 }
 
@@ -394,7 +397,10 @@ async function main() {
       await prisma.cmsBlock.create({ data: { brandKey: key, key: k, json: cms[k] as object } });
     }
     await prisma.cmsBlock.create({ data: { brandKey: key, key: 'hot', json: [] } });
-    if ((cms as Record<string, unknown>).social) await prisma.cmsBlock.create({ data: { brandKey: key, key: 'social', json: (cms as Record<string, unknown>).social as object } });
+    for (const k of ['social', 'about'] as const) {
+      const json = (cms as Record<string, unknown>)[k];
+      if (json) await prisma.cmsBlock.create({ data: { brandKey: key, key: k, json: json as object } });
+    }
   }
   console.log(`  ${products.length} products in 2 brands`);
 

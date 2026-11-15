@@ -7,6 +7,7 @@ import { getBrand, getBundles, getCategories, getCms, getFlashDeals, getProducts
 import { getT } from '@/server/locale';
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { AwardsStrip } from '@/components/store/Awards';
 import { brandImage, graph, organizationLd, pageMeta, websiteLd } from '@/server/seo';
 import { payLaterOn } from '@/server/paylater';
 import { stripPayLater } from '@bt/core';
@@ -82,6 +83,9 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
 
   const ld = <JsonLd data={graph(organizationLd(brand, cms), websiteLd(brand))} />;
 
+  // Quiet recognition strip at the foot of the page (nothing when the brand lists no awards).
+  const awards = <AwardsStrip awards={cms.about.awards} href={`/${key}/about#awards`} title={t('awardsStrip')} more={t('awardsSeeAll')} />;
+
   if (key === 'skywood') {
     const heroIds = new Set(cms.hero.map((h) => h.pid));
     const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
@@ -89,6 +93,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
       <>
         {ld}
         <SkywoodHome {...common} flash={flash} focus={focus} />
+        {awards}
       </>
     );
   }
@@ -96,6 +101,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
     <>
       {ld}
       <MrukHome {...common} flash={flash} />
+      {awards}
     </>
   );
 }

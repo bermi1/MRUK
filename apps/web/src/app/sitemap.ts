@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     out.push({ url: publicUrl(b, '/deals'), changeFrequency: 'daily', priority: 0.7 });
     // Pay Later switched off for this brand: the page is a 404, so it is not listed.
     if (payLater) out.push({ url: publicUrl(b, '/pay-later'), changeFrequency: 'monthly', priority: 0.6 });
+    out.push({ url: publicUrl(b, '/about'), changeFrequency: 'monthly', priority: 0.5 });
     out.push({ url: publicUrl(b, '/suppliers'), changeFrequency: 'monthly', priority: 0.5 });
     out.push({ url: publicUrl(b, '/support'), changeFrequency: 'monthly', priority: 0.4 });
     for (const p of products) {

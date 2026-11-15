@@ -6,7 +6,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
-import { refreshCatalog } from '@/server/catalog';
+import { aboutView, refreshCatalog } from '@/server/catalog';
 import { cookies } from 'next/headers';
 import { redirect, unstable_rethrow } from 'next/navigation';
 import QRCode from 'qrcode';
@@ -545,6 +545,50 @@ export async function saveSocialAction(brand: string, fd: FormData): Promise<Act
   });
 }
 
+export async function saveAboutAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('cms.write', async (ctx) => {
+    const b = brandZ.parse(brand);
+    assertBrand(ctx, b);
+    const f = fields(fd);
+    const count = (k: string, max: number) => intZ(0, max).parse(f[k] ?? '0');
+    const facts: { label: string; value: string }[] = [];
+    for (let i = 0; i < count('fact_count', 9); i++) {
+      const label = textZ(40).parse(f[`fact_label_${i}`] ?? '');
+      const value = textZ(60).parse(f[`fact_value_${i}`] ?? '');
+      if (!label && !value) continue; // blank row = removed
+      if (!label || !value) throw new Error(`Key fact ${i + 1}: fill both the label and the value`);
+      facts.push({ label, value });
+    }
+    const activities: { title: string; text: string }[] = [];
+    for (let i = 0; i < count('act_count', 13); i++) {
+      if (checkbox(f[`act_remove_${i}`])) continue;
+      const title = textZ(80).parse(f[`act_title_${i}`] ?? '');
+      const text = textZ(400).parse(f[`act_text_${i}`] ?? '');
+      if (!title && !text) continue;
+      if (!title) throw new Error(`Activity ${i + 1}: enter a title`);
+      activities.push({ title, text });
+    }
+    const current = aboutView(await getCmsJson<unknown>(b, 'about', null)).awards;
+    const awards: { title: string; org: string; year: string; recipient: string; img: string }[] = [];
+    for (let i = 0; i < count('aw_count', 13); i++) {
+      if (checkbox(f[`aw_remove_${i}`])) continue;
+      const title = textZ(120).parse(f[`aw_title_${i}`] ?? '');
+      const org = textZ(120).parse(f[`aw_org_${i}`] ?? '');
+      const file = fd.get(`aw_file_${i}`);
+      const hasFile = file instanceof File && file.size > 0;
+      if (!title && !org && !hasFile) continue;
+      if (!title) throw new Error(`Award ${i + 1}: enter the award name`);
+      // The photo already published for this row is kept unless a new one is uploaded (never taken from the form).
+      let img = current[i]?.img ?? '';
+      if (hasFile) img = await storePublicImage(file, `cms/${b}-award-${i + 1}`);
+      awards.push({ title, org, year: textZ(20).parse(f[`aw_year_${i}`] ?? ''), recipient: textZ(120).parse(f[`aw_recipient_${i}`] ?? ''), img });
+    }
+    const about = { headline: textZ(120).parse(f.headline ?? ''), intro: textZ(400).parse(f.intro ?? ''), story: z.string().trim().max(4000, 'Keep the story under 4,000 characters').parse(f.story ?? ''), facts, activities, awards };
+    await setCms(ctx, b, 'about', about);
+    return { message: 'About page published' };
+  });
+}
+
 export async function saveSeoAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
   return run('cms.write', async (ctx) => {
     const b = brandZ.parse(brand);
@@ -785,11 +829,15 @@ export async function updateStaffAction(id: string, fd: FormData): Promise<Actio
     const brands = brandsFrom(fd);
     if (!brands.length) throw new Error('Choose at least one brand');
     const active = checkbox(f.active);
-    if (u.id === ctx.id && (!active || roleId !== u.roleId)) throw new Error('You cannot change your own role or deactivate yourself');
+    // Other departments this person also covers. Super admin already has everything, so it is never an "also covers" role.
+    const known = new Set((await prisma.role.findMany({ select: { id: true } })).map((r) => r.id));
+    const extraRoles = roleId === 'owner' ? [] : [...new Set(fd.getAll('extra').filter((x): x is string => typeof x === 'string' && known.has(x) && x !== roleId && x !== 'owner'))].sort();
+    const rolesChanged = roleId !== u.roleId || extraRoles.join() !== [...u.extraRoles].sort().join();
+    if (u.id === ctx.id && (!active || rolesChanged)) throw new Error('You cannot change your own role or deactivate yourself');
     if (u.roleId === 'owner' && u.active) await assertOwnerRemains(u.id, roleId, active);
-    await prisma.staffUser.update({ where: { id: u.id }, data: { roleId, brands, active } });
+    await prisma.staffUser.update({ where: { id: u.id }, data: { roleId, extraRoles, brands, active } });
     if (!active || roleId !== u.roleId) await prisma.session.deleteMany({ where: { staffId: u.id } });
-    await audit(ctx.email, 'staff.update', 'StaffUser', u.id, { role: { from: u.roleId, to: roleId }, brands, active });
+    await audit(ctx.email, 'staff.update', 'StaffUser', u.id, { role: { from: u.roleId, to: roleId }, alsoCovers: { from: u.extraRoles, to: extraRoles }, brands, active });
     revalidateAdmin();
     return { message: 'Saved' };
   });

@@ -62,7 +62,7 @@ async function markDone(id: string, key: string, by: string, note: string) {
 
 /** Active staff of a role who may work on a brand. */
 async function roleStaff(role: string, brand: string | null) {
-  const staff = await prisma.staffUser.findMany({ where: { roleId: role, active: true }, select: { id: true, name: true, brands: true, phone: true, email: true, notifyVia: true } });
+  const staff = await prisma.staffUser.findMany({ where: { active: true, OR: [{ roleId: role }, { extraRoles: { has: role } }] }, select: { id: true, name: true, brands: true, phone: true, email: true, notifyVia: true } });
   return staff.filter((s) => !brand || s.brands.includes('*') || s.brands.includes(brand));
 }
 
@@ -177,7 +177,7 @@ export function seesAllTasks(ctx: StaffContext): boolean {
 }
 
 export function viewer(ctx: StaffContext): TaskViewer {
-  return { id: ctx.id, role: ctx.role, brands: ctx.brands, all: seesAllTasks(ctx) };
+  return { id: ctx.id, role: ctx.role, extraRoles: ctx.extraRoles, brands: ctx.brands, all: seesAllTasks(ctx) };
 }
 
 /**
@@ -187,7 +187,7 @@ export function viewer(ctx: StaffContext): TaskViewer {
  */
 export function taskWhere(ctx: StaffContext, brands: string[], scope: TaskScope): Prisma.StaffTaskWhereInput {
   const brand: Prisma.StaffTaskWhereInput = { OR: [{ brandKey: null }, { brandKey: { in: brands } }] };
-  const roles = queueRoles(ctx.role);
+  const roles = queueRoles(ctx.role, ctx.extraRoles);
   if (scope === 'all' && seesAllTasks(ctx)) return brand;
   if (scope === 'role') return { AND: [brand, { OR: [{ roleId: { in: roles } }, { assigneeId: ctx.id }] }] };
   return { AND: [brand, { OR: [{ assigneeId: ctx.id }, { roleId: { in: roles }, assigneeId: null }] }] };

@@ -116,6 +116,7 @@ export function organizationLd(brand: BrandView, cms: CmsView): Json {
     email: brand.supportEmail || undefined,
     areaServed: { '@type': 'Country', name: 'Tanzania' },
     sameAs: sameAs.length ? sameAs : undefined,
+    award: cms.about.awards.length ? cms.about.awards.map((a) => [a.title, a.org, a.year].filter(Boolean).join(', ')) : undefined,
     contactPoint: phone
       ? [{ '@type': 'ContactPoint', contactType: 'customer service', telephone: phone, email: brand.supportEmail || undefined, url: `https://wa.me/${phone.slice(1)}`, areaServed: 'TZ', availableLanguage: ['English', 'Swahili'] }]
       : undefined,

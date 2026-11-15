@@ -50,7 +50,7 @@ export async function loadTasks(ctx: StaffContext, brands: string[], scope: Task
   ]);
   const now = new Date();
   if (status === 'open') rows.sort(compareTasks(now));
-  const roles = queueRoles(ctx.role);
+  const roles = queueRoles(ctx.role, ctx.extraRoles);
   const all = seesAllTasks(ctx);
   return {
     total,

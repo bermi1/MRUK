@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
-import { saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveSeoAction, saveSocialAction } from '@/app/actions/admin';
+import { saveAboutAction, saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveSeoAction, saveSocialAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
 import { ImagePick } from '@/components/admin/PhotoUpload';
 import { SeoEditor } from '@/components/admin/SeoEditor';
 import { BrandMark, Forbidden } from '@/components/admin/ui';
-import { heroDefaults } from '@/server/catalog';
+import { aboutView, heroDefaults } from '@/server/catalog';
 import type { CmsView } from '@/lib/types';
 import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -36,7 +36,10 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },
     hot: [],
     social: { facebook: '', instagram: '', tiktok: '', youtube: '', x: '', linkedin: '', ...((m.social as Record<string, string>) ?? {}) },
+    about: aboutView(m.about),
   };
+  const about = cms.about;
+  const aboutVersion = blocks.find((x) => x.key === 'about')?.updatedAt.getTime() ?? 0;
   const heroVersion = blocks.find((x) => x.key === 'hero')?.updatedAt.getTime() ?? 0;
   const updated = blocks.reduce<{ at: Date; by: string } | null>((a, x) => (!a || x.updatedAt > a.at ? { at: x.updatedAt, by: x.updatedBy } : a), null);
   const write = ctx.can('cms.write');
@@ -246,6 +249,106 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                     {k === 'x' ? 'X (Twitter)' : k === 'tiktok' ? 'TikTok' : k === 'youtube' ? 'YouTube' : k === 'linkedin' ? 'LinkedIn' : k[0]!.toUpperCase() + k.slice(1)}
                     <input name={k} type="url" defaultValue={cms.social[k]} placeholder="https://" maxLength={200} />
                   </label>
+                ))}
+              </AForm>
+            )}
+          </section>
+
+          <section className="ad-card" id="about">
+            <h2 className="ad-h">About page, activities and awards</h2>
+            <p className="ad-sub">
+              Shown on the {BRAND_NAME[brand]} About page (footer link: About us). Awards also appear as a small strip at the bottom of the home page. Empty sections are hidden.
+            </p>
+            {ro}
+            {write && (
+              <AForm action={saveAboutAction.bind(null, brand)} submit="Publish About page" label="About page">
+                <div className="ad-form">
+                  <label className="ad-field full">
+                    Headline
+                    <input name="headline" defaultValue={about.headline} maxLength={120} />
+                  </label>
+                  <label className="ad-field full">
+                    Short introduction (also used by Google)
+                    <textarea name="intro" defaultValue={about.intro} maxLength={400} rows={3} />
+                  </label>
+                  <label className="ad-field full">
+                    Our story (leave an empty line between paragraphs)
+                    <textarea name="story" defaultValue={about.story} maxLength={4000} rows={9} />
+                  </label>
+                </div>
+
+                <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
+                  Key facts
+                </h3>
+                <p className="ad-sub">For example Founded / 2011. Clear both boxes to remove a fact; fill the last row to add one.</p>
+                <input type="hidden" name="fact_count" value={Math.min(about.facts.length + 1, 8)} />
+                {[...about.facts, { label: '', value: '' }].slice(0, 8).map((x, i) => (
+                  <div key={`${aboutVersion}:${i}`} className="ad-form" style={{ marginTop: 8 }}>
+                    <label className="ad-field">
+                      Label
+                      <input name={`fact_label_${i}`} defaultValue={x.label} maxLength={40} />
+                    </label>
+                    <label className="ad-field">
+                      Value
+                      <input name={`fact_value_${i}`} defaultValue={x.value} maxLength={60} />
+                    </label>
+                  </div>
+                ))}
+
+                <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
+                  Company activities
+                </h3>
+                <input type="hidden" name="act_count" value={Math.min(about.activities.length + 1, 12)} />
+                {[...about.activities, { title: '', text: '' }].slice(0, 12).map((x, i) => (
+                  <div key={`${aboutVersion}:${i}`} className="ad-form" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
+                    <label className="ad-field full">
+                      {i === about.activities.length ? 'New activity title' : 'Activity title'}
+                      <input name={`act_title_${i}`} defaultValue={x.title} maxLength={80} />
+                    </label>
+                    <label className="ad-field full">
+                      Description
+                      <textarea name={`act_text_${i}`} defaultValue={x.text} maxLength={400} rows={2} />
+                    </label>
+                    {i < about.activities.length && (
+                      <label className="ad-check full" style={{ gridColumn: '1 / -1', fontSize: 12.5 }}>
+                        <input type="checkbox" name={`act_remove_${i}`} /> Remove this activity
+                      </label>
+                    )}
+                  </div>
+                ))}
+
+                <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
+                  Awards and trophies
+                </h3>
+                <p className="ad-sub">Add a trophy photo on a plain or transparent background (JPG, PNG or WebP, up to 5 MB).</p>
+                <input type="hidden" name="aw_count" value={Math.min(about.awards.length + 1, 12)} />
+                {[...about.awards, { title: '', org: '', year: '', recipient: '', img: '' }].slice(0, 12).map((x, i) => (
+                  <div key={`${aboutVersion}:${i}`} className="ad-form" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
+                    <label className="ad-field full">
+                      {i === about.awards.length ? 'New award name' : 'Award name'}
+                      <input name={`aw_title_${i}`} defaultValue={x.title} maxLength={120} />
+                    </label>
+                    <label className="ad-field">
+                      Awarded by
+                      <input name={`aw_org_${i}`} defaultValue={x.org} maxLength={120} />
+                    </label>
+                    <label className="ad-field">
+                      Year
+                      <input name={`aw_year_${i}`} defaultValue={x.year} maxLength={20} />
+                    </label>
+                    <label className="ad-field full">
+                      Awarded to
+                      <input name={`aw_recipient_${i}`} defaultValue={x.recipient} maxLength={120} />
+                    </label>
+                    <div className="ad-field full">
+                      <ImagePick name={`aw_file_${i}`} current={x.img} text={x.img ? 'Replace trophy photo' : 'Add trophy photo'} alt={x.title} />
+                    </div>
+                    {i < about.awards.length && (
+                      <label className="ad-check full" style={{ gridColumn: '1 / -1', fontSize: 12.5 }}>
+                        <input type="checkbox" name={`aw_remove_${i}`} /> Remove this award
+                      </label>
+                    )}
+                  </div>
                 ))}
               </AForm>
             )}

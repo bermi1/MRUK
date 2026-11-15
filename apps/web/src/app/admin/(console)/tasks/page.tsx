@@ -20,7 +20,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const all = seesAllTasks(ctx);
   const scopes: { key: TaskScope; label: string }[] = [
     { key: 'mine', label: 'Mine' },
-    { key: 'role', label: ctx.role === 'owner' ? 'Owner and manager' : `${ROLE_LABEL[ctx.role as TaskRole] ?? ctx.roleName} team` },
+    { key: 'role', label: ctx.role === 'owner' ? 'Owner and manager' : ctx.extraRoles.length ? 'My teams' : `${ROLE_LABEL[ctx.role as TaskRole] ?? ctx.roleName} team` },
     ...(all ? [{ key: 'all' as const, label: 'All teams' }] : []),
   ];
   const scope = scopes.find((s) => s.key === sp.view)?.key ?? 'mine';

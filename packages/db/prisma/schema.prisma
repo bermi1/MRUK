@@ -403,6 +403,8 @@ model StaffUser {
   totpSecretEnc String?
   totpEnabled   Boolean   @default(false)
   roleId        String
+  /// Other departments this person also covers (role ids). Permissions and task queues are the union with roleId.
+  extraRoles    String[]  @default([])
   brands        String[] // brand scopes; empty = none, ["*"] = all
   branch        String    @default("All branches")
   active        Boolean   @default(true)

@@ -6,7 +6,7 @@ import { prisma } from '@bt/db';
 import { LISTABLE, isListable } from './listable';
 import { bundlePrice, salePrice, type CompareFacts } from '@bt/core';
 import { SOCIAL_KEYS } from '@/lib/types';
-import type { BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView , SocialLinks } from '@/lib/types';
+import type { AboutView, BrandKey, BrandView, CategoryView, CmsView, HeroSlide, ProductView, SocialLinks } from '@/lib/types';
 
 export const BRAND_KEYS: BrandKey[] = ['mruk', 'skywood'];
 
@@ -246,6 +246,23 @@ function socialLinks(v: unknown): SocialLinks {
   return Object.fromEntries(SOCIAL_KEYS.map((k) => [k, typeof o[k] === 'string' && /^https:\/\/[^\s]+$/.test(o[k] as string) ? (o[k] as string) : ''])) as SocialLinks;
 }
 
+const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
+const rows = (v: unknown, max: number) => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === 'object').slice(0, max) : []);
+
+/** About block with safe shapes: whatever is stored, the page gets plain strings and same-site or https images. */
+export function aboutView(v: unknown): AboutView {
+  const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  const img = (x: unknown) => (typeof x === 'string' && /^(\/(?!\/)|https:\/\/)[^\s]+$/.test(x) ? x : '');
+  return {
+    headline: str(o.headline, 120),
+    intro: str(o.intro, 400),
+    story: str(o.story, 4000),
+    facts: rows(o.facts, 8).map((f) => ({ label: str(f.label, 40), value: str(f.value, 60) })).filter((f) => f.label && f.value),
+    activities: rows(o.activities, 12).map((a) => ({ title: str(a.title, 80), text: str(a.text, 400) })).filter((a) => a.title),
+    awards: rows(o.awards, 12).map((a) => ({ title: str(a.title, 120), org: str(a.org, 120), year: str(a.year, 20), recipient: str(a.recipient, 120), img: img(a.img) })).filter((a) => a.title),
+  };
+}
+
 export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
   const blocks = await loadCmsBlocks(brand);
   const m = Object.fromEntries(blocks.map((b) => [b.key, b.json])) as Record<string, unknown>;
@@ -257,6 +274,7 @@ export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },
     hot: (m.hot as string[]) ?? [],
     social: socialLinks(m.social),
+    about: aboutView(m.about),
   };
 });
 

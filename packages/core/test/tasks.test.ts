@@ -163,6 +163,8 @@ describe('assignment, visibility and ordering', () => {
     expect(canSeeTask({ id: 'o', role: 'owner', brands: ['*'], all: true }, { assigneeId: null, roleId: 'finance', brandKey: 'skywood' })).toBe(true);
     expect(queueRoles('owner')).toEqual(['owner', 'manager']);
     expect(queueRoles('support')).toEqual(['support']);
+    expect(queueRoles('finance', ['support', 'finance'])).toEqual(['finance', 'support']);
+    expect(canSeeTask({ id: 'm', role: 'finance', extraRoles: ['support'], brands: ['*'], all: false }, { assigneeId: null, roleId: 'support', brandKey: null })).toBe(true);
   });
   it('priorities and queue order', () => {
     expect(priorityRank('urgent')).toBe(3);

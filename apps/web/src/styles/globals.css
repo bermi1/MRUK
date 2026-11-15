@@ -1182,3 +1182,63 @@ textarea.input { resize: vertical; }
 }
 @media (max-width: 767px) { .cfab { display: none; } }
 @media print { .cfab { display: none !important; } }
+
+/* About page and awards (Admin › CMS › About). Calm type: medium weights, modest sizes. */
+.about { max-width: 1040px; padding-bottom: 72px; }
+.about-head { max-width: 720px; padding: 24px 0 8px; }
+.about-kicker { margin: 0 0 12px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted2); }
+.about h1 { margin: 0; font-size: clamp(26px, 3.4vw, 38px); font-weight: 500; letter-spacing: -0.02em; line-height: 1.15; color: var(--ink); }
+.about-intro { margin: 16px 0 0; font-size: 16.5px; line-height: 1.65; color: var(--muted2); }
+.about-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; margin: 36px 0 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.about-facts > div { padding: 18px 20px 18px 0; }
+.about-facts dt { font-size: 12px; color: var(--muted2); }
+.about-facts dd { margin: 6px 0 0; font-size: 15px; font-weight: 500; color: var(--text); line-height: 1.4; }
+.about-sec { margin-top: 56px; }
+.about-sec h2 { margin: 0 0 20px; font-size: 21px; font-weight: 500; letter-spacing: -0.01em; color: var(--ink); }
+.about-story > div { max-width: 720px; }
+.about-story p { margin: 0 0 16px; font-size: 15.5px; line-height: 1.75; color: var(--text); }
+.about-acts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.about-acts li { border: 1px solid var(--border); border-radius: var(--rs); padding: 20px; background: #fff; }
+.about-acts h3 { margin: 0; font-size: 15.5px; font-weight: 500; color: var(--ink); }
+.about-acts p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--muted2); }
+.about-awards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.about-awards li { border: 1px solid var(--border); border-radius: var(--rs); padding: 20px; background: #fff; }
+.about-award-art { display: flex; align-items: center; justify-content: center; height: 230px; margin-bottom: 18px; border-radius: 12px; background: var(--surface); color: var(--muted2); }
+.about-award-art img { max-height: 198px; max-width: 80%; width: auto; height: auto; object-fit: contain; }
+.about-award-year { margin: 0; font-size: 12px; letter-spacing: 0.08em; color: var(--muted2); }
+.about-awards h3 { margin: 6px 0 0; font-size: 16px; font-weight: 500; line-height: 1.35; color: var(--ink); }
+.about-award-org { margin: 6px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--muted2); }
+.about-award-to { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.about-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 56px; }
+.about-btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); font-size: 14.5px; font-weight: 500; color: var(--ink); background: #fff; }
+.about-btn.solid { background: var(--p); border-color: var(--p); color: #fff; }
+.about-btn:hover { border-color: var(--ink); }
+
+.awards-strip { border-top: 1px solid var(--border); background: #fff; padding: 22px 0; }
+.awards-strip .wrap { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.awards-strip-t { margin: 0; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted2); }
+.awards-strip ul { list-style: none; margin: 0; padding: 0; display: flex; flex: 1; gap: 28px; flex-wrap: wrap; }
+.awards-strip li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.awards-strip-art { display: flex; align-items: center; justify-content: center; width: 34px; height: 46px; flex: none; color: var(--muted2); }
+.awards-strip-art img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.awards-strip-name { display: block; font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.3; }
+.awards-strip-org { display: block; font-size: 12px; color: var(--muted2); line-height: 1.35; }
+.awards-strip-more { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; color: var(--muted2); white-space: nowrap; }
+.awards-strip-more:hover { color: var(--ink); }
+@media (max-width: 767px) {
+  .about { padding-bottom: 48px; }
+  .about-sec { margin-top: 40px; }
+  .about-facts { grid-template-columns: 1fr 1fr; }
+  .about-award-art { height: 190px; }
+  .about-award-art img { max-height: 160px; }
+  /* Phone: one quiet line: the trophies, then the link to the full list. */
+  .awards-strip { padding: 10px 0; }
+  .awards-strip .wrap { gap: 12px; flex-wrap: nowrap; }
+  .awards-strip-t { display: none; }
+  .awards-strip ul { flex: none; flex-wrap: nowrap; gap: 8px; }
+  .awards-strip li > span:last-child { display: none; }
+  .awards-strip-art { width: 26px; height: 36px; }
+  .awards-strip-more { flex: 1; justify-content: space-between; gap: 8px; color: var(--text); }
+  .awards-strip-more::before { content: attr(data-short); }
+  .awards-strip-more > .awards-strip-long { display: none; }
+}

@@ -144,6 +144,8 @@ export interface StaffContext {
   email: string;
   name: string;
   role: string;
+  /** Other departments this person also covers (role ids). */
+  extraRoles: string[];
   roleName: string;
   permissions: string[];
   brands: string[];
@@ -156,7 +158,7 @@ type StaffSession = NonNullable<Awaited<ReturnType<typeof currentStaffSession>>>
 /** Build the staff context from a signed-in session (shared with route handlers). */
 export function staffContextOf(s: StaffSession): StaffContext {
   const staff = s.staff!;
-  const permissions = staff.role.permissions;
+  const permissions = [...new Set([...staff.role.permissions, ...s.extraRoles.flatMap((r) => r.permissions)])];
   const can = (p: string) => permissions.includes('*') || permissions.includes(p);
   return {
     id: staff.id,
@@ -166,7 +168,8 @@ export function staffContextOf(s: StaffSession): StaffContext {
     email: staff.email,
     name: staff.name,
     role: staff.roleId,
-    roleName: staff.role.name,
+    extraRoles: s.extraRoles.map((r) => r.id),
+    roleName: [staff.role.name, ...s.extraRoles.map((r) => r.name)].join(' + '),
     permissions,
     brands: staff.brands,
     can,

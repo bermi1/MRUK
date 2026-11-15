@@ -499,13 +499,15 @@ export function compareTasks(now = new Date()) {
 }
 
 /** Roles whose queue a staff member works from. A Super admin also covers the manager queue. */
-export function queueRoles(role: string): string[] {
-  return role === 'owner' ? ['owner', 'manager'] : [role];
+export function queueRoles(role: string, extra: readonly string[] = []): string[] {
+  return [...new Set([role, ...extra].flatMap((r) => (r === 'owner' ? ['owner', 'manager'] : [r])))];
 }
 
 export interface TaskViewer {
   id: string;
   role: string;
+  /** Other departments this person also covers. */
+  extraRoles?: string[];
   /** Brand scope; '*' = all. */
   brands: string[];
   /** May see every team's tasks (owner, manager: permission "tasks.all"). */
@@ -516,7 +518,7 @@ export interface TaskViewer {
 export function canSeeTask(v: TaskViewer, t: { assigneeId: string | null; roleId: string; brandKey: string | null }): boolean {
   const inBrand = !t.brandKey || v.brands.includes('*') || v.brands.includes(t.brandKey);
   if (!inBrand) return false;
-  return v.all || t.assigneeId === v.id || queueRoles(v.role).includes(t.roleId);
+  return v.all || t.assigneeId === v.id || queueRoles(v.role, v.extraRoles).includes(t.roleId);
 }
 
 // Dashboards ---------------------------------------------------------------------------------

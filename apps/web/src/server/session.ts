@@ -62,7 +62,9 @@ export async function currentStaffSession() {
   if (Date.now() - s.lastSeenAt.getTime() > 60_000) {
     await prisma.session.update({ where: { id: s.id }, data: { lastSeenAt: new Date() } }).catch(() => undefined);
   }
-  return s;
+  // A person covering several departments: their permissions are the union of all their roles.
+  const extra = s.staff.extraRoles.length ? await prisma.role.findMany({ where: { id: { in: s.staff.extraRoles } }, select: { id: true, name: true, permissions: true } }) : [];
+  return { ...s, extraRoles: extra };
 }
 
 /** HMAC-signed values for links that need no login (order confirmation, contract download). */

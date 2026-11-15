@@ -50,6 +50,7 @@ function Columns({ brand, cats, t, headClass, payLater }: { brand: BrandView; ca
       </nav>
       <nav className="foot-col" aria-label={t('footerHelp')}>
         <p className={headClass}>{t('footerHelp')}</p>
+        <Link href={`${b}/about`}>{t('aboutUs')}</Link>
         <Link href={`${b}/track`}>{t('trackOrder')}</Link>
         <Link href={`${b}/support`}>{t('support')}</Link>
         <Link href={`${b}/suppliers`}>{t('suppliersNearYou')}</Link>

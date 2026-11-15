@@ -100,6 +100,26 @@ export interface CmsView {
   hot: string[];
   /** Social profile links shown in the footer (empty = hidden). */
   social: SocialLinks;
+  /** About page: company story, activities and awards (Admin › CMS › About). */
+  about: AboutView;
+}
+
+export interface AwardView {
+  title: string;
+  org: string;
+  year: string;
+  recipient: string;
+  img: string;
+}
+
+export interface AboutView {
+  headline: string;
+  intro: string;
+  /** Paragraphs, separated by a blank line in the editor. */
+  story: string;
+  facts: { label: string; value: string }[];
+  activities: { title: string; text: string }[];
+  awards: AwardView[];
 }
 
 export const SOCIAL_KEYS = ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'] as const;

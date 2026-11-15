@@ -140,6 +140,19 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                                   {roleOptions}
                                 </select>
                               </label>
+                              <fieldset className="ad-field" style={{ border: 0, padding: 0, margin: 0 }}>
+                                <legend style={{ padding: 0, marginBottom: 4 }}>Also covers (one person doing several departments)</legend>
+                                <div className="ad-row" style={{ flexWrap: 'wrap', gap: '4px 14px' }}>
+                                  {roles
+                                    .filter((r) => r.id !== 'owner')
+                                    .map((r) => (
+                                      <label key={r.id} className="ad-check" style={{ fontSize: 12.5 }}>
+                                        <input type="checkbox" name="extra" value={r.id} defaultChecked={u.extraRoles.includes(r.id)} /> {r.name}
+                                      </label>
+                                    ))}
+                                </div>
+                                <span className="ad-muted" style={{ fontSize: 11.5 }}>They get the pages and task queues of every ticked department. Ignored for a Super admin.</span>
+                              </fieldset>
                               <BrandBoxes brands={u.brands} />
                               <label className="ad-check">
                                 <input type="checkbox" name="active" defaultChecked={u.active} /> Active (can sign in)
@@ -162,6 +175,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                       </td>
                       <td style={{ verticalAlign: 'top' }}>
                         <Pill cls="pill-navy">{u.role.name}</Pill>
+                        {u.extraRoles.map((r) => (
+                          <Pill key={r} cls="pill-blue">
+                            + {roles.find((x) => x.id === r)?.name ?? r}
+                          </Pill>
+                        ))}
                       </td>
                       <td className="ad-muted2" style={{ verticalAlign: 'top' }}>
                         {brandText(u.brands)}
