@@ -237,14 +237,28 @@ async function syncBrandDrafts(BT: ReturnType<typeof loadHandoff>, key: 'mruk' |
 }
 
 /** Default social profiles on a live database: only when the brand has none yet (staff edits always win). */
+/** JSON with sorted keys (Postgres jsonb does not keep key order). */
+function canonical(v: unknown): string {
+  const sort = (x: unknown): unknown => (Array.isArray(x) ? x.map(sort) : x && typeof x === 'object' ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, sort((x as Record<string, unknown>)[k])])) : x);
+  return JSON.stringify(sort(v));
+}
+
 async function syncSocial(BT: ReturnType<typeof loadHandoff>) {
   // Blocks added after launch: created once with their defaults, never overwritten (staff edit them in Admin › CMS).
   for (const key of ['mruk', 'skywood'] as const) {
     for (const block of ['social', 'about'] as const) {
       const json = (BT.cms(key) as Record<string, unknown>)[block];
       if (!json) continue;
-      const row = await prisma.cmsBlock.findFirst({ where: { brandKey: key, key: block }, select: { id: true } });
-      if (row) continue;
+      const row = await prisma.cmsBlock.findFirst({ where: { brandKey: key, key: block }, select: { id: true, updatedBy: true, json: true } });
+      if (row) {
+        // A block staff never edited follows the defaults (e.g. awards now shown on both brands, leadership added).
+        if (row.updatedBy === 'system' && canonical(row.json) !== canonical(json)) {
+          await prisma.cmsBlock.update({ where: { id: row.id }, data: { json: json as object } });
+          await prisma.auditLog.create({ data: { actor: 'system:deploy', action: `cms.${block}.default`, entity: 'CmsBlock', entityId: `${key}:${block}` } });
+          console.log(`  ${key} ${block} block updated to the current defaults.`);
+        }
+        continue;
+      }
       await prisma.cmsBlock.create({ data: { brandKey: key, key: block, json: json as object } });
       await prisma.auditLog.create({ data: { actor: 'system:deploy', action: `cms.${block}.default`, entity: 'CmsBlock', entityId: `${key}:${block}` } });
       console.log(`  ${key} ${block} block added.`);

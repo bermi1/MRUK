@@ -120,6 +120,8 @@ export interface AboutView {
   facts: { label: string; value: string }[];
   activities: { title: string; text: string }[];
   awards: AwardView[];
+  /** Leadership shown on the About page (photo optional). */
+  leaders: { name: string; role: string; bio: string; img: string }[];
 }
 
 export const SOCIAL_KEYS = ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'] as const;

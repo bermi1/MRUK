@@ -1209,6 +1209,13 @@ textarea.input { resize: vertical; }
 .about-awards h3 { margin: 6px 0 0; font-size: 16px; font-weight: 500; line-height: 1.35; color: var(--ink); }
 .about-award-org { margin: 6px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--muted2); }
 .about-award-to { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text); }
+.about-leaders { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.about-leaders li { display: flex; gap: 16px; align-items: flex-start; border: 1px solid var(--border); border-radius: var(--rs); padding: 20px; background: #fff; }
+.about-leader-art { flex: none; width: 72px; height: 72px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--soft); color: var(--ink); font-size: 20px; font-weight: 500; }
+.about-leader-art img { width: 100%; height: 100%; object-fit: cover; }
+.about-leaders h3 { margin: 0; font-size: 16px; font-weight: 500; color: var(--ink); }
+.about-leader-role { margin: 4px 0 0; font-size: 13.5px; color: var(--muted2); }
+.about-leader-bio { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--text); }
 .about-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 56px; }
 .about-btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 1px solid var(--line); font-size: 14.5px; font-weight: 500; color: var(--ink); background: #fff; }
 .about-btn.solid { background: var(--p); border-color: var(--p); color: #fff; }

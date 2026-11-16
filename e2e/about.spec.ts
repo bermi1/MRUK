@@ -25,12 +25,21 @@ test('Mr UK About page lists the story, activities and awards; the home page sho
   await expect(page.locator('footer').getByRole('link', { name: 'About us' })).toHaveAttribute('href', '/mruk/about');
 });
 
-test('Skywood has an About page and no awards strip until awards are added', async ({ page }) => {
+test('Skywood has an About page and shows the group awards', async ({ page }) => {
   await page.goto('/skywood/about');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByTestId('award')).toHaveCount(0);
+  await expect(page.getByTestId('award')).toHaveCount(3);
   await page.goto('/skywood');
-  await expect(page.getByTestId('awards-strip')).toHaveCount(0);
+  await expect(page.getByTestId('awards-strip')).toBeVisible();
+});
+
+test('leadership is listed on the About page and indexed as a Person', async ({ page }) => {
+  await page.goto('/mruk/about');
+  await expect(page.getByTestId('leader').first()).toContainText('Profile Beda Masawe');
+  await expect(page.getByTestId('leader').first()).toContainText('Chairperson');
+  const ld = (await page.locator('script[type="application/ld+json"]').allTextContents()).join(' ');
+  expect(ld).toContain('"@type":"Person"');
+  expect(ld).toContain('Profile Beda Masawe');
 });
 
 test('staff edit the About page in the CMS and the store shows it', async ({ page, browser, baseURL }) => {

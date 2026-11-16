@@ -2,11 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { AwardArt } from '@/components/store/Awards';
+import { initials } from '@/lib/format';
 import type { BrandKey } from '@/lib/types';
 import { publicUrl } from '@/lib/site';
 import { getBrand, getCms, getSuppliers } from '@/server/catalog';
 import { getT } from '@/server/locale';
-import { brandTitle, breadcrumbLd, graph, organizationLd, pageMeta } from '@/server/seo';
+import { brandTitle, breadcrumbLd, graph, leadersLd, organizationLd, pageMeta } from '@/server/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ brand: string }> }): Promise<Metadata> {
   const { brand: key } = (await params) as { brand: BrandKey };
@@ -24,7 +25,7 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
   const paragraphs = a.story.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   return (
     <div className="wrap page-top about">
-      <JsonLd data={graph(organizationLd(brand, cms), { '@type': 'AboutPage', url: publicUrl(key, '/about'), name: `About ${brand.name}`, description: a.intro || undefined }, breadcrumbLd(brand, [{ name: t('aboutUs'), path: '/about' }]))} />
+      <JsonLd data={graph(organizationLd(brand, cms), { '@type': 'AboutPage', url: publicUrl(key, '/about'), name: `About ${brand.name}`, description: a.intro || undefined }, breadcrumbLd(brand, [{ name: t('aboutUs'), path: '/about' }]), ...leadersLd(brand, a.leaders))} />
       <header className="about-head">
         <p className="about-kicker">{t('aboutUs')}</p>
         <h1>{a.headline || brand.name}</h1>
@@ -61,6 +62,27 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
               <li key={x.title}>
                 <h3>{x.title}</h3>
                 {x.text && <p>{x.text}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {a.leaders.length > 0 && (
+        <section className="about-sec" id="leadership" aria-labelledby="about-leadership">
+          <h2 id="about-leadership">{t('aboutLeadership')}</h2>
+          <ul className="about-leaders">
+            {a.leaders.map((l) => (
+              <li key={l.name} data-testid="leader">
+                <span className="about-leader-art" aria-hidden={l.img ? undefined : true}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {l.img ? <img src={l.img} alt={`${l.name}, ${l.role}`} loading="lazy" decoding="async" /> : initials(l.name)}
+                </span>
+                <div>
+                  <h3>{l.name}</h3>
+                  {l.role && <p className="about-leader-role">{l.role}</p>}
+                  {l.bio && <p className="about-leader-bio">{l.bio}</p>}
+                </div>
               </li>
             ))}
           </ul>

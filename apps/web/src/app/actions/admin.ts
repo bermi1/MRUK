@@ -583,7 +583,21 @@ export async function saveAboutAction(brand: string, fd: FormData): Promise<Acti
       if (hasFile) img = await storePublicImage(file, `cms/${b}-award-${i + 1}`);
       awards.push({ title, org, year: textZ(20).parse(f[`aw_year_${i}`] ?? ''), recipient: textZ(120).parse(f[`aw_recipient_${i}`] ?? ''), img });
     }
-    const about = { headline: textZ(120).parse(f.headline ?? ''), intro: textZ(400).parse(f.intro ?? ''), story: z.string().trim().max(4000, 'Keep the story under 4,000 characters').parse(f.story ?? ''), facts, activities, awards };
+    const leaders: { name: string; role: string; bio: string; img: string }[] = [];
+    const currentLeaders = aboutView(await getCmsJson<unknown>(b, 'about', null)).leaders;
+    for (let i = 0; i < count('ld_count', 13); i++) {
+      if (checkbox(f[`ld_remove_${i}`])) continue;
+      const name = textZ(80).parse(f[`ld_name_${i}`] ?? '');
+      const role = textZ(80).parse(f[`ld_role_${i}`] ?? '');
+      const file = fd.get(`ld_file_${i}`);
+      const hasFile = file instanceof File && file.size > 0;
+      if (!name && !role && !hasFile) continue;
+      if (!name) throw new Error(`Leader ${i + 1}: enter the name`);
+      let img = currentLeaders[i]?.img ?? '';
+      if (hasFile) img = await storePublicImage(file, `cms/${b}-leader-${i + 1}`);
+      leaders.push({ name, role, bio: textZ(500).parse(f[`ld_bio_${i}`] ?? ''), img });
+    }
+    const about = { headline: textZ(120).parse(f.headline ?? ''), intro: textZ(400).parse(f.intro ?? ''), story: z.string().trim().max(4000, 'Keep the story under 4,000 characters').parse(f.story ?? ''), facts, activities, awards, leaders };
     await setCms(ctx, b, 'about', about);
     return { message: 'About page published' };
   });

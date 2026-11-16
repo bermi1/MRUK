@@ -123,6 +123,18 @@ export function organizationLd(brand: BrandView, cms: CmsView): Json {
   };
 }
 
+/** Leadership as schema.org Person entries tied to the organisation, so search engines can index who leads the company. */
+export function leadersLd(brand: BrandView, leaders: CmsView['about']['leaders']): Json[] {
+  return leaders.map((l) => ({
+    '@type': 'Person',
+    name: l.name,
+    jobTitle: l.role || undefined,
+    description: l.bio || undefined,
+    image: l.img ? absUrl(l.img) : undefined,
+    worksFor: { '@id': orgId(brand.key) },
+  }));
+}
+
 export function websiteLd(brand: BrandView): Json {
   return {
     '@type': 'WebSite',

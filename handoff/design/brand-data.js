@@ -343,6 +343,7 @@
           { label: 'Head office', value: 'Kariakoo, Dar es Salaam' },
           { label: 'Branches', value: 'Arusha, Dodoma, Mwanza, Kilimanjaro' },
           { label: 'Reach', value: 'Eastern and Central Africa' },
+          { label: 'Quality', value: 'ISO 9001:2015 certified' },
         ],
         activities: [
           { title: 'Home appliances', text: 'Fridges, freezers, cookers, washing machines and small kitchen appliances for everyday family use.' },
@@ -354,8 +355,10 @@
         awards: [
           { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: 'MR UK Corporation', img: '/img/awards/africa-company-of-the-year-2026.webp' },
           { title: 'Outstanding Home Appliance Brand of the Year', org: 'East Africa Building and Construction (EABC) Awards', year: '2025', recipient: 'Mr UK Tanzania Limited', img: '/img/awards/eabc-awards-2025.webp' },
-          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: 'Beda Masawe, MR UK Corporation', img: '/img/awards/top-100-awards-2025.webp' },
+          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: 'Profile Beda Masawe, MR UK Corporation', img: '/img/awards/top-100-awards-2025.webp' },
         ],
+        // Photo and biography to come from the client (Admin › CMS › About › Leadership).
+        leaders: [{ name: 'Profile Beda Masawe', role: 'Chairperson, MR UK Corporation', bio: 'Named CEO/MD of the Year at The Top 100 Awards 2025.', img: '' }],
       },
       announcement: 'Take it home today, pay from your salary with Azania Bank Salary Advance',
       hero: [
@@ -381,7 +384,13 @@
         story: '',
         facts: [],
         activities: [],
-        awards: [],
+        // The client confirmed the group's awards are shown on both brands.
+        awards: [
+          { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: 'MR UK Corporation', img: '/img/awards/africa-company-of-the-year-2026.webp' },
+          { title: 'Outstanding Home Appliance Brand of the Year', org: 'East Africa Building and Construction (EABC) Awards', year: '2025', recipient: 'Mr UK Tanzania Limited', img: '/img/awards/eabc-awards-2025.webp' },
+          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: 'Profile Beda Masawe, MR UK Corporation', img: '/img/awards/top-100-awards-2025.webp' },
+        ],
+        leaders: [],
       },
       announcement: 'Beyond limits: pay monthly with Azania Bank Salary Advance',
       hero: [

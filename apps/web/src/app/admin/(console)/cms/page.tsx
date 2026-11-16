@@ -318,6 +318,36 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                 ))}
 
                 <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
+                  Leadership
+                </h3>
+                <p className="ad-sub">Chairperson, directors and managers shown on the About page. A photo is optional (square works best).</p>
+                <input type="hidden" name="ld_count" value={Math.min(about.leaders.length + 1, 12)} />
+                {[...about.leaders, { name: '', role: '', bio: '', img: '' }].slice(0, 12).map((x, i) => (
+                  <div key={`${aboutVersion}:${i}`} className="ad-form" style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F1F5' }}>
+                    <label className="ad-field">
+                      {i === about.leaders.length ? 'New leader name' : 'Name'}
+                      <input name={`ld_name_${i}`} defaultValue={x.name} maxLength={80} />
+                    </label>
+                    <label className="ad-field">
+                      Position
+                      <input name={`ld_role_${i}`} defaultValue={x.role} maxLength={80} />
+                    </label>
+                    <label className="ad-field full">
+                      Short biography
+                      <textarea name={`ld_bio_${i}`} defaultValue={x.bio} maxLength={500} rows={2} />
+                    </label>
+                    <div className="ad-field full">
+                      <ImagePick name={`ld_file_${i}`} current={x.img} text={x.img ? 'Replace photo' : 'Add photo'} alt={x.name} />
+                    </div>
+                    {i < about.leaders.length && (
+                      <label className="ad-check full" style={{ gridColumn: '1 / -1', fontSize: 12.5 }}>
+                        <input type="checkbox" name={`ld_remove_${i}`} /> Remove this person
+                      </label>
+                    )}
+                  </div>
+                ))}
+
+                <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
                   Awards and trophies
                 </h3>
                 <p className="ad-sub">Add a trophy photo on a plain or transparent background (JPG, PNG or WebP, up to 5 MB).</p>
