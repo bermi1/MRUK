@@ -75,7 +75,6 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
             {a.leaders.map((l) => (
               <li key={l.name} data-testid="leader">
                 <span className="about-leader-art" aria-hidden={l.img ? undefined : true}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   {l.img ? <img src={l.img} alt={`${l.name}, ${l.role}`} loading="lazy" decoding="async" /> : initials(l.name)}
                 </span>
                 <div>

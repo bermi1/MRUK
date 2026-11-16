@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { fmt } from '@/lib/format';
 import { ArrowRightIcon, BagIcon, CompareIcon, SearchIcon, UserIcon } from '../../../icons';
-import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { LangSwitch } from '../../LangSwitch';
@@ -35,7 +34,6 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
   const promo = (
     <Link href={`${b}/c/${cms.megaPromo.cat}`} className="mu-promo">
       <span className="mu-promo-art" aria-hidden="true">
-        <CatGlyph kind={glyphKind(promoCat?.id ?? '', promoCat?.name)} className="mu-promo-glyph" strokeWidth={1.1} />
         {promoCat?.img && <SafeImg src={promoCat.img} alt="" />}
       </span>
       <span className="mu-promo-eyebrow">{cms.megaPromo.eyebrow}</span>
@@ -170,7 +168,6 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
                     {cats.map((c, i) => (
                       <Link key={c.id} href={`${b}/c/${c.id}`} className="mu-tile" style={{ ['--i' as string]: i }}>
                         <span className="mu-tile-art">
-                          <CatGlyph kind={glyphKind(c.id, c.name)} className="mu-tile-glyph" />
                           {c.img && <SafeImg src={c.img} alt="" />}
                         </span>
                         <span className="mu-tile-name">{c.name}</span>

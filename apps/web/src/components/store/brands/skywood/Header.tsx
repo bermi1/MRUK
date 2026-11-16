@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { fmt } from '@/lib/format';
 import { ArrowRightIcon, CloseIcon } from '../../../icons';
-import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { LangSwitch } from '../../LangSwitch';
@@ -176,7 +175,6 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
                     </div>
                     <Link href={`${b}/c/${mc.id}`} className="sw-panel-hero">
                       <span className="sw-panel-art" aria-hidden="true">
-                        <CatGlyph kind={glyphKind(mc.id, mc.name)} className="sw-panel-glyph" strokeWidth={0.8} />
                         {mc.img && <SafeImg src={mc.img} alt="" />}
                       </span>
                       <span className="sw-panel-cap">
@@ -248,7 +246,6 @@ function SkywoodIndex({
         {h && (
           <div className="sw-index-preview" key={h.id} aria-hidden="true">
             <span className="sw-index-art">
-              <CatGlyph kind={glyphKind(h.id, h.name)} className="sw-index-glyph" strokeWidth={0.7} />
               {h.img && <SafeImg src={h.img} alt="" />}
             </span>
             <span className="sw-index-subs">{h.subs.join(' · ')}</span>

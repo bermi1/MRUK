@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
-import { CatGlyph, glyphKind } from '@/components/store/CatGlyph';
 import { SafeImg } from '@/components/store/SafeImg';
 import { ProductCard } from '@/components/store/brands/ProductCard';
 import { ShopControls } from '@/components/store/ShopControls';
@@ -102,7 +101,6 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
         {cats.map((c) => (
           <Link key={c.id} href={`${b}/c/${c.id}`} className="shop-cat">
             <span className="shop-cat-art" aria-hidden="true">
-              <CatGlyph kind={glyphKind(c.id, c.name)} className="shop-cat-glyph" strokeWidth={1.4} />
               {c.img && <SafeImg src={c.img} alt="" />}
             </span>
             <span className="shop-cat-name">{c.short}</span>

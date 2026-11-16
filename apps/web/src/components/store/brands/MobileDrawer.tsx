@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { setLocaleAction } from '@/app/actions/store';
 import { ArrowRightIcon, ChevronRightIcon, CloseIcon, CompareIcon, GlobeIcon, GridIcon, HelpIcon, PinIcon, RouteIcon, SearchIcon, TagIcon, WhatsAppIcon } from '../../icons';
-import { CatGlyph, glyphKind } from '../CatGlyph';
 import { SafeImg } from '../SafeImg';
 import { fill, useMobileMenu, type MobileMenuProps } from './shared';
 
@@ -70,7 +69,6 @@ export function MobileDrawer({ brand, brandName, cats, labels, announcement, loc
                   <li key={c.id} style={{ ['--i' as string]: i }}>
                     <Link href={`${b}/c/${c.id}`}>
                       <span className="dr-art" aria-hidden="true">
-                        <CatGlyph kind={glyphKind(c.id, c.name)} className="dr-glyph" strokeWidth={1.5} />
                         {c.img && <SafeImg src={c.img} alt="" />}
                       </span>
                       <span className="dr-name">{c.name}</span>

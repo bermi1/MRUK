@@ -55,9 +55,14 @@ export const getBrand = cache(async (key: string): Promise<BrandView> => {
 
 export const getCategories = cache(
   cached(async (brand: BrandKey): Promise<CategoryView[]> => {
-  const cats = await prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, include: { _count: { select: { products: { where: LISTABLE } } } } });
+  const cats = await prisma.category.findMany({ where: { brandKey: brand }, orderBy: { sort: 'asc' }, include: { _count: { select: { products: { where: LISTABLE } } }, products: { where: LISTABLE, select: { images: true }, orderBy: { price: 'desc' }, take: 12 } } });
   // A category with no published products (e.g. one holding only drafts) stays out of the store until one goes live.
-  return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img, subs: c.subs, count: c._count.products }));
+  // No category picture set: use its best product photo (own photos first), so every tile shows a real picture.
+  const photo = (c: (typeof cats)[number]) => {
+    const imgs = c.products.map((p) => p.images[0] ?? '').filter(Boolean);
+    return imgs.find((i) => i.startsWith('/img/')) ?? imgs[0] ?? '';
+  };
+  return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img || photo(c), subs: c.subs, count: c._count.products }));
   }, 'categories'),
 );
 

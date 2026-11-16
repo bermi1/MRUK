@@ -9,7 +9,6 @@ import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIc
 import { AddBundleButton, AddButton } from '../../CartButtons';
 import { subscribeLabels } from '../../Footer';
 import { Subscribe } from '../../Subscribe';
-import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -134,7 +133,6 @@ export function SkywoodHome(props: {
                 <span className="sw-col-art" aria-hidden="true">
                   <span className="sw-col-arch" />
                   <span className="sw-col-glow" />
-                  <CatGlyph kind={glyphKind(c.id, c.name)} className="sw-col-glyph" strokeWidth={0.9} />
                   {img && <SafeImg src={img} alt="" />}
                 </span>
                 <span className="sw-col-top">

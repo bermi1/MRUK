@@ -5,7 +5,6 @@ import { reviewsFor } from '@/lib/content';
 import { fmt, initials } from '@/lib/format';
 import type { BundleView, FlashDeal } from '@/server/catalog';
 import { AddBundleButton } from '../../CartButtons';
-import { CatGlyph, glyphKind } from '../../CatGlyph';
 import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
@@ -107,7 +106,6 @@ export function MrukHome(props: {
             {cats.map((c, i) => (
               <Link key={c.id} href={`${b}/c/${c.id}`} className="mu-cat" data-reveal style={{ ['--i' as string]: i }}>
                 <span className="mu-cat-art">
-                  <CatGlyph kind={glyphKind(c.id, c.name)} className="mu-cat-glyph" />
                   {c.img && <SafeImg src={c.img} alt="" />}
                 </span>
                 <span className="mu-cat-name">{c.name}</span>
@@ -155,7 +153,6 @@ export function MrukHome(props: {
               {needs.map((c, i) => (
                 <Link key={c.id} href={`${b}/c/${c.id}`} className={`mu-need n${i}`} data-reveal style={{ ['--i' as string]: i }}>
                   <span className="mu-need-art" aria-hidden="true">
-                    <CatGlyph kind={glyphKind(c.id, c.name)} className="mu-need-glyph" strokeWidth={1.2} />
                     {c.img && <SafeImg src={c.img} alt="" />}
                   </span>
                   <span className="mu-need-copy">

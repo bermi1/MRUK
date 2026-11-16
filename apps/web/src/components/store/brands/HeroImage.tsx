@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { img, imgSet, type ImgWidth } from '@/lib/img';
-import { CatGlyph, glyphKind } from '../CatGlyph';
 
 /**
  * Hero image. The first slide is the LCP element: eager, fetchPriority=high and never
@@ -13,7 +12,7 @@ export function HeroImage({
   src,
   mobileSrc,
   alt,
-  kind,
+  kind: _kind,
   first,
   sizes,
   w1,
@@ -39,7 +38,8 @@ export function HeroImage({
     const i = ref.current;
     if (i && i.complete && i.naturalWidth === 0) setBroken(true);
   }, [src, mobileSrc]);
-  if (!src || broken) return <CatGlyph kind={glyphKind(kind)} className={`${className ?? ''} hero-glyph`} strokeWidth={1.1} />;
+  // No photo, or it failed: show nothing rather than a drawn icon.
+  if (!src || broken) return null;
   const el = (
     <img
       ref={ref}
