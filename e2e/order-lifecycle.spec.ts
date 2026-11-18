@@ -41,7 +41,7 @@ test.beforeEach(async () => {
   await c.rateLimit.deleteMany({});
   // Older unpaid test orders would hand their reserved units back mid-test when they expire.
   const ids = BRANDS.flatMap((b) => [b.product, b.second]);
-  await c.order.updateMany({ where: { status: 'placed', items: { some: { productId: { in: ids } } } }, data: { status: 'cancelled', reservedUntil: null } });
+  await c.order.updateMany({ where: { status: { in: ['placed', 'confirmed'] }, items: { some: { productId: { in: ids } } } }, data: { status: 'cancelled', reservedUntil: null } });
   await c.product.updateMany({ where: { id: { in: ids } }, data: { stock: STOCK, hidden: false } });
 });
 
@@ -251,10 +251,10 @@ for (const b of BRANDS) {
       const before = await audits(number);
       for (const [label, status, customerSees] of [
         ['Mark packed', 'packed', 'Packed'],
-        ['Mark dispatched', 'out_for_delivery', 'Out for delivery'],
+        ['Dispatch', 'out_for_delivery', 'Out for delivery'],
         ['Mark delivered', 'delivered', 'Delivered'],
       ] as const) {
-        await detail.getByRole('button', { name: label }).click();
+        await detail.getByRole('button', { name: label, exact: true }).click();
         await expect.poll(async () => (await orderOf(number)).status).toBe(status);
         await expect(await trackStatus(page, b.key, number)).toHaveText(customerSees);
         await ap.goto(`/admin/orders?q=${number}`);
@@ -338,45 +338,79 @@ for (const b of BRANDS) {
       expect(await count()).toBe(0);
       expect(await stockOf(b.product)).toBe(STOCK);
 
-      // Dar es Salaam: pay on delivery, confirmed straight away with an issued (unpaid) invoice.
+      // Dar es Salaam: pay on delivery. The order waits for the Order desk's call; no invoice yet, nothing expires.
       await region(page, 'Dar es Salaam');
       await page.getByTestId('pay-pay_on_delivery').click();
       await page.getByTestId('place-order').click();
       await expect(page).toHaveURL(new RegExp(`/${b.key}/order/${b.prefix}-\\d+\\?t=`));
-      await expect(page.getByText('Have the cash or card ready on delivery')).toBeVisible();
+      await expect(page.getByText('Our team calls you to confirm the order')).toBeVisible();
       const number = page.url().match(new RegExp(`${b.prefix}-\\d+`))![0];
+      const token = new URL(page.url()).searchParams.get('t')!;
       let o = await orderOf(number);
-      expect(o).toMatchObject({ paymentMethod: 'pay_on_delivery', status: 'approved', region: 'Dar es Salaam', total: p1.price + (p1.price >= 500_000 ? 0 : 15_000), reservedUntil: null });
+      expect(o).toMatchObject({ paymentMethod: 'pay_on_delivery', status: 'placed', region: 'Dar es Salaam', total: p1.price + (p1.price >= 500_000 ? 0 : 15_000), reservedUntil: null });
       expect(o.payments).toEqual([expect.objectContaining({ status: 'pending', method: 'pay_on_delivery' })]);
-      expect(o.invoices).toEqual([expect.objectContaining({ status: 'issued', amount: o.total })]);
+      expect(o.invoices).toEqual([]);
       expect(await stockOf(b.product)).toBe(STOCK - 1);
-      // The confirmation token opens the invoice for a guest.
-      const link = await page.getByRole('link', { name: /^Invoice INV-/ }).getAttribute('href');
-      expect((await get(page, link!)).headers()['content-type']).toBe('application/pdf');
-      // Tracking never says "Payment confirmed" before the customer has paid.
-      await expect(await trackStatus(page, b.key, number)).toHaveText('Processing');
-      await expect(page.getByTestId('track-result')).toContainText('Order confirmed');
+      await expect(await trackStatus(page, b.key, number)).toHaveText('Order received');
       await expect(page.getByTestId('track-result')).not.toContainText('Payment confirmed');
 
-      // Staff deliver it: the cash is recorded and the invoice is paid.
       const admin = await newStore(browser, baseURL!);
-      await staffSignIn(admin.page, 'amani@mruk.co.tz');
-      let detail = await openOrder(admin.page, number);
-      await expect(detail).toContainText('Pay on delivery');
-      for (const [label, status] of [
-        ['Mark packed', 'packed'],
-        ['Mark dispatched', 'out_for_delivery'],
-        ['Mark delivered', 'delivered'],
-      ] as const) {
-        await detail.getByRole('button', { name: label }).click();
-        await expect.poll(async () => (await orderOf(number)).status).toBe(status);
-        detail = await openOrder(admin.page, number);
-      }
+      const ap = admin.page;
+      // Order desk: sees only its own steps; adds a second unit after the call, then confirms (invoice created).
+      await staffSignIn(ap, 'orders@mruk.co.tz');
+      let detail = await openOrder(ap, number);
+      await expect(detail.getByRole('button', { name: /Payment received|Clear for dispatch|^Dispatch$/ })).toHaveCount(0);
+      await detail.getByText('Change products (after calling the customer)').click();
+      await detail.getByLabel(`Quantity of ${p1.model}`).fill('2');
+      await detail.getByRole('button', { name: 'Save changes' }).click();
+      await expect.poll(async () => (await orderOf(number)).total).toBe(p1.price * 2 + (p1.price * 2 >= 500_000 ? 0 : 15_000));
+      expect(await stockOf(b.product)).toBe(STOCK - 2);
+      o = await orderOf(number);
+      expect(o.items).toEqual([expect.objectContaining({ productId: b.product, qty: 2, price: p1.price })]);
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: 'Confirm order and create invoice' }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('confirmed');
+      o = await orderOf(number);
+      expect(o.invoices).toEqual([expect.objectContaining({ status: 'issued', amount: o.total })]);
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: 'Send invoice by WhatsApp' }).click();
+      await expect(detail.getByText('Invoice link sent by WhatsApp')).toBeVisible();
+      // The customer's confirmation link opens the invoice.
+      expect((await get(page, `/api/orders/${number}/invoice?t=${token}`)).headers()['content-type']).toBe('application/pdf');
+      await expect(await trackStatus(page, b.key, number)).toHaveText('Confirmed, awaiting payment');
+
+      // Finance: first sends it back (not paid), the Order desk confirms again, then Finance clears it for dispatch.
+      await staffSignIn(ap, 'finance@mruk.co.tz');
+      detail = await openOrder(ap, number);
+      await expect(detail.getByRole('button', { name: /^Dispatch$|Confirm order/ })).toHaveCount(0);
+      ap.once('dialog', (d) => void d.accept());
+      await detail.getByRole('button', { name: 'Not paid · back to the Order desk' }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('placed');
+      await staffSignIn(ap, 'orders@mruk.co.tz');
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: 'Confirm order and create invoice' }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('confirmed');
+      expect((await orderOf(number)).invoices).toHaveLength(1); // the same invoice, not a second one
+      await staffSignIn(ap, 'finance@mruk.co.tz');
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: 'Clear for dispatch (pay on delivery)' }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('approved');
+      expect((await orderOf(number)).payments).toEqual([expect.objectContaining({ status: 'pending' })]); // cash not collected yet
+
+      // Storekeeper: dispatch, then delivered with the delivery person's cash: payment recorded, invoice paid.
+      await staffSignIn(ap, b.staff);
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: 'Dispatch', exact: true }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('out_for_delivery');
+      detail = await openOrder(ap, number);
+      await detail.getByRole('button', { name: /Mark delivered · cash/ }).click();
+      await expect.poll(async () => (await orderOf(number)).status).toBe('delivered');
       await admin.ctx.close();
       o = await orderOf(number);
       expect(o.payments).toEqual([expect.objectContaining({ status: 'captured', reference: 'POD-CASH', amount: o.total })]);
       expect(o.invoices).toEqual([expect.objectContaining({ status: 'paid' })]);
-      expect(await audits(number)).toBe(3);
+      expect(await audits(number)).toBe(6);
+      expect(o.events.map((e) => e.status)).toEqual(['placed', 'placed', 'confirmed', 'placed', 'confirmed', 'approved', 'out_for_delivery', 'delivered']);
       await expect(await trackStatus(page, b.key, number)).toHaveText('Delivered');
     });
 
@@ -397,11 +431,15 @@ for (const b of BRANDS) {
       };
       const { number: paid } = await placeWith('card');
       const { number: pod, token } = await placeWith('pay_on_delivery');
-      expect((await get(page, `/api/orders/${pod}/invoice?t=${token}`)).status()).toBe(200);
       expect(await stockOf(b.product)).toBe(STOCK - 2);
 
       const admin = await newStore(browser, baseURL!);
       await staffSignIn(admin.page, 'amani@mruk.co.tz');
+      // Management can do every step: confirm the phone order (invoice issued) before cancelling it.
+      const pd = await openOrder(admin.page, pod);
+      await pd.getByRole('button', { name: 'Confirm order and create invoice' }).click();
+      await expect.poll(async () => (await orderOf(pod)).status).toBe('confirmed');
+      expect((await get(page, `/api/orders/${pod}/invoice?t=${token}`)).status()).toBe(200);
       // Packed orders can still be cancelled; dispatched ones cannot.
       let detail = await openOrder(admin.page, paid);
       await detail.getByRole('button', { name: 'Mark packed' }).click();
@@ -413,7 +451,7 @@ for (const b of BRANDS) {
         await expect.poll(async () => (await orderOf(n)).status).toBe('cancelled');
         expect(await c.auditLog.count({ where: { entityId: n, action: 'order.status', diff: { path: ['to'], equals: 'cancelled' } } })).toBe(1);
         detail = await openOrder(admin.page, n);
-        await expect(detail.getByRole('button', { name: /Mark|Cancel order/ })).toHaveCount(0);
+        await expect(detail.getByRole('button', { name: /Mark|Cancel order|Dispatch/ })).toHaveCount(0);
       }
       await admin.ctx.close();
       expect(await stockOf(b.product)).toBe(STOCK);

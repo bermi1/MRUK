@@ -7,7 +7,7 @@
  * subscriber milestones and the cool-down before a dismissed stock task re-opens.
  */
 import type { OrderStatus } from './orders';
-import type { PaymentMethod } from './payments';
+import { staffConfirmed, type PaymentMethod } from './payments';
 
 export type TaskRole = 'owner' | 'manager' | 'marketing' | 'finance' | 'orderdesk' | 'warehouse' | 'catalogue' | 'website' | 'support';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -16,6 +16,9 @@ export type TaskCategory = 'orders' | 'bank' | 'stock' | 'tickets' | 'marketing'
 export type TaskEntity = 'Order' | 'Ticket' | 'Product' | 'Brand' | 'Campaign';
 
 export const TASK_KINDS = [
+  'order.confirm',
+  'order.payment',
+  'order.followup',
   'order.pack',
   'order.dispatch',
   'order.restock',
@@ -33,6 +36,9 @@ export const TASK_KINDS = [
 export type TaskKind = (typeof TASK_KINDS)[number];
 
 export const TASK_KIND_LABEL: Record<TaskKind, string> = {
+  'order.confirm': 'Confirm order',
+  'order.payment': 'Check payment',
+  'order.followup': 'Payment follow-up',
   'order.pack': 'Pack order',
   'order.dispatch': 'Dispatch order',
   'order.restock': 'Return stock',
@@ -105,7 +111,7 @@ export interface Routing {
 export type TaskEvent =
   | { type: 'order.placed'; brand: string; number: string; status: OrderStatus; method: PaymentMethod }
   | { type: 'order.paid'; brand: string; number: string; method: PaymentMethod }
-  | { type: 'order.status'; brand: string; number: string; from: OrderStatus; to: OrderStatus; reason?: 'expired' }
+  | { type: 'order.status'; brand: string; number: string; from: OrderStatus; to: OrderStatus; reason?: 'expired'; staffConfirmed?: boolean }
   | { type: 'advance.submitted'; brand: string; number: string; applicationId: string }
   | { type: 'advance.decided'; brand: string; number: string; applicationId: string; decision: 'approved' | 'rejected' }
   | { type: 'ticket.created'; brand: string; ticketId: string; number: string; issue: string }
@@ -120,6 +126,30 @@ const BRAND_NAME: Record<string, string> = { mruk: 'Mr UK', skywood: 'Skywood' }
 const brandName = (b: string) => BRAND_NAME[b] ?? b;
 const orderHref = (n: string) => `/admin/orders?o=${encodeURIComponent(n)}`;
 const none = (): Routing => ({ open: [], close: [] });
+
+/** Delivery questions go to the Order desk, payment questions to Finance, everything else to Client support. */
+export function ticketRole(issue: string): TaskRole {
+  if (issue === 'Delivery') return 'orderdesk';
+  if (issue === 'Payment') return 'finance';
+  return 'support';
+}
+
+function confirmTask(brand: string, number: string, method: PaymentMethod): TaskSpec {
+  return {
+    kind: 'order.confirm',
+    category: 'orders',
+    role: 'orderdesk',
+    brand,
+    title: `Call and confirm order ${number}`,
+    detail: `${brandName(brand)} · ${method === 'pay_on_delivery' ? 'Pay on delivery' : 'Pay before delivery'}. Call the customer, adjust the order if needed, confirm and send the invoice.`,
+    entity: 'Order',
+    entityId: number,
+    href: orderHref(number),
+    priority: 'high',
+    dueMinutes: TASK_DEFAULTS.contactMinutes,
+    key: `order:${number}:confirm`,
+  };
+}
 
 function packTask(brand: string, number: string, why: string): TaskSpec {
   return {
@@ -143,6 +173,7 @@ export function routeEvent(e: TaskEvent): Routing {
   switch (e.type) {
     case 'order.placed':
       // Card / Azania account orders wait for payment (stock is reserved); Pay Later waits for the bank.
+      if (e.status === 'placed' && staffConfirmed(e.method)) return { open: [confirmTask(e.brand, e.number, e.method)], close: [] };
       return e.status === 'approved' ? { open: [packTask(e.brand, e.number, e.method === 'pay_on_delivery' ? 'Pay on delivery, confirmed' : 'Payment confirmed')], close: [] } : none();
     case 'order.paid':
       return { open: [packTask(e.brand, e.number, 'Paid in full')], close: [] };
@@ -197,7 +228,7 @@ export function routeEvent(e: TaskEvent): Routing {
           {
             kind: 'ticket.respond',
             category: 'tickets',
-            role: 'support',
+            role: ticketRole(e.issue),
             brand: e.brand,
             title: `Reply to ${e.number} (${e.issue})`,
             detail: `${brandName(e.brand)} · First response within ${TASK_DEFAULTS.ticketNewSlaHours} hours.`,
@@ -295,6 +326,45 @@ function routeOrderStatus(e: Extract<TaskEvent, { type: 'order.status' }>): Rout
   const close: CloseSpec[] = [];
   const open: TaskSpec[] = [];
   switch (e.to) {
+    case 'confirmed':
+      close.push({ entity: 'Order', entityId: e.number, kinds: ['order.confirm', 'order.followup'] });
+      open.push({
+        kind: 'order.payment',
+        category: 'orders',
+        role: 'finance',
+        brand: e.brand,
+        title: `Check payment for ${e.number}`,
+        detail: `${brandName(e.brand)} · Invoice sent. Approve when paid (pay on delivery: clear it for dispatch), or send it back to the Order desk.`,
+        entity: 'Order',
+        entityId: e.number,
+        href: orderHref(e.number),
+        priority: 'high',
+        dueMinutes: TASK_DEFAULTS.contactMinutes,
+        key: `order:${e.number}:payment`,
+      });
+      break;
+    case 'placed':
+      // Finance: not paid. Back to the Order desk to follow up with the customer.
+      close.push({ entity: 'Order', entityId: e.number, kinds: ['order.payment'] });
+      open.push({
+        kind: 'order.followup',
+        category: 'orders',
+        role: 'orderdesk',
+        brand: e.brand,
+        title: `Follow up payment for ${e.number}`,
+        detail: `${brandName(e.brand)} · Finance found no payment. Call the customer, then confirm again or cancel.`,
+        entity: 'Order',
+        entityId: e.number,
+        href: orderHref(e.number),
+        priority: 'high',
+        dueMinutes: TASK_DEFAULTS.contactMinutes,
+        key: `order:${e.number}:followup`,
+      });
+      break;
+    case 'approved':
+      close.push({ entity: 'Order', entityId: e.number, kinds: ['order.confirm', 'order.payment', 'order.followup'] });
+      if (e.from === 'confirmed') open.push(packTask(e.brand, e.number, 'Cleared by Finance'));
+      break;
     case 'packed':
       close.push({ entity: 'Order', entityId: e.number, kinds: ['order.pack'] });
       open.push({
@@ -322,6 +392,8 @@ function routeOrderStatus(e: Extract<TaskEvent, { type: 'order.status' }>): Rout
     case 'rejected':
       close.push({ entity: 'Order', entityId: e.number });
       if (e.to === 'rejected') break; // handled by advance.decided
+      // Cancelled by the Order desk after calling the customer: nothing more to do.
+      if (!e.reason && (e.from === 'placed' || e.from === 'confirmed') && e.staffConfirmed) break;
       if (e.reason === 'expired' || e.from === 'placed') {
         open.push({
           kind: 'order.contact',
@@ -523,7 +595,7 @@ export function canSeeTask(v: TaskViewer, t: { assigneeId: string | null; roleId
 
 // Dashboards ---------------------------------------------------------------------------------
 
-export type DashboardSection = 'tasks' | 'overview' | 'teams' | 'finance' | 'warehouse' | 'support' | 'catalogue' | 'marketing';
+export type DashboardSection = 'tasks' | 'overview' | 'teams' | 'orderdesk' | 'finance' | 'warehouse' | 'support' | 'catalogue' | 'marketing';
 
 /**
  * Which dashboard widgets a set of permissions gets. Owner and manager (reports + products)
@@ -537,8 +609,9 @@ export function dashboardSections(perms: readonly string[]): { sections: Dashboa
   const out: DashboardSection[] = ['tasks'];
   if (overview) out.push('overview', 'teams');
   else {
+    if (has('orders.confirm')) out.push('orderdesk');
     if (has('advance') && has('invoices') && money) out.push('finance');
-    if (has('orders.write') && has('inventory')) out.push('warehouse');
+    if (has('orders.dispatch') && has('inventory')) out.push('warehouse');
     // Finance and the Order desk answer only payment / delivery tickets: the full support panel is Client support's.
     if (has('tickets') && !has('invoices')) out.push('support');
     if (has('products')) out.push('catalogue');

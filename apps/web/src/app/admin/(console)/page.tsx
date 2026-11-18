@@ -9,7 +9,7 @@ import { loadTasks } from '@/server/admin/taskview';
 import { requireStaff, type StaffContext } from '@/server/auth';
 import { maybeSweep } from '@/server/task-sweep';
 import { Overview } from './_dashboard/Overview';
-import { CatalogueWidgets, FinanceWidgets, MarketingWidgets, SupportWidgets, TeamsWidget, WarehouseWidgets } from './_dashboard/RoleWidgets';
+import { CatalogueWidgets, FinanceWidgets, MarketingWidgets, OrderDeskWidgets, PaymentQueueWidget, SupportWidgets, TeamsWidget, WarehouseWidgets } from './_dashboard/RoleWidgets';
 
 export const metadata = { title: 'Dashboard' };
 
@@ -18,7 +18,9 @@ const brandText = (b: string[]) => (b.includes('*') ? 'Mr UK and Skywood' : b.ma
 /** Shortcuts for the work each permission allows (first six that apply). */
 function quickActions(ctx: StaffContext): { href: string; label: string }[] {
   const all: [string, string, string][] = [
-    ['orders.write', '/admin/orders?status=approved', 'Orders to pack'],
+    ['orders.confirm', '/admin/orders?status=placed', 'New orders to call'],
+    ['payments.approve', '/admin/orders?status=confirmed', 'Payments to approve'],
+    ['orders.dispatch', '/admin/orders?status=approved', 'Orders to dispatch'],
     ['inventory', '/admin/inventory?show=low', 'Low stock'],
     ['advance.write', '/admin/advance', 'Pay Later queue'],
     ['invoices', '/admin/invoices?status=issued', 'Unpaid invoices'],
@@ -88,6 +90,8 @@ export default async function Dashboard() {
 
       {has('teams') && <TeamsWidget f={f} />}
       {has('overview') && <Overview ctx={ctx} f={f} />}
+      {has('orderdesk') && <OrderDeskWidgets f={f} />}
+      {ctx.can('payments.approve') && !has('overview') && <PaymentQueueWidget f={f} />}
       {has('finance') && <FinanceWidgets f={f} />}
       {has('warehouse') && <WarehouseWidgets f={f} />}
       {has('support') && <SupportWidgets ctx={ctx} f={f} />}

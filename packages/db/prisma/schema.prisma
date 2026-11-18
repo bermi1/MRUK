@@ -388,6 +388,29 @@ model DiscountCode {
   createdAt   DateTime  @default(now())
 }
 
+/// Ambassadors: personal discount codes (DiscountCode.code = Ambassador.code); commission on delivered orders.
+model Ambassador {
+  id                String             @id @default(cuid())
+  name              String
+  phone             String
+  brandKey          String? // null = both brands
+  code              String             @unique
+  commissionPercent Int
+  active            Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  payouts           AmbassadorPayout[]
+}
+
+model AmbassadorPayout {
+  id           String     @id @default(cuid())
+  ambassadorId String
+  amount       Int
+  note         String     @default("")
+  paidBy       String
+  paidAt       DateTime   @default(now())
+  ambassador   Ambassador @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+}
+
 model Role {
   id          String      @id // owner | manager | finance | support | catalogue
   name        String

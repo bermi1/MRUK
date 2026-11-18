@@ -24,19 +24,19 @@ export const ROLE_DEFS: readonly RoleDef[] = [
     id: 'finance',
     name: 'Finance',
     description: 'Approves payments, issues and settles invoices, Pay Later decisions, payment queries from customers.',
-    permissions: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports', 'tickets', 'tickets.write'],
+    permissions: ['dashboard', 'orders', 'payments.approve', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports', 'tickets', 'tickets.write'],
   },
   {
     id: 'orderdesk',
     name: 'Order desk',
     description: 'Receives new orders, calls the customer, edits and confirms the order, sends the invoice, follows up delivery queries.',
-    permissions: ['dashboard', 'orders', 'orders.write', 'invoices', 'invoices.write', 'customers', 'tickets', 'tickets.write'],
+    permissions: ['dashboard', 'orders', 'orders.write', 'orders.confirm', 'invoices', 'customers', 'tickets', 'tickets.write'],
   },
   {
     id: 'warehouse',
     name: 'Storekeeper',
     description: 'Dispatches orders cleared by Finance and marks them delivered on the delivery person’s confirmation.',
-    permissions: ['dashboard', 'orders', 'orders.write', 'inventory'],
+    permissions: ['dashboard', 'orders', 'orders.write', 'orders.dispatch', 'inventory'],
   },
   {
     id: 'catalogue',

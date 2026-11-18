@@ -102,37 +102,33 @@ test('add a product: one form with features, specs, photos (reorder, main), prev
   await c.$disconnect();
 });
 
-test('receive an order: new-order queue, one-click steps with SMS, picking note, search by number', async ({ page }) => {
+test('storekeeper: cleared-to-dispatch queue, one-click steps with SMS, picking note, search by number', async ({ page }) => {
   const c = db();
-  // An unpaid card order (seeded); on a re-run, a confirmed one that still has to be packed.
-  const unpaid = await c.order.findFirst({ where: { brandKey: 'mruk', status: 'placed', paymentMethod: 'card' }, orderBy: { createdAt: 'desc' } });
-  const o = unpaid ?? (await c.order.findFirstOrThrow({ where: { brandKey: 'mruk', status: 'approved' }, orderBy: { createdAt: 'desc' } }));
-  if (unpaid) await c.order.update({ where: { id: o.id }, data: { reservedUntil: new Date(Date.now() + 30 * 60_000) } });
+  // An order Finance has cleared (seeded); the Storekeeper dispatches and delivers it.
+  const o = await c.order.findFirstOrThrow({ where: { brandKey: 'mruk', status: 'approved' }, orderBy: { createdAt: 'desc' } });
   await signIn(page, 'daudi@mruk.co.tz');
   await page.goto('/admin/orders');
-  await expect(page.getByTestId('queue-new')).toContainText('New · to pack');
+  await expect(page.getByTestId('queue-dispatch')).toContainText('Cleared · to dispatch');
+  // The Storekeeper opens on their own queue.
+  await expect(page.getByRole('link', { name: /Cleared to dispatch/ })).toHaveAttribute('aria-current', 'true');
   // Typing the order number opens it.
   await page.getByLabel('Find order by number, name or phone').fill(o.number);
   await page.getByLabel('Find order by number, name or phone').press('Enter');
   const detail = page.getByRole('complementary', { name: `Order ${o.number}` });
   await expect(detail).toBeVisible();
+  // No Order desk or Finance buttons for the Storekeeper.
+  await expect(detail.getByRole('button', { name: /Confirm order|Payment received|Not paid/ })).toHaveCount(0);
   const steps = async () => c.auditLog.count({ where: { entityId: o.number, action: 'order.status' } });
   const before = await steps();
-  if (unpaid) {
-    // Confirm payment → payment recorded and the paid invoice issued.
-    await detail.getByRole('button', { name: 'Confirm payment' }).click();
-    await expect.poll(async () => (await c.order.findUniqueOrThrow({ where: { id: o.id } })).status).toBe('approved');
-    expect(await c.invoice.findFirst({ where: { orderId: o.id, status: 'paid' } })).not.toBeNull();
-  }
   for (const [label, status] of [
     ['Mark packed', 'packed'],
-    ['Mark dispatched', 'out_for_delivery'],
-    ['Mark delivered', 'delivered'],
+    ['Dispatch', 'out_for_delivery'],
+    [/^Mark delivered/, 'delivered'],
   ] as const) {
-    await detail.getByRole('button', { name: label }).click();
+    await detail.getByRole('button', { name: label, exact: typeof label === 'string' }).click();
     await expect.poll(async () => (await c.order.findUniqueOrThrow({ where: { id: o.id } })).status).toBe(status);
   }
-  expect(await steps()).toBe(before + (unpaid ? 4 : 3));
+  expect(await steps()).toBe(before + 3);
   await expect(detail.locator('.ad-steps li.done')).toHaveCount(4);
   // Picking / delivery note.
   await page.goto(`/admin/orders/${o.number}/note`);

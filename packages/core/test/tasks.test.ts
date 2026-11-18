@@ -41,7 +41,7 @@ describe('order routing', () => {
     expect(o.open).toHaveLength(0);
     expect(o.close[0]!.kinds).toContain('order.dispatch');
     expect(routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-1', from: 'out_for_delivery', to: 'delivered' }).close[0]!.kinds).toContain('order.pack');
-    expect(routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-1', from: 'placed', to: 'approved' })).toEqual({ open: [], close: [] });
+    expect(routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-1', from: 'placed', to: 'approved' }).open).toEqual([]);
   });
   it('cancelled orders go to warehouse (restock) and support (contact), closing everything else', () => {
     const r = routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-9', from: 'packed', to: 'cancelled' });
@@ -189,7 +189,7 @@ describe('role dashboards', () => {
     manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'cms', 'marketing', 'tickets', 'reports'],
     finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
     catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
-    warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
+    warehouse: ['dashboard', 'orders', 'orders.write', 'orders.dispatch', 'inventory'],
     support: ['dashboard', 'orders', 'customers', 'tickets', 'tickets.write'],
   };
   it('owner and manager keep the full overview', () => {
@@ -207,5 +207,42 @@ describe('role dashboards', () => {
     expect(greeting(new Date('2026-01-01T05:00:00Z'))).toBe('Good morning');
     expect(greeting(new Date('2026-01-01T11:00:00Z'))).toBe('Good afternoon');
     expect(greeting(new Date('2026-01-01T17:00:00Z'))).toBe('Good evening');
+  });
+});
+
+describe('order desk → finance → storekeeper', () => {
+  it('phone-confirmed orders open a call task for the Order desk', () => {
+    const r = routeEvent({ type: 'order.placed', brand: 'mruk', number: 'MU-9', status: 'placed', method: 'pay_on_delivery' });
+    expect(r.open[0]).toMatchObject({ kind: 'order.confirm', role: 'orderdesk' });
+    expect(routeEvent({ type: 'order.placed', brand: 'mruk', number: 'MU-9', status: 'placed', method: 'card' }).open).toEqual([]);
+  });
+  it('confirmed → Finance checks payment; not paid → back to the Order desk; cleared → Storekeeper', () => {
+    const c = routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-9', from: 'placed', to: 'confirmed' });
+    expect(c.open[0]).toMatchObject({ kind: 'order.payment', role: 'finance' });
+    expect(c.close[0]!.kinds).toContain('order.confirm');
+    const back = routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-9', from: 'confirmed', to: 'placed' });
+    expect(back.open[0]).toMatchObject({ kind: 'order.followup', role: 'orderdesk' });
+    const ok = routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-9', from: 'confirmed', to: 'approved' });
+    expect(ok.open[0]).toMatchObject({ kind: 'order.pack', role: 'warehouse' });
+    expect(ok.close[0]!.kinds).toContain('order.payment');
+  });
+  it('an order the Order desk cancels after the call opens no follow-up', () => {
+    expect(routeEvent({ type: 'order.status', brand: 'mruk', number: 'MU-9', from: 'placed', to: 'cancelled', staffConfirmed: true }).open).toEqual([]);
+  });
+  it('who may move an order', async () => {
+    const { transitionPermission } = await import('../src/index');
+    expect(transitionPermission('placed', 'confirmed')).toBe('orders.confirm');
+    expect(transitionPermission('confirmed', 'approved')).toBe('payments.approve');
+    expect(transitionPermission('confirmed', 'placed')).toBe('payments.approve');
+    expect(transitionPermission('approved', 'out_for_delivery')).toBe('orders.dispatch');
+    expect(transitionPermission('out_for_delivery', 'delivered')).toBe('orders.dispatch');
+    expect(transitionPermission('bank_review', 'approved')).toBe('advance.write');
+  });
+  it('tickets go to the team that can answer them', async () => {
+    const { ticketRole } = await import('../src/index');
+    expect(ticketRole('Delivery')).toBe('orderdesk');
+    expect(ticketRole('Payment')).toBe('finance');
+    expect(ticketRole('Installation')).toBe('support');
+    expect(ticketRole('Repair')).toBe('support');
   });
 });

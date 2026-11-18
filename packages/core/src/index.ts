@@ -14,3 +14,4 @@ export * from './tasks';
 export * from './paylater';
 export * from './product-facts';
 export * from './roles';
+export * from './ambassadors';

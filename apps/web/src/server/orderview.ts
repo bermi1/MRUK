@@ -1,7 +1,7 @@
 import 'server-only';
 import { notFound } from 'next/navigation';
 import { prisma } from '@bt/db';
-import { ORDER_STATUS_LABEL, deliveryEta, maskTzPhone, normaliseOrderNumber, paymentLabel, repaymentProgress, trackingSteps, type OrderStatus, type PaymentMethod } from '@bt/core';
+import { customerStatusLabel, deliveryEta, maskTzPhone, normaliseOrderNumber, paymentLabel, repaymentProgress, trackingSteps, type OrderStatus, type PaymentMethod } from '@bt/core';
 import { currentCustomer, verifySigned } from './session';
 
 export async function loadOrder(number: string) {
@@ -34,7 +34,7 @@ export async function trackView(number: string, brand: string) {
   return {
     number: o.number,
     brand: o.brandKey,
-    status: ORDER_STATUS_LABEL[status],
+    status: customerStatusLabel(status, method),
     statusKey: status,
     pay: paymentLabel(method),
     total: o.total,

@@ -12,18 +12,18 @@ import { redirect, unstable_rethrow } from 'next/navigation';
 import QRCode from 'qrcode';
 import { z } from 'zod';
 import { hashPassword, prisma, type Prisma } from '@bt/db';
-import { ORDER_STATUSES, type OrderStatus } from '@bt/core';
+import { ORDER_STATUSES, transitionPermission, type OrderStatus } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
 import { AuthError, beginTotpEnrolment, changeOwnStaffPassword, requireStaff, staff2faRequired, staffLogout, staffPasswordLogin, verifyStaffTotp, type StaffContext } from '@/server/auth';
 import { audit } from '@/server/audit';
 import { integrations } from '@/server/integrations';
-import { advanceLifecycle, CheckoutError, createShopSale, decideAdvance, invoiceLink, requestBankDecision, transitionOrder } from '@/server/orders';
+import { advanceLifecycle, CheckoutError, createShopSale, decideAdvance, invoiceLink, requestBankDecision, transitionOrder, editOrderItems } from '@/server/orders';
 import { env } from '@/server/env';
 import { limit } from '@/server/ratelimit';
-import { REGIONS, SHOP_PAYMENT_METHODS, splitRoles } from '@bt/core';
+import { AMBASSADOR_DEFAULTS, ambassadorTotals, normaliseCode, normalizeTzPhone, REGIONS, SHOP_PAYMENT_METHODS, splitRoles, suggestAmbassadorCode } from '@bt/core';
 import { RateLimitError } from '@/server/ratelimit';
 import { setPayLater } from '@/server/paylater';
-import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue, newOrdersSnapshot } from '@/server/admin/context';
+import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue, newOrdersSnapshot, ticketIssueScope } from '@/server/admin/context';
 import { storePublicImage, storePublicMedia, UploadError } from '@/server/admin/files';
 import { assignEntityTasks, checkPhotos, checkStock, emitTaskEvent } from '@/server/tasks';
 
@@ -144,17 +144,40 @@ export async function newOrdersAction(): Promise<ActionResult<{ count: number; l
 const orderNoZ = z.string().regex(/^[A-Z]{2}-\d{3,8}$/, 'Invalid order number');
 
 export async function transitionOrderAction(number: string, to: string): Promise<ActionResult<Msg>> {
-  return run('orders.write', async (ctx) => {
+  return run('orders', async (ctx) => {
     const n = orderNoZ.parse(number);
     const st = z.enum(ORDER_STATUSES).parse(to) as OrderStatus;
     const o = await prisma.order.findUnique({ where: { number: n }, select: { brandKey: true, status: true } });
     if (!o) throw new Error('Order not found');
     assertBrand(ctx, o.brandKey);
-    await transitionOrder(n, st, ctx.name, `Updated by ${ctx.name}`);
+    // Each step belongs to one team: Order desk confirms, Finance approves payment, Storekeeper dispatches.
+    const need = transitionPermission(o.status as OrderStatus, st);
+    if (!ctx.can(need)) throw new AuthError(`Your role (${ctx.roleName}) cannot do this step`);
+    await transitionOrder(n, st, ctx.name, st === 'placed' ? `Not paid: sent back to the Order desk by ${ctx.name}` : `Updated by ${ctx.name}`);
     await audit(ctx.email, 'order.status', 'Order', n, { from: o.status, to: st });
     revalidateAdmin();
     revalidateStore();
     return { message: `Order ${n} updated` };
+  });
+}
+
+/** Order desk: change the products of a new order after calling the customer (website prices only). */
+export async function editOrderItemsAction(number: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('orders.confirm', async (ctx) => {
+    const n = orderNoZ.parse(number);
+    const o = await prisma.order.findUnique({ where: { number: n }, select: { brandKey: true, items: { select: { productId: true } } } });
+    if (!o) throw new Error('Order not found');
+    assertBrand(ctx, o.brandKey);
+    const f = fields(fd);
+    const lines = o.items.map((i) => ({ productId: i.productId, qty: intZ(0, 20).parse(f[`qty_${i.productId}`] ?? '0') }));
+    const add = (f.add_product ?? '').trim();
+    if (add) lines.push({ productId: idZ.parse(add), qty: intZ(1, 20).parse(f.add_qty || '1') });
+    const changes = await editOrderItems(n, lines, ctx.name);
+    if (!changes.length) return { message: 'Nothing changed' };
+    await audit(ctx.email, 'order.items', 'Order', n, { changes });
+    revalidateAdmin();
+    revalidateStore();
+    return { message: `Order ${n} updated: ${changes.join(', ')}` };
   });
 }
 
@@ -752,6 +775,8 @@ async function loadTicket(ctx: StaffContext, id: string) {
   const t = await prisma.ticket.findUnique({ where: { id: idZ.parse(id) } });
   if (!t) throw new Error('Ticket not found');
   assertBrand(ctx, t.brandKey);
+  const scope = ticketIssueScope(ctx);
+  if (scope && !scope.includes(t.issue)) throw new AuthError('This ticket is handled by another team');
   return t;
 }
 
@@ -951,5 +976,70 @@ export async function saveSecurityAction(fd: FormData): Promise<ActionResult<Msg
     await audit(ctx.email, 'settings.security', 'Setting', 'security', value as Prisma.InputJsonValue);
     revalidateAdmin();
     return { message: 'Security settings saved' };
+  });
+}
+
+// Ambassadors (Marketing) ---------------------------------------------------------------------
+
+/** New ambassador: a personal discount code (customer discount) plus a commission on delivered orders. */
+export async function createAmbassadorAction(fd: FormData): Promise<ActionResult<Msg>> {
+  return run('marketing.write', async (ctx) => {
+    const f = fields(fd);
+    const name = textZ(80, 2).parse(f.name ?? '');
+    const phone = normalizeTzPhone(f.phone ?? '');
+    if (!phone) throw new Error('Enter a valid Tanzanian phone number (+255…)');
+    const scope = z.enum(['both', 'mruk', 'skywood']).parse(f.brand || 'both');
+    if (scope === 'both') {
+      if (!(ctx.canBrand('mruk') && ctx.canBrand('skywood'))) throw new AuthError('An ambassador for both brands needs access to both brands');
+    } else assertBrand(ctx, scope);
+    const discount = intZ(0, 30).parse(f.discount || String(AMBASSADOR_DEFAULTS.discountPercent));
+    const commission = intZ(0, 20).parse(f.commission || String(AMBASSADOR_DEFAULTS.commissionPercent));
+    let code = f.code?.trim() ? normaliseCode(f.code) : null;
+    if (f.code?.trim() && !code) throw new Error('A code is 4 to 20 letters and digits');
+    for (let i = 0; !code && i < 20; i++) {
+      const c = suggestAmbassadorCode(name, randomBytes(1)[0]!);
+      if (!(await prisma.discountCode.findUnique({ where: { code: c } }))) code = c;
+    }
+    if (!code) throw new Error('Choose a code');
+    if (await prisma.discountCode.findUnique({ where: { code } })) throw new Error(`The code ${code} is already in use`);
+    const brandKey = scope === 'both' ? null : scope;
+    const a = await prisma.$transaction(async (tx) => {
+      await tx.discountCode.create({ data: { code: code!, percent: discount, brandKey, active: true } });
+      return tx.ambassador.create({ data: { name, phone, brandKey, code: code!, commissionPercent: commission } });
+    });
+    await audit(ctx.email, 'ambassador.create', 'Ambassador', a.id, { code, discount, commission, brand: scope });
+    revalidateAdmin();
+    return { message: `Ambassador ${name} added with code ${code}` };
+  });
+}
+
+/** Pause or resume an ambassador: their code stops (or starts) working at checkout. */
+export async function toggleAmbassadorAction(id: string): Promise<ActionResult<Msg>> {
+  return run('marketing.write', async (ctx) => {
+    const a = await prisma.ambassador.findUnique({ where: { id: idZ.parse(id) } });
+    if (!a) throw new Error('Ambassador not found');
+    if (a.brandKey) assertBrand(ctx, a.brandKey);
+    await prisma.$transaction([prisma.ambassador.update({ where: { id: a.id }, data: { active: !a.active } }), prisma.discountCode.updateMany({ where: { code: a.code }, data: { active: !a.active } })]);
+    await audit(ctx.email, a.active ? 'ambassador.pause' : 'ambassador.resume', 'Ambassador', a.id, { code: a.code });
+    revalidateAdmin();
+    return { message: `${a.name} ${a.active ? 'paused' : 'active again'}` };
+  });
+}
+
+/** Record a commission payout (never more than what is owed for delivered orders). */
+export async function ambassadorPayoutAction(id: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('marketing.write', async (ctx) => {
+    const a = await prisma.ambassador.findUnique({ where: { id: idZ.parse(id) }, include: { payouts: true } });
+    if (!a) throw new Error('Ambassador not found');
+    if (a.brandKey) assertBrand(ctx, a.brandKey);
+    const f = fields(fd);
+    const amount = intZ(1, 100_000_000).parse(f.amount ?? '');
+    const orders = await prisma.order.findMany({ where: { discountCode: a.code }, select: { status: true, subtotal: true, discount: true } });
+    const t = ambassadorTotals(orders, a.commissionPercent, a.payouts.reduce((s, p) => s + p.amount, 0));
+    if (amount > t.owed) throw new Error(`Only ${t.owed.toLocaleString('en-US')} TZS is owed for delivered orders`);
+    await prisma.ambassadorPayout.create({ data: { ambassadorId: a.id, amount, note: textZ(120).parse(f.note ?? ''), paidBy: ctx.name } });
+    await audit(ctx.email, 'ambassador.payout', 'Ambassador', a.id, { amount });
+    revalidateAdmin();
+    return { message: `Payout of ${amount.toLocaleString('en-US')} TZS recorded for ${a.name}` };
   });
 }

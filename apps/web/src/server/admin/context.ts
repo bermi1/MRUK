@@ -73,13 +73,29 @@ export const REORDER_STOCK = 3;
 /** Draft products: hidden and without a price (created from the client's photo/spec pack, or saved hidden at 0). */
 export const DRAFT_WHERE = { hidden: true, price: { lte: 0 } } as const;
 
+/**
+ * Which support tickets a person answers: Client support (and Admin / Management) see all of them;
+ * the Order desk sees delivery questions, Finance sees payment questions. Holding several roles adds them up.
+ */
+export function ticketIssueScope(ctx: StaffContext): string[] | null {
+  const held = [ctx.role, ...ctx.extraRoles];
+  if (ctx.can('*') || held.some((r) => r === 'owner' || r === 'manager' || r === 'support')) return null;
+  const issues = [...(held.includes('orderdesk') ? ['Delivery'] : []), ...(held.includes('finance') ? ['Payment'] : [])];
+  return issues;
+}
+
+export function ticketScopeWhere(ctx: StaffContext): { issue?: { in: string[] } } {
+  const scope = ticketIssueScope(ctx);
+  return scope ? { issue: { in: scope } } : {};
+}
+
 export async function navCounts(ctx: StaffContext, f: AdminFilters) {
   const ow = orderWhere(f);
   const [orders, advances, lowStock, tickets, drafts] = await Promise.all([
-    ctx.can('orders') ? prisma.order.count({ where: { ...ow, status: { in: ['approved', 'packed'] } } }) : 0,
+    ctx.can('orders') ? prisma.order.count({ where: { ...ow, status: { in: ctx.can('*') ? ['placed', 'confirmed', 'approved', 'packed'] : [...(ctx.can('orders.confirm') ? ['placed'] : []), ...(ctx.can('payments.approve') ? ['confirmed'] : []), ...(ctx.can('orders.dispatch') ? ['approved', 'packed'] : [])] } } }) : 0,
     ctx.can('advance') ? prisma.salaryAdvanceApplication.count({ where: { status: 'submitted', order: ow } }) : 0,
     ctx.can('inventory') ? prisma.product.count({ where: { brandKey: { in: f.brands }, price: { gt: 0 }, stock: { lte: LOW_STOCK } } }) : 0,
-    ctx.can('tickets') ? prisma.ticket.count({ where: { brandKey: { in: f.brands }, status: 'new' } }) : 0,
+    ctx.can('tickets') ? prisma.ticket.count({ where: { brandKey: { in: f.brands }, status: 'new', ...ticketScopeWhere(ctx) } }) : 0,
     // Draft products (hidden, no price yet) for the staff who can price and publish them.
     ctx.can('products.write') ? prisma.product.count({ where: { brandKey: { in: f.brands }, ...DRAFT_WHERE } }) : 0,
   ]);
@@ -89,7 +105,9 @@ export async function navCounts(ctx: StaffContext, f: AdminFilters) {
 /** Orders waiting to be packed (paid or confirmed) in the staff member's brands, newest first: drives the new-order alert. */
 export async function newOrdersSnapshot(ctx: StaffContext): Promise<{ count: number; latest: string | null }> {
   if (!ctx.can('orders')) return { count: 0, latest: null };
-  const where = { brandKey: { in: brandScope(ctx, null) }, status: 'approved' };
+  // The Order desk is alerted to new orders to call; the Storekeeper to orders cleared for dispatch.
+  const statuses = [...(ctx.can('orders.confirm') ? ['placed'] : []), ...(ctx.can('orders.dispatch') || !ctx.can('orders.confirm') ? ['approved'] : [])];
+  const where = { brandKey: { in: brandScope(ctx, null) }, OR: statuses.map((st) => (st === 'placed' ? { status: st, paymentMethod: { in: ['pay_on_delivery', 'pay_before_delivery'] } } : { status: st })) };
   const [count, latest] = await Promise.all([prisma.order.count({ where }), prisma.order.findFirst({ where, orderBy: { createdAt: 'desc' }, select: { number: true } })]);
   return { count, latest: latest?.number ?? null };
 }

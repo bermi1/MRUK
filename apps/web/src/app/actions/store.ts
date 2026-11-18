@@ -129,7 +129,7 @@ export async function placeOrderAction(brand: string, input: unknown): Promise<A
     // Checkout rate limit (CLAUDE.md quality gate): per phone, and per IP (3x).
     await limit('checkout', 10, 10 * 60, normalizeTzPhone(d.phone) ?? d.phone);
     const customer = await currentCustomer();
-    const r = await placeOrder(b, { ...d, method: d.method as 'card' | 'azania_account' | 'pay_on_delivery', region: '', customerId: customer?.id });
+    const r = await placeOrder(b, { ...d, method: d.method as 'card' | 'azania_account' | 'pay_before_delivery' | 'pay_on_delivery', region: '', customerId: customer?.id });
     revalidatePath(`/${b}`, 'layout');
     return { ok: true, data: { redirect: r.next === 'pay' ? `/${b}/pay/${r.number}?t=${confirmationToken(r.number)}` : confirmationPath(b, r.number) } };
   } catch (e) {

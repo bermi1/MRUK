@@ -4,7 +4,7 @@ import { aiTipsAction, createTicketAction } from '@/app/actions/store';
 import { FAQS } from '@/lib/content';
 import { MinusIcon, PlusIcon, SparkleIcon } from '../icons';
 
-const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Other'];
+const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Payment', 'Other'];
 
 export function SupportForm({ brand, brandName, whatsapp, products, prefill, payLater }: { brand: string; brandName: string; whatsapp: string; products: { id: string; label: string }[]; prefill: { name: string; phone: string }; payLater: boolean }) {
   const faqs = payLater ? FAQS : FAQS.filter(([q]) => !/pay later/i.test(q));

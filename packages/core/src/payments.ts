@@ -1,11 +1,12 @@
 /** Payment methods in this phase. No mobile money (CLAUDE.md, out of scope). */
-export const PAYMENT_METHODS = ['salary_advance', 'azania_account', 'card', 'pay_on_delivery'] as const;
+export const PAYMENT_METHODS = ['salary_advance', 'azania_account', 'card', 'pay_before_delivery', 'pay_on_delivery'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const PAYMENT_METHOD_INFO: Record<PaymentMethod, { title: string; sub: string; mono: string; tile: string; azania: boolean }> = {
   salary_advance: { title: 'Pay Later', sub: 'Azania Bank · monthly', mono: 'AZ', tile: '#0098DA', azania: true },
   azania_account: { title: 'Azania Bank account', sub: 'Direct bank payment', mono: 'AB', tile: '#0078B4', azania: true },
   card: { title: 'Card', sub: 'Visa, Mastercard', mono: 'CD', tile: '#12152B', azania: false },
+  pay_before_delivery: { title: 'Pay before delivery', sub: 'Cash or bank transfer after we call you', mono: 'PB', tile: '#1D2366', azania: false },
   pay_on_delivery: { title: 'Pay on delivery', sub: 'Dar es Salaam only', mono: 'PD', tile: '#5E6378', azania: false },
 };
 
@@ -20,6 +21,11 @@ export function isPaymentMethod(v: string): v is PaymentMethod {
  */
 export function mockGatewayAllowed(o: { production: boolean; demo: boolean }): boolean {
   return !o.production || o.demo;
+}
+
+/** Orders the Order desk confirms by phone before any money moves (the customer pays after the call, or at the door). */
+export function staffConfirmed(method: string): boolean {
+  return method === 'pay_on_delivery' || method === 'pay_before_delivery';
 }
 
 /** Pay on delivery is only offered in Dar es Salaam. */

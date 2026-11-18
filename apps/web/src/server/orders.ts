@@ -2,7 +2,7 @@ import 'server-only';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { decrypt, encrypt, prisma, sha256, type Prisma } from '@bt/db';
-import { LISTABLE } from './listable';
+import { isListable, LISTABLE } from './listable';
 import {
   assertAdvanceTransition,
   assertOrderTransition,
@@ -17,6 +17,7 @@ import {
   fmtDate,
   fmtTZS,
   initialOrderStatus,
+  staffConfirmed,
   isAdvanceTerm,
   monthlyInstalment,
   normaliseNida,
@@ -173,6 +174,8 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
   if (!paymentAllowed(input.method, cart.region)) throw new CheckoutError('Pay on delivery is only available in Dar es Salaam', 'method');
   await assertMethodOpen(brand, input.method);
   const status: OrderStatus = initialOrderStatus(input.method, false);
+  // Pay on delivery / before delivery: the Order desk calls first, so the reservation does not expire.
+  const byPhone = staffConfirmed(input.method);
 
   const order = await prisma.$transaction(async (tx) => {
     // First take the cart: a second, concurrent submit of the same cart waits here and finds it empty.
@@ -199,22 +202,21 @@ export async function placeOrder(brand: BrandKey, input: PlaceOrderInput) {
         total: cart.total,
         branch: cart.region,
         consentAt: new Date(),
-        reservedUntil: status === 'placed' ? new Date(Date.now() + RESERVATION_MINUTES * 60_000) : null,
+        reservedUntil: status === 'placed' && !byPhone ? new Date(Date.now() + RESERVATION_MINUTES * 60_000) : null,
         items: { create: cart.lines.map((l) => ({ productId: l.productId, name: l.name, model: l.model, price: l.price, qty: l.qty })) },
         events: { create: [{ status: 'placed', note: 'Order placed', actor: 'customer' }, ...(status !== 'placed' ? [{ status, note: 'Pay on delivery confirmed', actor: 'system' }] : [])] },
         payments: { create: { method: input.method, amount: cart.total, status: 'pending' } },
       },
     });
     if (cart.discountCode && !cart.discountError) await countCodeUse(tx, cart.discountCode);
-    if (input.method === 'pay_on_delivery') await issueInvoice(tx, o.id, o.total, 'issued');
     return o;
   });
   await clearCart(brand);
   // Route the work (never blocks the order): confirmed orders go to the warehouse to pack.
   await emitTaskEvent({ type: 'order.placed', brand, number: order.number, status: order.status as OrderStatus, method: input.method });
   await checkStock(cart.lines.map((l) => l.productId));
-  if (input.method === 'pay_on_delivery') await notifyCustomer(order.contactPhone, `${brandName(brand)}: order ${order.number} confirmed. Total ${fmtTZS(order.total)}, pay on delivery. Track: ${order.number}`);
-  return { number: order.number, next: input.method === 'pay_on_delivery' ? ('confirmed' as const) : ('pay' as const) };
+  if (byPhone) await notifyCustomer(order.contactPhone, `${brandName(brand)}: we received order ${order.number} (${fmtTZS(order.total)}). Our team will call you shortly to confirm it. Track: ${order.number}`);
+  return { number: order.number, next: byPhone ? ('confirmed' as const) : ('pay' as const) };
 }
 
 export interface AdvanceInput extends ContactInput {
@@ -393,7 +395,9 @@ async function notifyCustomer(phone: string, text: string) {
 async function issueInvoice(tx: Prisma.TransactionClient, orderId: string, amount: number, status: 'issued' | 'paid') {
   const existing = await tx.invoice.findFirst({ where: { orderId, status: { not: 'void' } } });
   if (existing) {
-    if (status === 'paid' && existing.status !== 'paid') await tx.invoice.update({ where: { id: existing.id }, data: { status: 'paid' } });
+    // An edited order (Order desk) changes the amount of an invoice not yet paid.
+    const data = { ...(status === 'paid' && existing.status !== 'paid' ? { status: 'paid' } : {}), ...(existing.status !== 'paid' && existing.amount !== amount ? { amount } : {}) };
+    if (Object.keys(data).length) return tx.invoice.update({ where: { id: existing.id }, data });
     return existing;
   }
   const n = await nextNumber(tx, 'invoice', 1_500);
@@ -481,6 +485,15 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'failed' } });
       await tx.invoice.updateMany({ where: { orderId: o.id }, data: { status: 'void' } });
     }
+    if (to === 'confirmed') {
+      // Order desk confirmed by phone: the invoice the customer receives.
+      await issueInvoice(tx, o.id, o.total, 'issued');
+    }
+    if (to === 'approved' && o.status === 'confirmed' && o.paymentMethod !== 'pay_on_delivery') {
+      // Finance saw the money (cash, bank transfer): record it and mark the invoice paid.
+      await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', reference: 'FINANCE-APPROVED' } });
+      await issueInvoice(tx, o.id, o.total, 'paid');
+    }
     if (to === 'approved' && o.status === 'placed') {
       // Staff confirmed the payment (e.g. seen on the bank statement): record it and issue the paid invoice.
       await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', reference: 'STAFF-CONFIRMED' } });
@@ -494,7 +507,7 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       await tx.salaryAdvanceApplication.update({ where: { id: o.advance.id }, data: { status: 'rejected', decisionNote: 'Order cancelled' } });
     }
   });
-  await emitTaskEvent({ type: 'order.status', brand: o.brandKey, number: o.number, from: o.status as OrderStatus, to }, actor);
+  await emitTaskEvent({ type: 'order.status', brand: o.brandKey, number: o.number, from: o.status as OrderStatus, to, staffConfirmed: staffConfirmed(o.paymentMethod) }, actor);
   if (releasesStock(to)) await checkOrderStock(o.id);
   // Loyalty (DEFAULT rules, server/loyalty.ts): earn on delivery, reverse on cancel/reject. Never blocks the order change.
   try {
@@ -505,12 +518,88 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
   }
   const msg: Partial<Record<OrderStatus, string>> = {
     ...(o.status === 'placed' ? { approved: `is confirmed: payment of ${fmtTZS(o.total)} received. We are preparing it` } : {}),
+    ...(o.status === 'confirmed'
+      ? { approved: o.paymentMethod === 'pay_on_delivery' ? `is ready for dispatch. Please have ${fmtTZS(o.total)} ready on delivery` : `payment of ${fmtTZS(o.total)} received. We are preparing it` }
+      : {}),
+    confirmed: `is confirmed. Your invoice of ${fmtTZS(o.total)} has been sent`,
     packed: 'is packed at our warehouse',
     out_for_delivery: 'is out for delivery. Our team will call before arrival',
     delivered: 'has been delivered. Thank you for shopping with us',
     cancelled: 'has been cancelled',
   };
   if (msg[to]) await notifyCustomer(o.contactPhone, `${brandName(o.brandKey)}: order ${o.number} ${msg[to]}.`);
+}
+
+/**
+ * Order desk: change the items of a new order after calling the customer (quantities, add or remove products).
+ * Prices are always the website price: lines kept keep the price the customer saw; new lines take today's
+ * price (with any live flash deal). Stock is reserved or released for the difference, atomically. A discount
+ * code is applied again at its percentage. The invoice, if one exists and is unpaid, follows the new total.
+ */
+export async function editOrderItems(number: string, lines: { productId: string; qty: number }[], actor: string) {
+  const o = await prisma.order.findUnique({ where: { number }, include: { items: true } });
+  if (!o) throw new Error('Order not found');
+  if (o.status !== 'placed') throw new Error('Only new orders can be changed. Send it back to the Order desk first.');
+  const want = new Map<string, number>();
+  for (const l of lines) {
+    if (!Number.isInteger(l.qty) || l.qty < 0 || l.qty > 20) throw new Error('Quantities must be whole numbers from 0 to 20');
+    want.set(l.productId, (want.get(l.productId) ?? 0) + l.qty);
+  }
+  for (const [id, q] of want) if (q === 0) want.delete(id);
+  if (!want.size) throw new Error('An order needs at least one product. Cancel the order instead.');
+  const flash = await flashDiscounts(o.brandKey as BrandKey);
+  const products = await prisma.product.findMany({ where: { id: { in: [...want.keys()] }, brandKey: o.brandKey }, select: { id: true, name: true, model: true, price: true, hidden: true, images: true, description: true, features: true } });
+  const changes: string[] = [];
+  await prisma.$transaction(async (tx) => {
+    const have = new Map(o.items.map((i) => [i.productId, i]));
+    for (const [pid, q] of want) {
+      const old = have.get(pid);
+      const diff = q - (old?.qty ?? 0);
+      if (!old) {
+        const p = products.find((x) => x.id === pid);
+        if (!p || !isListable(p) || p.price <= 0) throw new Error('That product is not on sale on this store');
+        const price = Math.round(p.price * (1 - flash(pid) / 100));
+        await tx.orderItem.create({ data: { orderId: o.id, productId: pid, name: p.name, model: p.model, price, qty: q } });
+        changes.push(`+${q} ${p.model}`);
+      } else if (diff !== 0) {
+        await tx.orderItem.update({ where: { id: old.id }, data: { qty: q } });
+        changes.push(`${old.model} ${old.qty}→${q}`);
+      }
+      if (diff > 0) {
+        const r = await tx.product.updateMany({ where: { id: pid, stock: { gte: diff } }, data: { stock: { decrement: diff } } });
+        if (r.count !== 1) throw new Error(`Not enough stock for ${products.find((x) => x.id === pid)?.model ?? old?.model ?? 'that product'}`);
+      } else if (diff < 0) {
+        await tx.product.update({ where: { id: pid }, data: { stock: { increment: -diff } } });
+      }
+    }
+    for (const old of o.items) {
+      if (want.has(old.productId)) continue;
+      await tx.orderItem.delete({ where: { id: old.id } });
+      await tx.product.update({ where: { id: old.productId }, data: { stock: { increment: old.qty } } });
+      changes.push(`−${old.qty} ${old.model}`);
+    }
+    if (!changes.length) return;
+    const items = await tx.orderItem.findMany({ where: { orderId: o.id } });
+    const subtotal = items.reduce((a, i) => a + i.price * i.qty, 0);
+    const code = o.discountCode ? await tx.discountCode.findUnique({ where: { code: o.discountCode } }) : null;
+    const discount = code && code.percent > 0 ? Math.round((subtotal * code.percent) / 100) : Math.min(o.discount, subtotal);
+    // Same delivery rule as checkout (free in Dar es Salaam from the threshold).
+    let fee = o.deliveryFee;
+    try {
+      fee = deliveryFee(o.region, subtotal);
+    } catch {
+      // region not in the list (shop sale): keep the fee charged
+    }
+    const total = subtotal - discount + fee;
+    await tx.order.update({ where: { id: o.id }, data: { subtotal, discount, deliveryFee: fee, total } });
+    await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { amount: total } });
+    const inv = await tx.invoice.findFirst({ where: { orderId: o.id, status: 'issued' } });
+    if (inv) await tx.invoice.update({ where: { id: inv.id }, data: { amount: total } });
+    await tx.orderEvent.create({ data: { orderId: o.id, status: 'placed', note: `Items changed: ${changes.join(', ')}`.slice(0, 300), actor } });
+  });
+  stockChanged();
+  await checkStock([...new Set([...want.keys(), ...o.items.map((i) => i.productId)])]);
+  return changes;
 }
 
 /** Record Azania Bank's decision on an application (admin action or bank callback). */

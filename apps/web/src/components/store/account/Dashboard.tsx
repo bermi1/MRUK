@@ -92,7 +92,7 @@ export function OrderItemCard({ o, ctx, full = false }: { o: OrderCard; ctx: Ctx
           {statusBadge(o, t)}
         </div>
       </header>
-      {o.steps ? (o.active || full ? <Stepper steps={o.steps} salaryAdvance={sa} payOnDelivery={o.method === 'pay_on_delivery'} ctx={ctx} /> : null) : <p className="acc-closed">{t('accClosed')}</p>}
+      {o.steps ? (o.active || full ? <Stepper steps={o.steps} salaryAdvance={sa} payOnDelivery={o.method === 'pay_on_delivery' || o.method === 'pay_before_delivery'} ctx={ctx} /> : null) : <p className="acc-closed">{t('accClosed')}</p>}
       {full ? (
         <ul className="acc-lines">
           {o.items.map((i) => (

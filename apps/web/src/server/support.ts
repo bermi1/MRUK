@@ -91,7 +91,7 @@ export interface TicketInput {
   channel?: string;
 }
 
-export const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Other'] as const;
+export const ISSUES = ['Repair', 'Installation', 'Warranty claim', 'Delivery', 'Payment', 'Other'] as const;
 
 export async function createTicket(t: TicketInput) {
   const phone = normalizeTzPhone(t.phone);

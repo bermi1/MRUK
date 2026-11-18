@@ -6,7 +6,7 @@ import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
 import { BrandChip, Forbidden, Pager, pageParam, Pill, TICKET_PILL } from '@/components/admin/ui';
 import { waLink } from '@/lib/format';
-import { adminFilters } from '@/server/admin/context';
+import { adminFilters, ticketScopeWhere } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
 
 export const metadata = { title: 'Support tickets' };
@@ -22,14 +22,15 @@ export default async function TicketsPage({ searchParams }: { searchParams: Prom
   const f = await adminFilters(ctx);
   const st = (STATUSES as readonly string[]).includes(sp.status ?? '') ? sp.status! : 'all';
   const page = pageParam(sp.page);
-  const listWhere = { brandKey: { in: f.brands }, ...(st !== 'all' ? { status: st } : {}) };
+  const scope = ticketScopeWhere(ctx);
+  const listWhere = { brandKey: { in: f.brands }, ...scope, ...(st !== 'all' ? { status: st } : {}) };
   const [list, counts, total] = await Promise.all([
     prisma.ticket.findMany({ where: listWhere, orderBy: { createdAt: 'desc' }, skip: (page - 1) * PER, take: PER }),
-    prisma.ticket.groupBy({ by: ['status'], where: { brandKey: { in: f.brands } }, _count: { _all: true } }),
+    prisma.ticket.groupBy({ by: ['status'], where: { brandKey: { in: f.brands }, ...scope }, _count: { _all: true } }),
     prisma.ticket.count({ where: listWhere }),
   ]);
   const selId = sp.id && /^[a-z0-9]{10,40}$/.test(sp.id) ? sp.id : list[0]?.id;
-  const t = selId ? await prisma.ticket.findFirst({ where: { id: selId, brandKey: { in: f.allowed } }, include: { messages: { orderBy: { at: 'asc' } }, brand: { select: { name: true } } } }) : null;
+  const t = selId ? await prisma.ticket.findFirst({ where: { id: selId, brandKey: { in: f.allowed }, ...scope }, include: { messages: { orderBy: { at: 'asc' } }, brand: { select: { name: true } } } }) : null;
   const product = t?.productId ? await prisma.product.findUnique({ where: { id: t.productId }, select: { name: true, model: true } }) : null;
   const productNames = new Map((await prisma.product.findMany({ where: { id: { in: list.map((x) => x.productId).filter(Boolean) } }, select: { id: true, name: true } })).map((p) => [p.id, p.name]));
   const write = ctx.can('tickets.write');

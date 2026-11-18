@@ -6,7 +6,7 @@ import { durationLabel, LOW_STOCK, REORDER_STOCK, isoDayEAT, monthName, orderWhe
 import type { StaffContext } from '@/server/auth';
 
 const CHANNEL: Record<string, string> = { web: 'Web', app: 'App', azania: 'Azania app' };
-const MIX_COLOR: Record<string, string> = { salary_advance: '#0098DA', azania_account: '#12164A', card: '#A7A9AC', pay_on_delivery: '#D5D7E0' };
+const MIX_COLOR: Record<string, string> = { salary_advance: '#0098DA', azania_account: '#12164A', card: '#A7A9AC', pay_before_delivery: '#5E6378', pay_on_delivery: '#D5D7E0' };
 const millions = (n: number) => `${(n / 1e6).toFixed(1)}M`;
 
 function delta(now: number, before: number, label: string) {

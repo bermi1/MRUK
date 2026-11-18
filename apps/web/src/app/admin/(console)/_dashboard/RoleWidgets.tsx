@@ -13,6 +13,90 @@ const n = (v: number) => v.toLocaleString('en-US');
 /** DEFAULT (not in README): an issued, unpaid invoice is overdue after 7 days. */
 const INVOICE_DUE_DAYS = 7;
 
+// Order desk -------------------------------------------------------------------------------------
+
+/** One order row: number, customer, how they pay, total, waiting time. */
+function OrderRow({ o }: { o: { number: string; brandKey: string; contactName: string; paymentMethod: string; total: number; updatedAt: Date } }) {
+  return (
+    <li>
+      <Link href={`/admin/orders?o=${o.number}`} className="ad-rowlink">
+        <span>
+          <b className="num">{o.number}</b> <BrandChip brand={o.brandKey} />
+          <small>
+            {o.contactName} · {o.paymentMethod === 'pay_on_delivery' ? 'Pay on delivery' : 'Pay before delivery'}
+          </small>
+        </span>
+        <span className="r">
+          <b>{fmtTZS(o.total)}</b>
+          <small>{ago(o.updatedAt)}</small>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+const PHONE_METHODS = ['pay_on_delivery', 'pay_before_delivery'];
+const ROW = { number: true, brandKey: true, contactName: true, paymentMethod: true, total: true, updatedAt: true } as const;
+
+export async function OrderDeskWidgets({ f }: { f: AdminFilters }) {
+  const ow = orderWhere(f);
+  const [toCall, sentBack, waitingPay, delivery] = await Promise.all([
+    prisma.order.findMany({ where: { ...ow, status: 'placed', paymentMethod: { in: PHONE_METHODS }, events: { none: { status: 'confirmed' } } }, orderBy: { createdAt: 'asc' }, take: 8, select: ROW }),
+    prisma.order.findMany({ where: { ...ow, status: 'placed', paymentMethod: { in: PHONE_METHODS }, events: { some: { status: 'confirmed' } } }, orderBy: { updatedAt: 'asc' }, take: 6, select: ROW }),
+    prisma.order.count({ where: { ...ow, status: 'confirmed' } }),
+    prisma.ticket.count({ where: { brandKey: { in: f.brands }, issue: 'Delivery', status: { in: ['new', 'open'] } } }),
+  ]);
+  return (
+    <>
+      <Widget title="New orders to call" sub="Oldest first · call, adjust if needed, confirm and send the invoice" link={{ href: '/admin/orders?status=placed', label: 'All new orders' }} testid="dash-orderdesk">
+        <div className="ad-stats s3">
+          <Stat label="To call" value={toCall.length} tone={toCall.length ? 'az' : 'ok'} href="/admin/orders?status=placed" testid="od-new" />
+          <Stat label="Awaiting payment (Finance)" value={waitingPay} href="/admin/orders?status=confirmed" />
+          <Stat label="Delivery questions" value={delivery} tone={delivery ? 'warn' : 'ok'} href="/admin/tickets" />
+        </div>
+        <ul className="ad-rows">
+          {toCall.map((o) => (
+            <OrderRow key={o.number} o={o} />
+          ))}
+          {!toCall.length && <li className="ad-empty">No new orders waiting</li>}
+        </ul>
+      </Widget>
+      <Widget title="Sent back by Finance" sub="No payment found · call the customer, then confirm again or cancel" testid="dash-orderdesk-back">
+        <ul className="ad-rows">
+          {sentBack.map((o) => (
+            <OrderRow key={o.number} o={o} />
+          ))}
+          {!sentBack.length && <li className="ad-empty">Nothing sent back</li>}
+        </ul>
+      </Widget>
+    </>
+  );
+}
+
+/** Finance: confirmed orders waiting for the payment check. */
+export async function PaymentQueueWidget({ f }: { f: AdminFilters }) {
+  const ow = orderWhere(f);
+  const [rows, total, podCash] = await Promise.all([
+    prisma.order.findMany({ where: { ...ow, status: 'confirmed' }, orderBy: { updatedAt: 'asc' }, take: 8, select: ROW }),
+    prisma.order.aggregate({ where: { ...ow, status: 'confirmed' }, _sum: { total: true }, _count: { _all: true } }),
+    prisma.order.aggregate({ where: { ...ow, paymentMethod: 'pay_on_delivery', status: { in: ['approved', 'packed', 'out_for_delivery'] } }, _sum: { total: true }, _count: { _all: true } }),
+  ]);
+  return (
+    <Widget title="Payments to approve" sub="Invoice sent by the Order desk · approve when paid, or send back" link={{ href: '/admin/orders?status=confirmed', label: 'Open queue' }} testid="dash-finance-payments">
+      <div className="ad-stats s3">
+        <Stat label="Waiting" value={total._count._all} sub={fmtTZS(total._sum.total ?? 0)} tone={total._count._all ? 'az' : 'ok'} href="/admin/orders?status=confirmed" testid="fin-waiting" />
+        <Stat label="Cash due on delivery" value={podCash._count._all} sub={fmtTZS(podCash._sum.total ?? 0)} />
+      </div>
+      <ul className="ad-rows">
+        {rows.map((o) => (
+          <OrderRow key={o.number} o={o} />
+        ))}
+        {!rows.length && <li className="ad-empty">No payments waiting</li>}
+      </ul>
+    </Widget>
+  );
+}
+
 // Finance ---------------------------------------------------------------------------------------
 
 export async function FinanceWidgets({ f }: { f: AdminFilters }) {

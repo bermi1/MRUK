@@ -122,7 +122,7 @@ const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ p
  * only ever add permissions, never removing what an Admin set.
  */
 async function syncRolePermissions() {
-  const done = await prisma.setting.findUnique({ where: { key: 'roles.v2' } });
+  const done = await prisma.setting.findUnique({ where: { key: 'roles.v3' } });
   for (const def of ROLE_DEFS) {
     const r = await prisma.role.findUnique({ where: { id: def.id } });
     if (!r) {
@@ -137,7 +137,7 @@ async function syncRolePermissions() {
     }
   }
   if (!done) {
-    await prisma.setting.create({ data: { key: 'roles.v2', value: { at: new Date().toISOString() } } });
+    await prisma.setting.create({ data: { key: 'roles.v3', value: { at: new Date().toISOString() } } });
     await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'roles.restructure', entity: 'Role', entityId: 'all', diff: { roles: ROLE_DEFS.map((r) => r.name) } } });
   }
 }

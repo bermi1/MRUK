@@ -4,10 +4,11 @@ const TABS = [
   { key: 'campaigns', href: '/admin/marketing', label: 'Campaigns' },
   { key: 'subscribers', href: '/admin/marketing/subscribers', label: 'Subscribers' },
   { key: 'loyalty', href: '/admin/marketing/loyalty', label: 'Loyalty' },
+  { key: 'ambassadors', href: '/admin/marketing/ambassadors', label: 'Ambassadors' },
 ] as const;
 
 /** Section tabs for Marketing (campaigns, subscribers, loyalty) plus the "New campaign" button. */
-export function MarketingTabs({ current, canWrite }: { current: 'campaigns' | 'subscribers' | 'loyalty' | 'new'; canWrite: boolean }) {
+export function MarketingTabs({ current, canWrite }: { current: 'campaigns' | 'subscribers' | 'loyalty' | 'ambassadors' | 'new'; canWrite: boolean }) {
   return (
     <div className="ad-between" style={{ flexWrap: 'wrap', gap: 10 }}>
       <nav className="ad-tabs" aria-label="Marketing sections">

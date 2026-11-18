@@ -255,7 +255,8 @@ describe('order state machine', () => {
   });
   it('picks the initial status by payment method', () => {
     expect(initialOrderStatus('salary_advance', false)).toBe('bank_review');
-    expect(initialOrderStatus('pay_on_delivery', false)).toBe('approved');
+    expect(initialOrderStatus('pay_on_delivery', false)).toBe('placed');
+    expect(initialOrderStatus('pay_before_delivery', false)).toBe('placed');
     expect(initialOrderStatus('card', true)).toBe('approved');
     expect(initialOrderStatus('azania_account', false)).toBe('placed');
   });

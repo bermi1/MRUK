@@ -43,17 +43,17 @@ describe('order lifecycle without Azania', () => {
     expect(paymentAllowed('card', 'Zanzibar')).toBe(true);
   });
 
-  it('starts card orders awaiting payment and pay on delivery confirmed', () => {
+  it('starts card orders awaiting payment and phone-confirmed orders with the Order desk', () => {
     expect(initialOrderStatus('card', false)).toBe('placed');
     expect(initialOrderStatus('card', true)).toBe('approved');
-    expect(initialOrderStatus('pay_on_delivery', false)).toBe('approved');
+    expect(initialOrderStatus('pay_on_delivery', false)).toBe('placed');
   });
 
   it('walks a card order from payment to delivery, one step at a time', () => {
     const path: OrderStatus[] = ['placed', 'approved', 'packed', 'out_for_delivery', 'delivered'];
     for (let i = 1; i < path.length; i++) expect(() => assertOrderTransition(path[i - 1]!, path[i]!)).not.toThrow();
-    // No skipping steps, no going back.
-    expect(canTransitionOrder('approved', 'out_for_delivery')).toBe(false);
+    // The Storekeeper may dispatch straight from cleared; no skipping to delivered, no going back.
+    expect(canTransitionOrder('approved', 'out_for_delivery')).toBe(true);
     expect(canTransitionOrder('approved', 'delivered')).toBe(false);
     expect(canTransitionOrder('packed', 'approved')).toBe(false);
     expect(canTransitionOrder('delivered', 'cancelled')).toBe(false);
@@ -71,7 +71,8 @@ describe('order lifecycle without Azania', () => {
   });
 
   it('never tells a pay on delivery customer that payment is confirmed', () => {
-    expect(trackingSteps('approved', 'pay_on_delivery')[1]).toEqual({ title: 'Order confirmed', state: 'done' });
+    expect(trackingSteps('approved', 'pay_on_delivery')[1]).toEqual({ title: 'Confirmed by phone', state: 'done' });
+    expect(trackingSteps('approved', 'pay_on_delivery')[2]!.title).toBe('Ready for dispatch');
     expect(trackingSteps('approved', 'card')[1]!.title).toBe('Payment confirmed');
     expect(trackingSteps('packed', 'pay_on_delivery').map((s) => s.state)).toEqual(['done', 'done', 'done', 'pending', 'pending']);
     expect(trackingSteps('delivered', 'pay_on_delivery').every((s) => s.state === 'done')).toBe(true);

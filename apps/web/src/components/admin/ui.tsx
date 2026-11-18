@@ -4,6 +4,7 @@ import { ADVANCE_STATUS_LABEL, ORDER_STATUS_LABEL, type AdvanceStatus, type Orde
 
 export const ORDER_PILL: Record<string, string> = {
   placed: 'pill-amber',
+  confirmed: 'pill-violet',
   bank_review: 'pill-blue',
   approved: 'pill-navy',
   packed: 'pill-navy',

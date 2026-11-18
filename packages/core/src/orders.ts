@@ -1,13 +1,19 @@
-import type { PaymentMethod } from './payments';
+import { staffConfirmed, type PaymentMethod } from './payments';
 
-/** README: placed → bank_review → approved → packed → out_for_delivery → delivered (+ cancelled, rejected). */
-export const ORDER_STATUSES = ['placed', 'bank_review', 'approved', 'packed', 'out_for_delivery', 'delivered', 'cancelled', 'rejected'] as const;
+/**
+ * placed (New: Order desk calls the customer) → confirmed (invoice sent; Finance checks the payment)
+ * → approved (cleared for dispatch: Storekeeper) → [packed] → out_for_delivery → delivered (+ cancelled, rejected).
+ * Pay Later orders go placed → bank_review → approved. Card / Azania account orders paid online start at approved.
+ */
+export const ORDER_STATUSES = ['placed', 'confirmed', 'bank_review', 'approved', 'packed', 'out_for_delivery', 'delivered', 'cancelled', 'rejected'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  placed: ['bank_review', 'approved', 'cancelled'],
+  placed: ['confirmed', 'bank_review', 'approved', 'cancelled'],
+  // Finance: paid or cleared → approved; not paid → back to the Order desk (placed) to follow up.
+  confirmed: ['approved', 'placed', 'cancelled'],
   bank_review: ['approved', 'rejected', 'cancelled'],
-  approved: ['packed', 'cancelled'],
+  approved: ['packed', 'out_for_delivery', 'cancelled'],
   packed: ['out_for_delivery', 'cancelled'],
   out_for_delivery: ['delivered'],
   delivered: [],
@@ -41,7 +47,8 @@ export function isTerminal(status: OrderStatus): boolean {
 }
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  placed: 'Awaiting payment',
+  placed: 'Order received',
+  confirmed: 'Confirmed, awaiting payment',
   bank_review: 'Bank review',
   approved: 'Processing',
   packed: 'Packed',
@@ -54,7 +61,8 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
 /** Status an order starts in after checkout, by payment method. */
 export function initialOrderStatus(method: PaymentMethod, paymentCaptured: boolean): OrderStatus {
   if (method === 'salary_advance') return 'bank_review';
-  if (method === 'pay_on_delivery') return 'approved';
+  // Pay on delivery / pay before delivery: the Order desk calls and confirms first.
+  if (method === 'pay_on_delivery' || method === 'pay_before_delivery') return 'placed';
   return paymentCaptured ? 'approved' : 'placed';
 }
 
@@ -66,10 +74,18 @@ export interface TrackingStep {
 export function trackingSteps(status: OrderStatus, method: PaymentMethod): TrackingStep[] {
   // Pay on delivery is confirmed without a payment: the customer pays when the order arrives.
   const second = method === 'salary_advance' ? 'Azania Bank approval' : method === 'pay_on_delivery' ? 'Order confirmed' : 'Payment confirmed';
+  // Orders confirmed by phone: received → confirmed (invoice) → cleared → out for delivery → delivered.
+  if (method === 'pay_on_delivery' || method === 'pay_before_delivery') {
+    const titles2 = ['Order received', 'Confirmed by phone', method === 'pay_on_delivery' ? 'Ready for dispatch' : 'Payment confirmed', 'Out for delivery', 'Delivered'];
+    const p2: Record<OrderStatus, [number, number]> = { placed: [1, 1], confirmed: [2, 2], bank_review: [1, 1], approved: [3, -1], packed: [3, -1], out_for_delivery: [3, 3], delivered: [5, -1], cancelled: [1, -1], rejected: [1, -1] };
+    const [d2, c2] = p2[status];
+    return titles2.map((title, i) => ({ title, state: i < d2 ? 'done' : i === c2 ? 'current' : 'pending' }));
+  }
   const titles = ['Order placed', second, 'Packed at warehouse', 'Out for delivery', 'Delivered'];
   // How many steps are complete, and which step is in progress (-1 = none).
   const progress: Record<OrderStatus, [done: number, current: number]> = {
     placed: [1, 1],
+    confirmed: [1, 1],
     bank_review: [1, 1],
     approved: [2, 2],
     packed: [3, -1],
@@ -105,7 +121,7 @@ export interface StepperStep {
   at: Date | null;
 }
 
-const STEP_OF_STATUS: Partial<Record<OrderStatus, number>> = { placed: 0, approved: 1, packed: 2, out_for_delivery: 3, delivered: 4 };
+const STEP_OF_STATUS: Partial<Record<OrderStatus, number>> = { placed: 0, confirmed: 1, approved: 1, packed: 2, out_for_delivery: 3, delivered: 4 };
 
 /**
  * Stepper state from the order status, with each step dated from the order's events.
@@ -126,4 +142,23 @@ export function orderStepper(status: OrderStatus, method: PaymentMethod, events:
 /** Orders still moving (the dashboard's "Active" filter). */
 export function isActiveOrder(status: string): boolean {
   return isOrderStatus(status) && !isTerminal(status);
+}
+
+/**
+ * Who may move an order between two statuses (permission names, see packages/core/src/roles.ts):
+ * the Order desk confirms or cancels new orders, Finance approves payment or sends it back,
+ * the Storekeeper dispatches and marks delivered. Pay Later bank decisions are taken on their own page.
+ */
+export function transitionPermission(from: OrderStatus, to: OrderStatus): string {
+  if (from === 'placed' && (to === 'confirmed' || to === 'cancelled')) return 'orders.confirm';
+  if (from === 'confirmed' && to === 'cancelled') return 'orders.confirm';
+  if ((from === 'confirmed' || from === 'placed') && (to === 'approved' || to === 'placed')) return 'payments.approve';
+  if (from === 'bank_review' || to === 'bank_review') return 'advance.write';
+  return 'orders.dispatch';
+}
+
+/** Status words for the customer: an online payment not made yet reads "Awaiting payment"; a phone order "Order received". */
+export function customerStatusLabel(status: OrderStatus, method: string): string {
+  if (status === 'placed' && !staffConfirmed(method)) return 'Awaiting payment';
+  return ORDER_STATUS_LABEL[status];
 }
