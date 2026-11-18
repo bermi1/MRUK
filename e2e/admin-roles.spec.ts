@@ -30,9 +30,9 @@ async function shoot(page: Page, name: string) {
 
 const ROLES = [
   { who: 'finance', email: 'finance@mruk.co.tz', role: 'Finance', sees: ['dash-finance-revenue', 'dash-finance-advance', 'dash-finance-collect'], money: true, task: 'Pay Later application' },
-  { who: 'warehouse', email: 'daudi@mruk.co.tz', role: 'Warehouse', sees: ['dash-warehouse', 'dash-warehouse-queue', 'dash-warehouse-stock'], money: false, task: 'Reorder' },
-  { who: 'support', email: 'zawadi@mruk.co.tz', role: 'Support agent', sees: ['dash-support', 'dash-support-orders', 'dash-support-issues'], money: false, task: 'TK-' },
-  { who: 'catalogue', email: 'halima@skywood.co.tz', role: 'Catalogue editor', sees: ['dash-catalogue', 'dash-catalogue-cms', 'dash-catalogue-promos'], money: false, task: 'Low stock on the store' },
+  { who: 'warehouse', email: 'daudi@mruk.co.tz', role: 'Storekeeper', sees: ['dash-warehouse', 'dash-warehouse-queue', 'dash-warehouse-stock'], money: false, task: /Reorder|Pack order/ },
+  { who: 'support', email: 'zawadi@mruk.co.tz', role: 'Client support', sees: ['dash-support', 'dash-support-orders', 'dash-support-issues'], money: false, task: 'TK-' },
+  { who: 'catalogue', email: 'halima@skywood.co.tz', role: 'Store control', sees: ['dash-catalogue', 'dash-catalogue-recent'], money: false, task: 'Low stock on the store' },
 ] as const;
 const ALL_WIDGETS = ['dash-overview', 'dash-teams', 'dash-finance-revenue', 'dash-warehouse', 'dash-support', 'dash-catalogue', 'subscribers-tile'];
 
@@ -69,7 +69,7 @@ test('owner keeps the full multi-brand view with work by team', async ({ page })
   await signIn(page, 'bernard@bermitechs.com');
   await expect(page.getByTestId('dash-overview')).toBeVisible();
   await expect(page.getByTestId('dash-teams')).toBeVisible();
-  await expect(page.getByTestId('team-warehouse')).not.toContainText(/^Warehouse\s*0/);
+  await expect(page.getByTestId('team-warehouse')).not.toContainText(/^Storekeeper\s*0/);
   await expect(page.getByTestId('subscribers-tile')).toBeVisible();
   await shoot(page, 'owner');
   await page.goto('/admin/tasks?view=all');

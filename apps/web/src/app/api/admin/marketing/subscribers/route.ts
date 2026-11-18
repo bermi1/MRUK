@@ -12,11 +12,11 @@ function cell(v: string | number): string {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-/** Subscriber list as CSV. Contains personal data: Super admin and Store manager only, audit-logged. */
+/** Subscriber list as CSV. Contains personal data: Admin, Management and Marketing only, audit-logged. */
 export async function GET(req: Request) {
   const ctx = await staffForRoute();
   if (!ctx) return new Response('Sign in required', { status: 401 });
-  if (!ctx.can('marketing') || !['owner', 'manager'].includes(ctx.role)) return new Response('Forbidden', { status: 403 });
+  if (!ctx.can('marketing') || !['owner', 'manager', 'marketing'].some((r) => r === ctx.role || ctx.extraRoles.includes(r))) return new Response('Forbidden', { status: 403 });
   const url = new URL(req.url);
   const sp = Object.fromEntries(['q', 'channel', 'status'].map((k) => [k, url.searchParams.get(k)?.slice(0, 60) ?? undefined]));
   const f = await adminFilters(ctx);

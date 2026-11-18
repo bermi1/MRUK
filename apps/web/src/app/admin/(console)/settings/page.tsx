@@ -1,5 +1,5 @@
 import { prisma, type Prisma } from '@bt/db';
-import { fmtDateTime } from '@bt/core';
+import { fmtDateTime, ROLE_DEFS } from '@bt/core';
 import { createStaffAction, resetStaffTotpAction, saveNotificationsAction, saveSecurityAction, setTempPasswordAction, updateStaffAction } from '@/app/actions/admin';
 import { ActBtn } from '@/components/admin/ActBtn';
 import { AForm } from '@/components/admin/AForm';
@@ -51,6 +51,29 @@ const NOTIFS: [string, string, string][] = [
 const AUDIT_PER = 100;
 const brandText = (b: string[]) => (b.includes('*') ? 'Both brands' : b.map((x) => (x === 'mruk' ? 'Mr UK' : 'Skywood')).join(', ') || 'None');
 
+/** One tick box per role: a person can hold any combination (main role = the first ticked, in this order). */
+function RoleBoxes({ roles, held }: { roles: { id: string; name: string }[]; held: string[] }) {
+  const ordered = ROLE_DEFS.map((d) => ({ def: d, live: roles.find((r) => r.id === d.id) })).filter((x) => x.live);
+  return (
+    <fieldset className="ad-field" style={{ border: 0, padding: 0, margin: 0 }}>
+      <legend style={{ padding: 0, marginBottom: 6 }}>Roles (tick every job this person does)</legend>
+      <div className="ad-stack s8">
+        {ordered.map(({ def, live }) => (
+          <label key={def.id} className="ad-check" style={{ alignItems: 'flex-start', fontSize: 13 }}>
+            <input type="checkbox" name="roles" value={def.id} defaultChecked={held.includes(def.id)} style={{ marginTop: 3 }} />
+            <span>
+              <b>{live!.name}</b>
+              <span className="ad-muted" style={{ display: 'block', fontSize: 11.5 }}>
+                {def.description}
+              </span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function BrandBoxes({ brands }: { brands?: string[] }) {
   const all = !brands || brands.includes('*');
   return (
@@ -92,14 +115,11 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     prisma.auditLog.findMany({ distinct: ['entity'], select: { entity: true }, orderBy: { entity: 'asc' } }),
     prisma.auditLog.count({ where: auditWhere }),
   ]);
+  // Registry order (Admin first), not alphabetical.
+  roles.sort((a, b) => ROLE_DEFS.findIndex((d) => d.id === a.id) - ROLE_DEFS.findIndex((d) => d.id === b.id));
   const notif = (settings.find((s) => s.key === 'notifications')?.value ?? {}) as Record<string, boolean>;
   const sec = (settings.find((s) => s.key === 'security')?.value ?? {}) as { sessionTimeoutMinutes?: number; backups?: string };
   const adapters = adapterStatus();
-  const roleOptions = roles.map((r) => (
-    <option key={r.id} value={r.id}>
-      {r.name}
-    </option>
-  ));
 
   return (
     <div className="ad-stack">
@@ -134,25 +154,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                           <summary>Manage</summary>
                           <div style={{ width: 'min(460px, 70vw)' }}>
                             <AForm action={updateStaffAction.bind(null, u.id)} className="ad-stack s8" label={`Manage ${u.name}`}>
-                              <label className="ad-field">
-                                Role
-                                <select name="role" defaultValue={u.roleId}>
-                                  {roleOptions}
-                                </select>
-                              </label>
-                              <fieldset className="ad-field" style={{ border: 0, padding: 0, margin: 0 }}>
-                                <legend style={{ padding: 0, marginBottom: 4 }}>Also covers (one person doing several departments)</legend>
-                                <div className="ad-row" style={{ flexWrap: 'wrap', gap: '4px 14px' }}>
-                                  {roles
-                                    .filter((r) => r.id !== 'owner')
-                                    .map((r) => (
-                                      <label key={r.id} className="ad-check" style={{ fontSize: 12.5 }}>
-                                        <input type="checkbox" name="extra" value={r.id} defaultChecked={u.extraRoles.includes(r.id)} /> {r.name}
-                                      </label>
-                                    ))}
-                                </div>
-                                <span className="ad-muted" style={{ fontSize: 11.5 }}>They get the pages and task queues of every ticked department. Ignored for a Super admin.</span>
-                              </fieldset>
+                              <RoleBoxes roles={roles} held={[u.roleId, ...u.extraRoles]} />
                               <BrandBoxes brands={u.brands} />
                               <label className="ad-check">
                                 <input type="checkbox" name="active" defaultChecked={u.active} /> Active (can sign in)
@@ -211,12 +213,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                   Work email
                   <input name="email" type="email" required maxLength={160} />
                 </label>
-                <label className="ad-field">
-                  Role
-                  <select name="role" defaultValue="support">
-                    {roleOptions}
-                  </select>
-                </label>
+                <div className="full" style={{ gridColumn: '1 / -1' }}>
+                  <RoleBoxes roles={roles} held={[]} />
+                </div>
                 <BrandBoxes />
               </AForm>
             </details>

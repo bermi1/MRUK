@@ -120,7 +120,7 @@ test('sticky buy bar appears after scrolling past the buttons and adds to cart',
 });
 
 test('a product without description or specs still has an overview (features) and a spec table', async ({ page }) => {
-  const plain = await db.product.findFirst({ where: { brandKey: 'skywood', hidden: false, description: '', features: { isEmpty: false } }, select: { id: true, model: true, features: true } });
+  const plain = await db.product.findFirst({ where: { brandKey: 'skywood', hidden: false, description: '', features: { isEmpty: false }, images: { isEmpty: false } }, select: { id: true, model: true, features: true } });
   test.skip(!plain, 'every product has a description');
   await page.goto(`/skywood/p/${plain!.id}`);
   const overview = page.getByTestId('pdp-overview');

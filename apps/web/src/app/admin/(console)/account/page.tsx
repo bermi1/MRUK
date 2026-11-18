@@ -70,7 +70,7 @@ export default async function AccountPage() {
           <span>{sessions}</span>
         </div>
         <p className="ad-muted2" style={{ fontSize: 12.5, margin: 0 }}>
-          Lost your authenticator app? Ask a Super admin to reset your two-factor sign-in in Settings and users.
+          Lost your authenticator app? Ask an Admin to reset your two-factor sign-in in Settings and users.
         </p>
       </section>
       {!ctx.mustChangePassword && (
@@ -101,7 +101,7 @@ export default async function AccountPage() {
               </label>
             ))}
             <p className="ad-muted2" style={{ fontSize: 12, margin: 0 }}>
-              Messages carry the task and order or ticket number only, never customer details. A Super admin can pause a whole category in Settings › Notifications.
+              Messages carry the task and order or ticket number only, never customer details. An Admin can pause a whole category in Settings › Notifications.
             </p>
           </AForm>
         </section>

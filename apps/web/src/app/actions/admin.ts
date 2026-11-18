@@ -20,7 +20,7 @@ import { integrations } from '@/server/integrations';
 import { advanceLifecycle, CheckoutError, createShopSale, decideAdvance, invoiceLink, requestBankDecision, transitionOrder } from '@/server/orders';
 import { env } from '@/server/env';
 import { limit } from '@/server/ratelimit';
-import { REGIONS, SHOP_PAYMENT_METHODS } from '@bt/core';
+import { REGIONS, SHOP_PAYMENT_METHODS, splitRoles } from '@bt/core';
 import { RateLimitError } from '@/server/ratelimit';
 import { setPayLater } from '@/server/paylater';
 import { BRAND_COOKIE, BRANCH_COOKIE, filterCookieValue, newOrdersSnapshot } from '@/server/admin/context';
@@ -805,11 +805,11 @@ function tempPassword(): string {
   return `Tmp-${randomBytes(6).toString('base64url')}-${randomBytes(3).toString('hex')}9`;
 }
 
-/** Keep at least one active Super admin so nobody is locked out of Settings. */
+/** Keep at least one active Admin so nobody is locked out of Settings. */
 async function assertOwnerRemains(userId: string, nextRole: string, nextActive: boolean) {
   if (nextRole === 'owner' && nextActive) return;
   const others = await prisma.staffUser.count({ where: { roleId: 'owner', active: true, id: { not: userId } } });
-  if (!others) throw new Error('Keep at least one active Super admin');
+  if (!others) throw new Error('Keep at least one active Admin');
 }
 
 function brandsFrom(fd: FormData): string[] {
@@ -818,16 +818,24 @@ function brandsFrom(fd: FormData): string[] {
   return uniq.length === 2 ? ['*'] : uniq;
 }
 
+/** The roles ticked on a staff form ("roles" checkboxes): main role + the others, registry order. Only roles that exist. */
+async function rolesFrom(fd: FormData): Promise<{ main: string; extra: string[] }> {
+  const known = new Set((await prisma.role.findMany({ select: { id: true } })).map((r) => r.id));
+  const ticked = fd.getAll('roles').filter((x): x is string => typeof x === 'string' && known.has(x));
+  const picked = splitRoles(ticked);
+  if (!picked) throw new Error('Tick at least one role');
+  return picked;
+}
+
 export async function createStaffAction(fd: FormData): Promise<ActionResult<Msg>> {
   return run('settings', async (ctx) => {
-    const f = z.object({ name: textZ(80, 2), email: z.string().trim().toLowerCase().email('Enter a valid email').max(160), role: z.string().regex(/^[a-z_]{2,30}$/) }).parse(fields(fd));
-    const role = await prisma.role.findUnique({ where: { id: f.role } });
-    if (!role) throw new Error('Choose a role');
+    const f = z.object({ name: textZ(80, 2), email: z.string().trim().toLowerCase().email('Enter a valid email').max(160) }).parse(fields(fd));
+    const picked = await rolesFrom(fd);
     const brands = brandsFrom(fd);
     if (!brands.length) throw new Error('Choose at least one brand');
     const temp = tempPassword();
-    const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: role.id, brands, passwordHash: hashPassword(temp), mustChangePassword: true } });
-    await audit(ctx.email, 'staff.create', 'StaffUser', u.id, { role: role.id, brands });
+    const u = await prisma.staffUser.create({ data: { name: f.name, email: f.email, roleId: picked.main, extraRoles: picked.extra, brands, passwordHash: hashPassword(temp), mustChangePassword: true } });
+    await audit(ctx.email, 'staff.create', 'StaffUser', u.id, { roles: [picked.main, ...picked.extra], brands });
     revalidateAdmin();
     return { message: `Created. Temporary password (shown once): ${temp} — they ${staff2faRequired() ? 'set up 2FA and ' : ''}choose their own password at first sign-in.` };
   });
@@ -838,20 +846,18 @@ export async function updateStaffAction(id: string, fd: FormData): Promise<Actio
     const u = await prisma.staffUser.findUnique({ where: { id: idZ.parse(id) } });
     if (!u) throw new Error('User not found');
     const f = fields(fd);
-    const roleId = z.string().regex(/^[a-z_]{2,30}$/).parse(f.role);
-    if (!(await prisma.role.findUnique({ where: { id: roleId } }))) throw new Error('Choose a role');
+    const picked = await rolesFrom(fd);
+    const roleId = picked.main;
+    const extraRoles = picked.extra;
     const brands = brandsFrom(fd);
     if (!brands.length) throw new Error('Choose at least one brand');
     const active = checkbox(f.active);
-    // Other departments this person also covers. Super admin already has everything, so it is never an "also covers" role.
-    const known = new Set((await prisma.role.findMany({ select: { id: true } })).map((r) => r.id));
-    const extraRoles = roleId === 'owner' ? [] : [...new Set(fd.getAll('extra').filter((x): x is string => typeof x === 'string' && known.has(x) && x !== roleId && x !== 'owner'))].sort();
     const rolesChanged = roleId !== u.roleId || extraRoles.join() !== [...u.extraRoles].sort().join();
     if (u.id === ctx.id && (!active || rolesChanged)) throw new Error('You cannot change your own role or deactivate yourself');
     if (u.roleId === 'owner' && u.active) await assertOwnerRemains(u.id, roleId, active);
     await prisma.staffUser.update({ where: { id: u.id }, data: { roleId, extraRoles, brands, active } });
     if (!active || roleId !== u.roleId) await prisma.session.deleteMany({ where: { staffId: u.id } });
-    await audit(ctx.email, 'staff.update', 'StaffUser', u.id, { role: { from: u.roleId, to: roleId }, alsoCovers: { from: u.extraRoles, to: extraRoles }, brands, active });
+    await audit(ctx.email, 'staff.update', 'StaffUser', u.id, { roles: { from: [u.roleId, ...u.extraRoles], to: [roleId, ...extraRoles] }, brands, active });
     revalidateAdmin();
     return { message: 'Saved' };
   });

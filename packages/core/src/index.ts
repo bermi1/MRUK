@@ -13,3 +13,4 @@ export * from './marketing';
 export * from './tasks';
 export * from './paylater';
 export * from './product-facts';
+export * from './roles';

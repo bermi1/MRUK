@@ -65,7 +65,7 @@ test('staff edit the About page in the CMS and the store shows it', async ({ pag
   await expect(form.getByText('About page published')).toBeVisible();
 });
 
-test('one person can cover two departments: a support agent who also covers the warehouse', async ({ page }) => {
+test('one person can hold several roles: client support who is also the storekeeper', async ({ page }) => {
   const c = db();
   try {
     await staffSignIn(page, 'bernard@bermitechs.com');
@@ -73,13 +73,13 @@ test('one person can cover two departments: a support agent who also covers the 
     const row = page.locator('tr', { hasText: 'zawadi@mruk.co.tz' });
     await row.locator('summary', { hasText: 'Manage' }).click();
     const form = row.getByRole('form', { name: /^Manage / });
-    await form.getByRole('checkbox', { name: 'Warehouse' }).check();
+    await form.getByRole('checkbox', { name: /^Storekeeper/ }).check();
     await form.getByRole('button', { name: 'Save' }).click();
     await expect(form.getByText('Saved')).toBeVisible();
-    expect((await c.staffUser.findUniqueOrThrow({ where: { email: 'zawadi@mruk.co.tz' } })).extraRoles).toEqual(['warehouse']);
+    expect((await c.staffUser.findUniqueOrThrow({ where: { email: 'zawadi@mruk.co.tz' } })).extraRoles).toEqual(['support']);
 
     await staffSignIn(page, 'zawadi@mruk.co.tz');
-    await expect(page.getByTestId('dash-hello')).toContainText('Support agent + Warehouse');
+    await expect(page.getByTestId('dash-hello')).toContainText('Storekeeper + Client support');
     // Support pages as before, plus the warehouse's inventory page.
     await page.goto('/admin/tickets');
     await expect(page.getByRole('heading', { name: /tickets/i }).first()).toBeVisible();
@@ -87,7 +87,7 @@ test('one person can cover two departments: a support agent who also covers the 
     await expect(page.getByText(/cannot|not allowed|no access/i)).toHaveCount(0);
     await expect(page.getByRole('heading', { name: /inventory/i }).first()).toBeVisible();
   } finally {
-    await c.staffUser.update({ where: { email: 'zawadi@mruk.co.tz' }, data: { extraRoles: [] } });
+    await c.staffUser.update({ where: { email: 'zawadi@mruk.co.tz' }, data: { roleId: 'support', extraRoles: [] } });
     await c.$disconnect();
   }
 });

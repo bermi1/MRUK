@@ -91,7 +91,7 @@ export default async function Dashboard() {
       {has('finance') && <FinanceWidgets f={f} />}
       {has('warehouse') && <WarehouseWidgets f={f} />}
       {has('support') && <SupportWidgets ctx={ctx} f={f} />}
-      {has('catalogue') && <CatalogueWidgets f={f} />}
+      {has('catalogue') && <CatalogueWidgets f={f} showCms={ctx.can('cms')} showPromos={ctx.can('promos')} />}
       {has('marketing') && <MarketingWidgets f={f} />}
     </div>
   );

@@ -38,6 +38,9 @@ test('brand-scoped staff only see their own brand', async ({ page }) => {
   await page.goto('/admin/products?b=mruk');
   await expect(page.locator('tr[data-product^="mruk-"]')).toHaveCount(0);
   await expect(page.locator('tr[data-product^="skywood-"]').first()).toBeVisible();
-  await page.goto('/admin/cms?b=mruk');
-  await expect(page.getByTestId('cms-brand')).toContainText('Skywood');
+  await page.goto('/admin/inventory?b=mruk');
+  await expect(page.locator('main')).not.toContainText('mruk-');
+  // Store control does not run the website: the CMS is IT and website's job.
+  await page.goto('/admin/cms');
+  await expect(page.getByRole('heading', { name: 'No access' })).toBeVisible();
 });

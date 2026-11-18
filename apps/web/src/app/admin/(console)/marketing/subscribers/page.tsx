@@ -22,7 +22,7 @@ export default async function SubscribersPage({ searchParams }: { searchParams: 
   const page = pageParam(sp.page);
   const [total, rows] = await Promise.all([prisma.subscriber.count({ where }), prisma.subscriber.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * PER, take: PER })]);
   const write = ctx.can('marketing.write');
-  const canExport = ['owner', 'manager'].includes(ctx.role) && ctx.can('marketing');
+  const canExport = ['owner', 'manager', 'marketing'].some((r) => r === ctx.role || ctx.extraRoles.includes(r)) && ctx.can('marketing');
   const keep = Object.fromEntries(Object.entries({ q: sp.q, channel: sp.channel, status: sp.status }).filter(([, v]) => !!v)) as Record<string, string>;
   return (
     <div className="ad-stack">

@@ -17,6 +17,7 @@ import {
   normaliseNida,
   orderNumber,
   REGIONS,
+  ROLE_DEFS,
   type AdvanceStatus,
   type OrderStatus,
   type PaymentMethod,
@@ -115,18 +116,29 @@ const CUSTOMERS = [
 
 const brandTokens = (b: Record<string, string>, key: 'mruk' | 'skywood') => ({ primary: b.primary, dark: b.dark, soft: b.soft, ink: b.ink, accent: b.accent, hi: b.hi, r: b.r, rs: b.rs, head: b.head, track: b.track, logo: BRAND_LOGO[key] });
 
-/** Permissions added after launch: granted to existing roles on every deploy (only ever adds; never removes what an owner set). */
-const ADDED_PERMISSIONS: Record<string, string[]> = { manager: ['marketing', 'marketing.write', 'tasks.all', 'paylater.toggle'] };
-
+/**
+ * Roles on a live database follow ROLE_DEFS (packages/core/src/roles.ts): missing roles are created and names
+ * kept current. The 2026-11 restructure (nine roles) resets every role's permissions once, then later deploys
+ * only ever add permissions, never removing what an Admin set.
+ */
 async function syncRolePermissions() {
-  for (const [id, add] of Object.entries(ADDED_PERMISSIONS)) {
-    const r = await prisma.role.findUnique({ where: { id } });
-    if (!r || r.permissions.includes('*')) continue;
-    const missing = add.filter((p) => !r.permissions.includes(p));
-    if (missing.length) {
-      await prisma.role.update({ where: { id }, data: { permissions: [...r.permissions, ...missing] } });
-      console.log(`Role ${id}: added ${missing.join(', ')}.`);
+  const done = await prisma.setting.findUnique({ where: { key: 'roles.v2' } });
+  for (const def of ROLE_DEFS) {
+    const r = await prisma.role.findUnique({ where: { id: def.id } });
+    if (!r) {
+      await prisma.role.create({ data: { id: def.id, name: def.name, permissions: [...def.permissions] } });
+      console.log(`Role ${def.id} (${def.name}) created.`);
+      continue;
     }
+    const permissions = done || r.permissions.includes('*') ? [...r.permissions, ...def.permissions.filter((p) => !r.permissions.includes(p))] : [...def.permissions];
+    if (r.name !== def.name || permissions.join() !== r.permissions.join()) {
+      await prisma.role.update({ where: { id: def.id }, data: { name: def.name, permissions: def.permissions.includes('*') ? ['*'] : permissions } });
+      console.log(`Role ${def.id}: now ${def.name}.`);
+    }
+  }
+  if (!done) {
+    await prisma.setting.create({ data: { key: 'roles.v2', value: { at: new Date().toISOString() } } });
+    await prisma.auditLog.create({ data: { actor: 'system:deploy', action: 'roles.restructure', entity: 'Role', entityId: 'all', diff: { roles: ROLE_DEFS.map((r) => r.name) } } });
   }
 }
 
@@ -446,18 +458,10 @@ async function main() {
   });
 
   // Staff, roles ------------------------------------------------------------
-  const PERMS = {
-    owner: ['*'],
-    manager: ['dashboard', 'orders', 'orders.write', 'advance', 'invoices', 'customers', 'products', 'products.write', 'inventory', 'catalog', 'promos', 'promos.write', 'cms', 'cms.write', 'marketing', 'marketing.write', 'tickets', 'tickets.write', 'reports', 'tasks.all', 'paylater.toggle'],
-    finance: ['dashboard', 'orders', 'advance', 'advance.write', 'invoices', 'invoices.write', 'customers', 'reports'],
-    catalogue: ['dashboard', 'products', 'products.write', 'inventory', 'catalog', 'cms', 'cms.write', 'promos', 'promos.write'],
-    warehouse: ['dashboard', 'orders', 'orders.write', 'inventory'],
-    support: ['dashboard', 'orders', 'customers', 'tickets', 'tickets.write'],
-  } as const;
-  const ROLE_NAMES = { owner: 'Super admin', manager: 'Store manager', finance: 'Finance', catalogue: 'Catalogue editor', warehouse: 'Warehouse', support: 'Support agent' } as const;
-  for (const [id, permissions] of Object.entries(PERMS)) {
-    await prisma.role.create({ data: { id, name: ROLE_NAMES[id as keyof typeof ROLE_NAMES], permissions: [...permissions] } });
+  for (const r of ROLE_DEFS) {
+    await prisma.role.create({ data: { id: r.id, name: r.name, permissions: [...r.permissions] } });
   }
+  const ROLE_NAMES = Object.fromEntries(ROLE_DEFS.map((r) => [r.id, r.name])) as Record<string, string>;
   const staffPassword = process.env.SEED_STAFF_PASSWORD || 'ChangeMe-2026!';
   const staff = [
     ['Bernard Salia', 'bernard@bermitechs.com', 'owner', ['*']],
@@ -466,6 +470,9 @@ async function main() {
     ['Daudi Mrisho', 'daudi@mruk.co.tz', 'warehouse', ['mruk']],
     ['Zawadi Nnko', 'zawadi@mruk.co.tz', 'support', ['*']],
     ['Salma Hassan', 'finance@mruk.co.tz', 'finance', ['*']],
+    ['Neema Mushi', 'marketing@mruk.co.tz', 'marketing', ['*']],
+    ['Joseph Mtui', 'orders@mruk.co.tz', 'orderdesk', ['*']],
+    ['Rehema Kimaro', 'it@mruk.co.tz', 'website', ['*']],
   ] as const;
   for (const [name, email, roleId, brands] of staff) {
     await prisma.staffUser.create({ data: { name, email, roleId, brands: [...brands], passwordHash: hashPassword(staffPassword) } });

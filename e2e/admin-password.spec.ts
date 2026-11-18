@@ -25,6 +25,7 @@ test('invited staff must replace the temporary password, and can change it again
     const invite = page.getByRole('form', { name: 'Invite user' });
     await invite.locator('input[name=name]').fill('Password Test');
     await invite.locator('input[name=email]').fill(email);
+    await invite.getByRole('checkbox', { name: /^Client support/ }).check();
     await invite.getByRole('button', { name: 'Create user' }).click();
     const created = await invite.getByText(/Temporary password \(shown once\)/).textContent();
     const temp = /: (\S+) —/.exec(created ?? '')![1]!;

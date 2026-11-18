@@ -57,7 +57,7 @@ export function Forbidden({ what }: { what: string }) {
     <div className="ad-card" style={{ maxWidth: 560 }}>
       <h2 className="ad-h">No access</h2>
       <p className="ad-muted2" style={{ fontSize: 14, lineHeight: 1.6 }}>
-        Your role cannot open {what}. Ask a Super admin to change your role in Settings and users.
+        Your role cannot open {what}. Ask an Admin to change your roles in Settings and users.
       </p>
     </div>
   );

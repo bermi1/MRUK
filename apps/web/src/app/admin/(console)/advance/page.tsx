@@ -298,7 +298,7 @@ export default async function AdvancePage({ searchParams }: { searchParams: Prom
               ))}
             </div>
           </div>
-          {!write && <p className="ad-muted2" style={{ fontSize: 12.5, margin: 0 }}>Your role can view applications. Decisions need the Finance or Super admin role.</p>}
+          {!write && <p className="ad-muted2" style={{ fontSize: 12.5, margin: 0 }}>Your role can view applications. Decisions need the Finance, Management or Admin role.</p>}
         </section>
       )}
 

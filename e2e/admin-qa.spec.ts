@@ -100,6 +100,8 @@ test('uploaded JPEG and PNG photos are stored and served as WebP (rotated, resiz
 
   // PNG with transparency, through the CMS (SEO / sharing image).
   const png = await sharp({ create: { width: 64, height: 48, channels: 4, background: { r: 0, g: 120, b: 200, alpha: 0.5 } } }).png().toBuffer();
+  // Website content is IT and website's job (Store control has no CMS).
+  await signIn(page, 'it@mruk.co.tz');
   await page.goto('/admin/cms?b=skywood');
   const seo = page.locator('form').filter({ has: page.locator('input[name=img]') });
   await seo.locator('input[name=img]').setInputFiles({ name: 'og.png', mimeType: 'image/png', buffer: png });
@@ -111,6 +113,7 @@ test('uploaded JPEG and PNG photos are stored and served as WebP (rotated, resiz
   expect(ogMeta).toMatchObject({ format: 'webp', width: 64, height: 48, hasAlpha: true });
 
   // Not an image (right name and type, wrong bytes) is refused.
+  await signIn(page, 'halima@skywood.co.tz');
   await page.goto(`/admin/products?b=skywood&q=${encodeURIComponent(product.model)}`);
   await row.locator('input[type=file]').setInputFiles({ name: 'fake.png', mimeType: 'image/png', buffer: Buffer.from('definitely not a picture, just text') });
   await expect(row.getByRole('alert')).toContainText('Only JPG, PNG or WebP');
@@ -231,20 +234,17 @@ test('promo codes: validation, edit, pause; uses count only when an order is pla
 });
 
 test('role limits on figures and PII; order search by local phone number', async ({ page }) => {
-  // Catalogue editor: promotions without revenue figures.
-  await signIn(page, 'halima@skywood.co.tz');
+  // Marketing: promotions without revenue figures.
+  await signIn(page, 'marketing@mruk.co.tz');
   await page.goto('/admin/promos');
   await expect(page.getByText('Active discount codes')).toBeVisible();
-  await expect(page.locator('main')).not.toContainText('Promo revenue');
-  // Manager: can view Pay Later applications but not unmask NIDA / salary.
+  await expect(page.locator('main')).toContainText('Promo revenue'); // campaign analytics are Marketing's job
+  // Client support has no Pay Later pages at all (applicant data stays with Finance, Management and Admin).
   const c = db();
-  const app = await c.salaryAdvanceApplication.findFirstOrThrow({ where: { order: { brandKey: 'mruk' } } });
+  await signIn(page, 'zawadi@mruk.co.tz');
+  await page.goto('/admin/advance');
+  await expect(page.getByRole('heading', { name: 'No access' })).toBeVisible();
   await signIn(page, 'amani@mruk.co.tz');
-  await page.goto(`/admin/advance?id=${app.id}&reveal=1`);
-  await expect(page.getByText('APPLICANT')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Show full details' })).toHaveCount(0);
-  await expect(page.locator('main')).toContainText(`•••• ${app.nidaLast4}`);
-  expect(await c.auditLog.count({ where: { actor: 'amani@mruk.co.tz', action: 'advance.view_pii' } })).toBe(0);
   // Orders: 0754… finds an order stored as +255754….
   const o = await c.order.findFirstOrThrow({ where: { brandKey: 'mruk' }, orderBy: { createdAt: 'desc' } });
   await page.goto(`/admin/orders?q=${o.contactPhone.replace('+255', '0')}`);

@@ -9,7 +9,7 @@
 import type { OrderStatus } from './orders';
 import type { PaymentMethod } from './payments';
 
-export type TaskRole = 'owner' | 'manager' | 'finance' | 'catalogue' | 'warehouse' | 'support';
+export type TaskRole = 'owner' | 'manager' | 'marketing' | 'finance' | 'orderdesk' | 'warehouse' | 'catalogue' | 'website' | 'support';
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 /** Matches the notification switches in Settings › Notifications. */
 export type TaskCategory = 'orders' | 'bank' | 'stock' | 'tickets' | 'marketing';
@@ -48,7 +48,7 @@ export const TASK_KIND_LABEL: Record<TaskKind, string> = {
   'marketing.campaign': 'Campaign result',
 };
 
-export const ROLE_LABEL: Record<TaskRole, string> = { owner: 'Super admin', manager: 'Store manager', finance: 'Finance', catalogue: 'Catalogue', warehouse: 'Warehouse', support: 'Support' };
+export const ROLE_LABEL: Record<TaskRole, string> = { owner: 'Admin', manager: 'Management', marketing: 'Marketing', finance: 'Finance', orderdesk: 'Order desk', warehouse: 'Storekeeper', catalogue: 'Store control', website: 'IT and website', support: 'Client support' };
 
 /** DEFAULT service levels (minutes / hours). */
 export const TASK_DEFAULTS = {
@@ -539,7 +539,8 @@ export function dashboardSections(perms: readonly string[]): { sections: Dashboa
   else {
     if (has('advance') && has('invoices') && money) out.push('finance');
     if (has('orders.write') && has('inventory')) out.push('warehouse');
-    if (has('tickets')) out.push('support');
+    // Finance and the Order desk answer only payment / delivery tickets: the full support panel is Client support's.
+    if (has('tickets') && !has('invoices')) out.push('support');
     if (has('products')) out.push('catalogue');
   }
   if (has('marketing')) out.push('marketing');

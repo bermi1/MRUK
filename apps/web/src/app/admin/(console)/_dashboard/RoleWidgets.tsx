@@ -320,7 +320,7 @@ export async function SupportWidgets({ ctx, f }: { ctx: StaffContext; f: AdminFi
 
 // Catalogue -------------------------------------------------------------------------------------
 
-export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
+export async function CatalogueWidgets({ f, showCms = true, showPromos = true }: { f: AdminFilters; showCms?: boolean; showPromos?: boolean }) {
   const pw = { brandKey: { in: f.brands } };
   const soon = new Date(Date.now() + 14 * DAY);
   const [total, drafts, out, low, noPhoto, recent, cms, flash, codes] = await Promise.all([
@@ -366,7 +366,8 @@ export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
           </ul>
         </Widget>
         <div className="ad-stack">
-          <Widget title="Website CMS" sub="Last change per store" link={{ href: '/admin/cms', label: 'Edit' }} testid="dash-catalogue-cms">
+          {showCms && (
+<Widget title="Website CMS" sub="Last change per store" link={{ href: '/admin/cms', label: 'Edit' }} testid="dash-catalogue-cms">
             <ul className="ad-rows">
               {cmsBy.map((c) => (
                 <li key={c.brandKey}>
@@ -383,7 +384,9 @@ export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
               ))}
             </ul>
           </Widget>
-          <Widget title="Promotions and codes" sub={`${flash.reduce((a, x) => a + x._count._all, 0)} flash deals live · codes expiring within 14 days in red`} link={{ href: '/admin/promos', label: 'Promotions' }} testid="dash-catalogue-promos">
+          )}
+          {showPromos && (
+<Widget title="Promotions and codes" sub={`${flash.reduce((a, x) => a + x._count._all, 0)} flash deals live · codes expiring within 14 days in red`} link={{ href: '/admin/promos', label: 'Promotions' }} testid="dash-catalogue-promos">
             <ul className="ad-rows">
               {codes.map((c) => (
                 <li key={c.id} className={c.expiresAt && c.expiresAt < soon ? 'warn' : ''}>
@@ -402,6 +405,7 @@ export async function CatalogueWidgets({ f }: { f: AdminFilters }) {
               {!codes.length && <li className="ad-empty">No active codes</li>}
             </ul>
           </Widget>
+          )}
         </div>
       </div>
     </>
@@ -478,7 +482,7 @@ export async function MarketingWidgets({ f }: { f: AdminFilters }) {
 
 export async function TeamsWidget({ f }: { f: AdminFilters }) {
   const by = await openTasksByRole(f.brands);
-  const roles: TaskRole[] = ['warehouse', 'finance', 'support', 'catalogue', 'manager'];
+  const roles: TaskRole[] = ['orderdesk', 'finance', 'warehouse', 'catalogue', 'support', 'marketing', 'website', 'manager'];
   return (
     <Widget title="Work by team" sub="Open tasks routed to each team · overdue in red" link={{ href: '/admin/tasks?view=all', label: 'All tasks' }} testid="dash-teams">
       <div className="ad-stats s5">
