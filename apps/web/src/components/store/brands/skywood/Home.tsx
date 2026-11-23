@@ -72,6 +72,21 @@ export function SkywoodHome(props: {
   const perMonth = payLater ? t('perMonthShort') : '';
   const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
   const reviews = reviewsFor('skywood', payLater);
+  // Opening film (real Skywood lifestyle footage, no captions or graphics) comes first unless the CMS already set a video slide.
+  const heroSlides: HeroSlideView[] = slides.some((x) => x.video)
+    ? slides
+    : [
+        {
+          ...SKYWOOD_FILM_SLIDE,
+          eyebrow: t('swFilmEyebrow'),
+          title: t('swFilmTitle'),
+          sub: t('swFilmSub'),
+          href: `${b}/shop`,
+          name: brand.name,
+          cta: t('filmShop'),
+        },
+        ...slides,
+      ];
   // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
   const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
@@ -84,7 +99,7 @@ export function SkywoodHome(props: {
 
   return (
     <div className="sw-home">
-      <SkywoodHero slides={slides} labels={heroLabels} dealsHref={`${b}/deals`} />
+      <SkywoodHero slides={heroSlides} labels={heroLabels} dealsHref={`${b}/deals`} />
 
       {/* Service promise */}
       <section className="sw-promise" aria-label={t('swPromise')}>
@@ -389,3 +404,27 @@ export function SkywoodHome(props: {
     </div>
   );
 }
+
+const SKYWOOD_FILM_SLIDE: HeroSlideView = {
+  eyebrow: '',
+  title: '',
+  sub: '',
+  img: '/video/skywood-film.webp',
+  href: '/skywood/shop',
+  price: 0,
+  model: 'Skywood',
+  name: 'Skywood',
+  kind: 'Lifestyle',
+  features: [],
+  cta: '',
+  pid: '',
+  layout: 'photo',
+  imgMobile: '',
+  theme: 'dark',
+  align: 'left',
+  focal: '50% 50%',
+  showPrice: false,
+  video: '/video/skywood-film.mp4',
+  videoPoster: '/video/skywood-film.webp',
+  audio: '',
+};
