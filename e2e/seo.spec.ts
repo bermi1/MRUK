@@ -224,6 +224,11 @@ test.describe('single-brand sites', () => {
         expect(pg.robots, path).toContain('noindex');
       }
       expect((await getPage(request, `${o}/privacy`)).status).toBe(200);
+      // Hero films and posters are served from the site root, not rewritten under /<brand> (they were 500s on live).
+      for (const file of ['/video/mruk-kitchen-film.mp4', '/video/mruk-home-film.webp', '/video/skywood-film.mp4']) {
+        const v = await request.get(`${o}${file}`, { headers: { Range: 'bytes=0-99' } });
+        expect([200, 206], file).toContain(v.status());
+      }
     });
   }
 

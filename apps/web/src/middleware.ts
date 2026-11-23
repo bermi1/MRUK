@@ -18,7 +18,7 @@ const OTHER_BRAND = STORE_BRAND === 'mruk' ? 'skywood' : STORE_BRAND === 'skywoo
 
 // Served from the site root in every mode (not rewritten under /<brand>): includes the SEO files
 // (robots.txt, sitemap.xml, llms.txt, llms-full.txt) and the shared privacy notice.
-const PASS_THROUGH = /^\/(mruk|skywood|admin|azania|api|_next|brand|img|icons|sw\.js|manifest\.webmanifest|favicon|robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt|privacy|offline)/;
+const PASS_THROUGH = /^\/(mruk|skywood|admin|azania|api|_next|brand|img|video|icons|sw\.js|manifest\.webmanifest|favicon|robots\.txt|sitemap\.xml|llms\.txt|llms-full\.txt|privacy|offline)/;
 
 function csp(nonce: string, dev: boolean) {
   return [
