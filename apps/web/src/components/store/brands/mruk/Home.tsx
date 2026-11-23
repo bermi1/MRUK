@@ -13,6 +13,7 @@ import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { ArrowRightIcon, BoltIcon, Stars } from '../../../icons';
 import { MrukHero } from './Hero';
+import { ActionClip, FilmHero, MRUK_FILM } from './FilmHero';
 import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -63,10 +64,12 @@ export function MrukHome(props: {
   const avgRating = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 5;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
   const exampleMonthly = Math.min(...products.map((p) => p.price)) / 12;
+  const tvCat = cats.find((c) => c.id === 'music-tv');
+  const genCat = cats.find((c) => c.id === 'generators');
 
   return (
     <div className="mu-home">
-      <MrukHero slides={slides} dealsHref={`${b}/deals`} labels={heroLabels} />
+      <FilmHero eyebrow={t('filmEyebrow')} title={t('filmTitle')} sub={t('filmSub')} primary={{ href: `${b}/shop`, label: t('filmShop') }} secondary={{ href: `${b}/deals`, label: t('filmDeals') }} />
 
       {/* Trust bar */}
       <section className="mu-trust" aria-label={t('helpAndServices')}>
@@ -89,6 +92,13 @@ export function MrukHome(props: {
           ))}
         </div>
       </section>
+
+      {/* Product spotlight (Admin › CMS › Hero slides) */}
+      {slides.length > 0 && (
+        <div className="mu-spot" aria-label={t('spotlight')}>
+          <MrukHero slides={slides} dealsHref={`${b}/deals`} labels={heroLabels} level={2} />
+        </div>
+      )}
 
       <div className="wrap">
         {/* Category rail */}
@@ -115,6 +125,19 @@ export function MrukHome(props: {
           </div>
         </section>
       </div>
+
+      {/* See it in action: short silent product clips */}
+      {(tvCat || genCat) && (
+        <div className="wrap">
+          <section className="mu-sec" data-testid="mruk-action">
+            <Head kicker={t('actionKicker')} title={t('actionTitle')} />
+            <div className="mu-clips">
+              {tvCat && <ActionClip src="/video/mruk-tv.mp4" poster="/video/mruk-tv.webp" title={t('actionTv')} sub={t('actionTvSub')} href={`${b}/c/${tvCat.id}`} cta={tvCat.name} />}
+              {genCat && <ActionClip src="/video/mruk-generators.mp4" poster="/video/mruk-generators.webp" title={t('actionGen')} sub={t('actionGenSub')} href={`${b}/c/${genCat.id}`} cta={genCat.name} />}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Flash deals */}
       {flash.length > 0 && (
@@ -258,6 +281,37 @@ export function MrukHome(props: {
         </div>
       </section>
       )}
+
+      {/* How buying works (the customer journey) */}
+      <section className="mu-journey" data-testid="mruk-journey">
+        <div className="wrap mu-journey-in">
+          <div className="mu-journey-photo" aria-hidden="true">
+            <img src={MRUK_FILM.poster} alt="" loading="lazy" decoding="async" />
+          </div>
+          <div>
+            <p className="mu-kicker">{t('journeyKicker')}</p>
+            <h2 className="mu-journey-h">{t('journeyTitle')}</h2>
+            <ol className="mu-journey-steps">
+              {(
+                [
+                  ['journey1', 'journey1Sub'],
+                  ['journey2', 'journey2Sub'],
+                  ['journey3', 'journey3Sub'],
+                  ['journey4', 'journey4Sub'],
+                ] as const
+              ).map(([a, sb], k) => (
+                <li key={a}>
+                  <span className="mu-journey-n">{String(k + 1).padStart(2, '0')}</span>
+                  <span>
+                    <b>{t(a)}</b>
+                    <span>{t(sb)}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
 
       <div className="wrap">
         {/* Reviews + showrooms */}

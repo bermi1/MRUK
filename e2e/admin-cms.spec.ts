@@ -17,7 +17,7 @@ test('admin signs in, edits the hero and price, and the store shows it', async (
   const store = await browser.newPage();
   await store.route('**/*', (r) => (r.request().url().startsWith(baseURL!) ? r.continue() : r.abort()));
   await store.goto('/mruk');
-  await expect(store.getByRole('heading', { level: 1, name: headline })).toBeVisible();
+  await expect(store.getByRole('heading', { name: headline })).toBeVisible();
   await store.close();
 
   // Restore the original hero title.

@@ -15,7 +15,8 @@ import { ArrowRightIcon } from '@/components/icons';
  * (hover, focus, the pause button) freezes both together; with reduced motion there is no
  * animation and therefore no auto-advance.
  */
-export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[]; dealsHref: string; labels: HeroLabels }) {
+export function MrukHero({ slides, dealsHref, labels, level = 1 }: { slides: HeroSlideView[]; dealsHref: string; labels: HeroLabels; level?: 1 | 2 }) {
+  const Heading = level === 2 ? 'h2' : 'h1';
   const [i, setI] = useState(0);
   const [moved, setMoved] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -57,7 +58,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
             <span>{String(i + 1).padStart(2, '0')}</span>
             {s.eyebrow}
           </p>
-          <h1>
+          <Heading>
             {words.map((w, k) => (
               <Fragment key={k}>
                 <span className="mu-w" style={{ ['--k' as string]: k }}>
@@ -66,7 +67,7 @@ export function MrukHero({ slides, dealsHref, labels }: { slides: HeroSlideView[
                 {k < words.length - 1 ? ' ' : ''}
               </Fragment>
             ))}
-          </h1>
+          </Heading>
           <p className="mu-hero-sub">{s.sub}</p>
           {s.showPrice && (
             <div className="mu-hero-price">
