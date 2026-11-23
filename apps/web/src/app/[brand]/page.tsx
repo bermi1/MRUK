@@ -86,9 +86,10 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   // Quiet recognition strip at the foot of the page (nothing when the brand lists no awards).
   const awards = <AwardsStrip awards={cms.about.awards} href={`/${key}/about#awards`} title={t('awardsStrip')} more={t('awardsSeeAll')} />;
 
+  // "In focus" product: one with a photo that is not already in the hero.
+  const heroIds = new Set(cms.hero.map((h) => h.pid));
+  const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
   if (key === 'skywood') {
-    const heroIds = new Set(cms.hero.map((h) => h.pid));
-    const focus = products.find((p) => p.img && !heroIds.has(p.id)) ?? products.find((p) => p.img) ?? products[0];
     return (
       <>
         {ld}
@@ -100,7 +101,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   return (
     <>
       {ld}
-      <MrukHome {...common} flash={flash} />
+      <MrukHome {...common} flash={flash} focus={focus} />
       {awards}
     </>
   );

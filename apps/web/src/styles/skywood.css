@@ -800,3 +800,13 @@
   [data-brand='skywood'] .pdp-sticky-n { font-size: 14.5px; }
   [data-brand='skywood'] .pdp-sticky-btn { padding: 0 14px; font-size: 11.5px; letter-spacing: 0.08em; }
 }
+
+/* Header over a playing video / dark photo slide: white type on a soft shade, so the menu never fights the footage. */
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over { color: #fff; background: linear-gradient(180deg, rgba(14, 11, 8, 0.55) 0%, rgba(14, 11, 8, 0.28) 60%, rgba(14, 11, 8, 0) 100%); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over :is(a, button, .sw-icon-l, .sw-menu-btn) { color: #fff; text-shadow: 0 1px 12px rgba(0, 0, 0, 0.35); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats-pl a { color: var(--sw-gold-hi); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-logo img { filter: brightness(0) invert(1); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-count { background: #fff; color: var(--sw-ink); text-shadow: none; }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-bag { border-left-color: rgba(255, 255, 255, 0.3); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats { border-top-color: rgba(255, 255, 255, 0.16); }
+body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats-sep { background: rgba(255, 255, 255, 0.4); }
