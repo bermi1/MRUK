@@ -15,8 +15,9 @@ import { ProductCard } from '../ProductCard';
 import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIcon } from '../../../icons';
-import { MrukHero } from './Hero';
 import { MRUK_FILM } from './FilmHero';
+import { FilmsHero } from './FilmsHero';
+import { Spotlight } from './Spotlight';
 import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -84,26 +85,29 @@ export function MrukHome(props: {
     const ps = products.filter((p) => p.cat === c.id);
     return { from: ps.length ? Math.min(...ps.map((p) => p.price)) : 0, hero: ps.find((p) => p.img) };
   };
-  // Opening film (real Mr UK products in a Tanzanian kitchen, no captions or graphics) leads the carousel
-  // unless the CMS already set a video slide; the CMS product slides follow.
-  const heroSlides: HeroSlideView[] = slides.some((x) => x.video)
+  // Hero = video only: two caption-free lifestyle films from the Mr UK kitchen shoot, played one after the other.
+  const films = [
+    { src: MRUK_FILM.src, poster: MRUK_FILM.poster, label: t('mxFilm1') },
+    { src: '/video/mruk-home-film.mp4', poster: '/video/mruk-home-film.webp', label: t('mxFilm2') },
+  ];
+  // Spotlight = the CMS hero slides (Admin › CMS); without any, the "in focus" product.
+  const spot: HeroSlideView[] = slides.length
     ? slides
-    : [
-        {
-          ...FILM_SLIDE,
-          eyebrow: t('filmEyebrow'),
-          title: t('filmTitle'),
-          sub: t('filmSub'),
-          href: `${b}/shop`,
-          name: brand.name,
-          cta: t('filmShop'),
-        },
-        ...slides,
-      ];
+    : focus
+      ? [{ ...SPOT_BASE, eyebrow: focus.catName, title: productLabel(focus), img: focus.img, href: `${b}/p/${focus.id}`, price: focus.price, model: focus.model, name: focus.name, features: focus.features, pid: focus.stock > 0 ? focus.id : '', showPrice: true }]
+      : [];
 
   return (
     <div className="mu-home mv">
-      <MrukHero slides={heroSlides} dealsHref={`${b}/deals`} labels={heroLabels} />
+      <FilmsHero
+        films={films}
+        eyebrow={t('filmEyebrow')}
+        title={t('filmTitle')}
+        sub={t('filmSub')}
+        primary={{ href: `${b}/shop`, label: t('filmShop') }}
+        secondary={{ href: `${b}/deals`, label: t('filmDeals') }}
+        labels={{ pause: heroLabels.pause, play: heroLabels.play }}
+      />
 
       {/* Service promise */}
       <section className="mv-promise" aria-label={t('helpAndServices')}>
@@ -238,41 +242,10 @@ export function MrukHome(props: {
         </section>
       )}
 
-      {/* In focus: one product, standing on a glossy floor with its reflection */}
-      {focus && (
+      {/* In the spotlight: Admin › CMS slides, one product at a time */}
+      {spot.length > 0 && (
         <section className="wrap mv-sec">
-          <div className="mv-story" data-reveal>
-            <div className="mv-story-media" aria-hidden="true">
-              <span className="mv-story-ghost" style={{ ['--len' as string]: Math.max(focus.model.length, 5) }}>
-                {focus.model}
-              </span>
-              <span className="mv-story-glow" />
-              <div className="mv-story-obj">{focus.img && <SafeImg src={focus.img} alt="" />}</div>
-              <div className="mv-story-reflect">{focus.img && <SafeImg src={focus.img} alt="" />}</div>
-            </div>
-            <div className="mv-story-copy">
-              <p className="mx-kicker">
-                {t('inFocus')} · {focus.catName}
-              </p>
-              <h2 className="mx-h">{productLabel(focus)}</h2>
-              <Stars value={focus.rating} size={15} label={t('ratedOutOf', { r: focus.rating.toFixed(1) })} className="mx-stars mv-left" />
-              <ul>
-                {focus.features.slice(0, 4).map((f) => (
-                  <li key={f}>{f}</li>
-                ))}
-              </ul>
-              <p className="mv-story-price">
-                <b>{fmt(focus.price)}</b>
-                {payLater && <span>{t('orPerMonth', { amount: fmt(focus.price / 12) })}</span>}
-              </p>
-              <div className="mx-row">
-                <Link href={`${b}/p/${focus.id}`} className="mu-btn mu-btn-navy">
-                  {t('discover')} <ArrowRightIcon size={16} className="i-arrow" />
-                </Link>
-                {focus.stock > 0 && <AddButton brand="mruk" id={focus.id} name={focus.name} className="mx-textlink" label={t('addToCart')} />}
-              </div>
-            </div>
-          </div>
+          <Spotlight slides={spot} labels={heroLabels} kicker={slides.length ? t('spotlight') : t('inFocus')} />
         </section>
       )}
 
@@ -422,26 +395,26 @@ export function MrukHome(props: {
   );
 }
 
-const FILM_SLIDE: HeroSlideView = {
+const SPOT_BASE: HeroSlideView = {
   eyebrow: '',
   title: '',
   sub: '',
-  img: MRUK_FILM.poster,
-  href: '/mruk/shop',
+  img: '',
+  href: '',
   price: 0,
-  model: 'Mr UK',
-  name: 'Mr UK',
-  kind: 'Lifestyle',
+  model: '',
+  name: '',
+  kind: '',
   features: [],
   cta: '',
   pid: '',
-  layout: 'photo',
+  layout: 'product',
   imgMobile: '',
   theme: 'dark',
   align: 'left',
   focal: '50% 50%',
-  showPrice: false,
-  video: MRUK_FILM.src,
-  videoPoster: MRUK_FILM.poster,
+  showPrice: true,
+  video: '',
+  videoPoster: '',
   audio: '',
 };

@@ -17,8 +17,6 @@ test('admin signs in, edits the hero and price, and the store shows it', async (
   const store = await browser.newPage();
   await store.route('**/*', (r) => (r.request().url().startsWith(baseURL!) ? r.continue() : r.abort()));
   await store.goto('/mruk');
-  // The opening film is slide 1; the first CMS slide is slide 2.
-  await store.getByRole('tab', { name: 'Slide 2' }).click();
   await expect(store.getByRole('heading', { name: headline })).toBeVisible();
   await store.close();
 

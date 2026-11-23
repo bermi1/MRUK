@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 type Conn = { saveData?: boolean; effectiveType?: string };
 
 /** True when a background video may load: no reduced motion, no Save-Data, not on a 2G/3G-class connection. */
-function videoAllowed(): boolean {
+export function videoAllowed(): boolean {
   if (typeof window === 'undefined') return false;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
   const c = (navigator as Navigator & { connection?: Conn }).connection;
