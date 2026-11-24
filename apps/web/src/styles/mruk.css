@@ -1478,3 +1478,22 @@
 .mv7-offer-img { height: 380px; }
 .mv7-offer-img .pimg > img { padding: 2%; }
 @media (max-width: 767px) { .mv7-offer-img { height: 280px; } .mv7-offer { padding: 24px; } }
+/* Bundles: a row that scrolls when there are more than three */
+.mv7-sets { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: calc((100% - 48px) / 3); overflow-x: auto; scroll-snap-type: x mandatory; }
+.mv7-set { scroll-snap-align: start; }
+@media (max-width: 767px) {
+  .mv7-sets { grid-auto-columns: 80vw; }
+  /* Phone hero: compact copy, buttons side by side, small featured card */
+  .mv7 .mv-films .mu-film-eyebrow { font-size: 10.5px; margin-bottom: 8px; }
+  .mv7 .mv-films h1 { font-size: 26px; line-height: 30px; max-width: 16ch; }
+  .mv7 .mv-films .mu-film-sub { font-size: 13.5px; line-height: 20px; margin-top: 8px; }
+  .mv7 .mv-films .mu-film-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .mv7 .mv-films .mu-film-cta .mu-btn { flex: none; min-height: 44px; padding: 0 12px; font-size: 13.5px; }
+  .mv7 .mv-films .mu-film-in { padding-top: 18px; padding-bottom: 18px; gap: 12px; }
+  .mv7-hero-prod { padding: 6px 12px 6px 6px; gap: 10px; border-radius: 14px; }
+  .mv7-hero-prod-img { width: 46px; height: 46px; border-radius: 10px; }
+  .mv7-hero-prod-t { font-size: 12.5px; }
+  .mv7-hero-prod-t b { font-size: 14px; }
+  .mv7 .mv-film-tabs button { min-height: 40px; }
+}
+@media (min-width: 768px) { .mv7-sets { grid-auto-columns: calc((100% - (var(--n, 3) - 1) * 24px) / var(--n, 3)); } .mv7-set-art { aspect-ratio: auto; height: 240px; } }

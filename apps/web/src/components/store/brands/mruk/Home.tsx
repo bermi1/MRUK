@@ -87,8 +87,10 @@ export function MrukHome(props: {
   const shown = products.filter((p) => p.img);
   const best = shown.filter((p) => p.stock > 0).sort((x, y) => y.reviews - x.reviews || y.rating - x.rating).slice(0, 10);
   const newest = [...shown].sort((x, y) => y.createdAt.localeCompare(x.createdAt)).slice(0, 10);
-  const deals = flash.filter((p) => p.img && p.stock > 0);
-  const sets = bundles.filter((d) => d.items.length >= 2 && d.items.every((p) => p.img)).slice(0, 3);
+  const deals = flash.filter((p) => p.img);
+  // Fill the deals row: popular in-stock products at their normal price (no deal badge) after the real deals.
+  const dealFill = best.filter((p) => !deals.some((d) => d.id === p.id)).slice(0, Math.max(0, 8 - deals.length));
+  const sets = bundles.filter((d) => d.items.length >= 2);
   const reviews = reviewsFor('mruk', payLater);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
@@ -308,6 +310,9 @@ export function MrukHome(props: {
                             {deals.map((p) => (
                               <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" price={p.dealPrice} was={p.price} badge={`−${p.off}%`} perMonth={perMonth} />
                             ))}
+                            {dealFill.map((p) => (
+                              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" perMonth={perMonth} />
+                            ))}
                           </Rail>
                         ),
                       },
@@ -319,7 +324,7 @@ export function MrukHome(props: {
                         id: 'sets',
                         label: t('bundlesTitle'),
                         panel: (
-                          <div className="mv7-sets nsb">
+                          <div className="mv7-sets nsb" style={{ ['--n' as string]: Math.min(3, sets.length) }}>
                             {sets.map((d) => (
                               <article key={d.title} className="mv7-set">
                                 <div className="mv7-set-art">
