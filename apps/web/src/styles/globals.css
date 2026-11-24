@@ -1260,7 +1260,7 @@ textarea.input { resize: vertical; }
 
 /* Gallery: hover zoom, video item, lifestyle item, full-screen viewer */
 .pdp-zoom-btn { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; display: block; }
-.pdp-media.is-zoom .pimg > img { transform: scale(2); transform-origin: var(--zx, 50%) var(--zy, 50%); transition: transform 0.12s ease-out; }
+.pdp-media.is-zoom .pimg > img { transform: scale(1.75); transform-origin: var(--zx, 50%) var(--zy, 50%); transition: transform 0.12s ease-out; }
 .pdp-media .pimg > img { transition: transform 0.3s ease; }
 .pdp-media.is-life .pimg { background: #111; }
 .pdp-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #0b0f33; }
@@ -1275,7 +1275,7 @@ textarea.input { resize: vertical; }
 .pdp-lb-arrow.l { left: 18px; }
 .pdp-lb-arrow.r { right: 18px; }
 @keyframes lbIn { from { opacity: 0; } to { opacity: 1; } }
-@media (hover: none) { .pdp-media.is-zoom .pimg > img { transform: none; } }
+
 @media (prefers-reduced-motion: reduce) { .pdp-lightbox { animation: none; } .pdp-media .pimg > img { transition: none; } }
 
 /* Product story (below the buy box): feature panels, film, in your home, reviews */

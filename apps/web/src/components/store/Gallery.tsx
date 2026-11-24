@@ -23,7 +23,7 @@ type Item = { kind: 'photo' | 'life'; src: string } | { kind: 'video'; src: stri
 const fill = (tpl: string, v: Record<string, number>) => tpl.replace(/\{(\w+)\}/g, (_, k: string) => String(v[k] ?? ''));
 
 /**
- * Product gallery: large photo with hover zoom (desktop) and tap-to-zoom in place,
+ * Product gallery: large photo; click or tap zooms it in place (no zoom on mere hover, so nothing is cropped while browsing),
  * swipe/arrows between items, the product video as one of the items (plays with controls, muted
  * until the shopper turns sound on) and lifestyle "in your home" pictures after the photos.
  * Clicking a photo zooms it in place (no full-screen viewer); the counter counts photos only.
@@ -65,7 +65,7 @@ export function Gallery({ images, name, model, sub, badge, labels, video, lifest
   return (
     <div className="pdp-gallery">
       <div
-        className={`pdp-media ${(zoom || locked) && canZoom ? 'is-zoom' : ''} ${cur.kind === 'life' ? 'is-life' : ''}`}
+        className={`pdp-media ${locked && canZoom ? 'is-zoom' : ''} ${cur.kind === 'life' ? 'is-life' : ''}`}
         data-testid="gallery-media"
         {...swipeHandlers}
         onMouseMove={(e) => {
@@ -74,7 +74,7 @@ export function Gallery({ images, name, model, sub, badge, labels, video, lifest
           setZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
         }}
         onMouseLeave={() => (setZoom(null), setLocked(false))}
-        style={zoom && canZoom ? ({ ['--zx' as string]: `${zoom.x}%`, ['--zy' as string]: `${zoom.y}%` } as React.CSSProperties) : undefined}
+        style={locked && zoom && canZoom ? ({ ['--zx' as string]: `${zoom.x}%`, ['--zy' as string]: `${zoom.y}%` } as React.CSSProperties) : undefined}
       >
         {cur.kind === 'video' ? (
           <video key={cur.src} className="pdp-video" src={cur.src} poster={cur.poster} controls muted autoPlay playsInline loop preload="metadata" aria-label={`${label}, ${labels.video ?? 'video'}`} />
