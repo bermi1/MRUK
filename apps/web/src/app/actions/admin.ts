@@ -513,6 +513,21 @@ export async function saveHeroAction(brand: string, fd: FormData): Promise<Actio
   });
 }
 
+export async function saveOfferAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('cms.write', async (ctx) => {
+    const b = brandZ.parse(brand);
+    const f = fields(fd);
+    const v = z.object({ eyebrow: textZ(40), title: textZ(90, 2), sub: textZ(200), cta: textZ(30, 2), href: z.string().trim().regex(/^\/(?!\/)[\w\-/?=&.]*$/, 'Link: a page on this site, e.g. /deals') }).parse(f);
+    const href = v.href.startsWith(`/${b}`) ? v.href : `/${b}${v.href === '/' ? '' : v.href}`;
+    const current = await getCmsJson<{ img?: string }>(b, 'offer', {});
+    let img = checkbox(f.clear_img) ? '' : (current?.img ?? '');
+    const file = fd.get('img');
+    if (file instanceof File && file.size > 0) img = await storePublicImage(file, `cms/${b}-offer`);
+    await setCms(ctx, b, 'offer', { on: checkbox(f.on), ...v, href, img });
+    return { message: checkbox(f.on) ? 'Seasonal offer published' : 'Seasonal offer switched off' };
+  });
+}
+
 export async function saveMegaPromoAction(brand: string, fd: FormData): Promise<ActionResult<Msg>> {
   return run('cms.write', async (ctx) => {
     const b = brandZ.parse(brand);

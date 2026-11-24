@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { prisma } from '@bt/db';
-import { saveAboutAction, saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveSeoAction, saveSocialAction } from '@/app/actions/admin';
+import { saveAboutAction, saveAnnouncementAction, saveDealsAction, saveHeroAction, saveMegaPromoAction, saveOfferAction, saveSeoAction, saveSocialAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
 import { ImagePick } from '@/components/admin/PhotoUpload';
 import { SeoEditor } from '@/components/admin/SeoEditor';
 import { BrandMark, Forbidden } from '@/components/admin/ui';
-import { aboutView, heroDefaults } from '@/server/catalog';
+import { aboutView, heroDefaults, offerView } from '@/server/catalog';
 import type { CmsView } from '@/lib/types';
 import { adminFilters, BRAND_NAME, pickBrand } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -30,6 +30,7 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
   const m = Object.fromEntries(blocks.map((x) => [x.key, x.json])) as Record<string, unknown>;
   const cms: CmsView = {
     announcement: (m.announcement as string) ?? '',
+    offer: offerView(m.offer, brand as 'mruk' | 'skywood'),
     hero: (m.hero as CmsView['hero']) ?? [],
     megaPromo: (m.megaPromo as CmsView['megaPromo']) ?? { eyebrow: '', title: '', cta: '', cat: '' },
     deals: (m.deals as CmsView['deals']) ?? [],
@@ -423,6 +424,48 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                     )}
                   </div>
                 ))}
+              </AForm>
+            )}
+          </section>
+
+          <section className="ad-card">
+            <h2 className="ad-h">Seasonal offer</h2>
+            <p className="ad-sub">Shown on the left of the subscribe pop-up and as the home offer banner (Mr UK). For example a Christmas offer. Only state discounts that are real.</p>
+            {ro}
+            {write && (
+              <AForm action={saveOfferAction.bind(null, brand)} submit="Publish offer" className="ad-form" label="Seasonal offer">
+                <label className="ad-check full">
+                  <input type="checkbox" name="on" defaultChecked={cms.offer.on} /> Show the offer
+                </label>
+                <label className="ad-field">
+                  Small heading
+                  <input name="eyebrow" defaultValue={cms.offer.eyebrow} maxLength={40} placeholder="Christmas offer" />
+                </label>
+                <label className="ad-field">
+                  Link (page on this site)
+                  <input name="href" defaultValue={cms.offer.href.replace(`/${brand}`, '') || '/deals'} maxLength={120} placeholder="/deals" />
+                </label>
+                <label className="ad-field full">
+                  Title
+                  <input name="title" defaultValue={cms.offer.title} required maxLength={90} />
+                </label>
+                <label className="ad-field full">
+                  Text
+                  <input name="sub" defaultValue={cms.offer.sub} maxLength={200} />
+                </label>
+                <label className="ad-field">
+                  Button text
+                  <input name="cta" defaultValue={cms.offer.cta} required maxLength={30} />
+                </label>
+                <label className="ad-field">
+                  Photo (optional, JPG/PNG/WebP)
+                  <input name="img" type="file" accept="image/jpeg,image/png,image/webp" />
+                </label>
+                {cms.offer.img && (
+                  <label className="ad-check">
+                    <input type="checkbox" name="clear_img" /> Remove the current photo
+                  </label>
+                )}
               </AForm>
             )}
           </section>

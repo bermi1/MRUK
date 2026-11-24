@@ -77,11 +77,13 @@ export function MrukHome(props: {
   cities: string[];
   compare: string[];
   focus: ProductView | undefined;
+  /** Seasonal offer (Admin › CMS): when on, it leads the offer banner. */
+  offer?: { on: boolean; eyebrow: string; title: string; sub: string; cta: string; href: string; img: string };
   /** Admin switch: false removes the Pay Later section, trust item and every monthly price. */
   payLater: boolean;
   t: T;
 }) {
-  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, payLater, t } = props;
+  const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, payLater, t, offer } = props;
   const b = `/${brand.key}`;
   const perMonth = payLater ? t('perMonthShort') : '';
   const shown = products.filter((p) => p.img);
@@ -177,21 +179,25 @@ export function MrukHome(props: {
       </section>
 
       {/* Offer banner (blue): the deepest live deal, one tap to the deals page */}
-      {topDeal && (
+      {(offer?.on || topDeal) && (
         <section className="wrap mv7-sec">
-          <Link href={`${b}/deals`} className="mv7-offer" data-reveal>
+          <Link href={offer?.on ? offer.href : `${b}/deals`} className="mv7-offer" data-reveal>
             <span className="mv7-offer-copy">
-              <span className="mv7-kicker light">{t('mv7Deals')}</span>
-              <span className="mv7-offer-t">{t('mv7OfferT', { n: topDeal.off, name: topDeal.name })}</span>
-              <span className="mv7-offer-p">
-                {fmt(topDeal.dealPrice)} <s>{fmt(topDeal.price)}</s>
-              </span>
+              <span className="mv7-kicker light">{offer?.on ? offer.eyebrow || t('mv7Deals') : t('mv7Deals')}</span>
+              <span className="mv7-offer-t">{offer?.on ? offer.title : t('mv7OfferT', { n: topDeal!.off, name: topDeal!.name })}</span>
+              {offer?.on && offer.sub && <span className="mv7-offer-s">{offer.sub}</span>}
+              {topDeal && (
+                <span className="mv7-offer-p">
+                  {offer?.on && <small>{topDeal.name} · </small>}
+                  {fmt(topDeal.dealPrice)} <s>{fmt(topDeal.price)}</s>
+                </span>
+              )}
               <span className="mv7-offer-cta">
-                {t('seeDeals')} <ArrowRightIcon size={16} className="i-arrow" />
+                {offer?.on ? offer.cta : t('seeDeals')} <ArrowRightIcon size={16} className="i-arrow" />
               </span>
             </span>
             <span className="mv7-offer-img" aria-hidden="true">
-              <PImg src={topDeal.img} alt="" model={topDeal.model} sub={topDeal.sub} size="md" />
+              {offer?.on && offer.img ? <img src={offer.img} alt="" loading="lazy" decoding="async" /> : topDeal ? <PImg src={topDeal.img} alt="" model={topDeal.model} sub={topDeal.sub} size="md" /> : null}
             </span>
           </Link>
         </section>

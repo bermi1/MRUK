@@ -97,6 +97,8 @@ export interface CmsView {
   announcement: string;
   hero: HeroSlide[];
   megaPromo: { eyebrow: string; title: string; cta: string; cat: string };
+  /** Seasonal offer (e.g. Christmas): left panel of the subscribe pop-up and the home offer banner. */
+  offer: { on: boolean; eyebrow: string; title: string; sub: string; cta: string; href: string; img: string };
   deals: { title: string; items: string[]; save: number; tag?: string }[];
   seo: { title: string; desc: string; img: string };
   hot: string[];

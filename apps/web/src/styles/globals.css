@@ -1404,3 +1404,34 @@ textarea.input { resize: vertical; }
 [data-brand='skywood'] .about-mv > div { background: var(--sw-stone); border-radius: 2px; }
 @media (max-width: 767px) { .about-mv, .about-visit { grid-template-columns: 1fr; } }
 .about-hero-img { object-position: 50% 30%; }
+
+/* Subscribe pop-up: offer panel (left) + logo and form (right) */
+.subpop-card { display: grid; grid-template-columns: minmax(0, 1fr); width: min(460px, 100%); padding: 0; overflow: hidden; }
+.subpop-card.has-offer { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); width: min(860px, 100%); }
+.subpop-offer { position: relative; display: flex; align-items: flex-end; min-height: 420px; color: #fff; isolation: isolate; }
+.subpop-offer img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.subpop-offer::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(8, 10, 30, 0.85) 0%, rgba(8, 10, 30, 0.2) 60%, rgba(8, 10, 30, 0.05) 100%); }
+.subpop-offer-in { display: flex; flex-direction: column; gap: 8px; padding: 28px; }
+.subpop-eyebrow { align-self: flex-start; padding: 4px 12px; border-radius: 999px; background: #c8102e; font-size: 11.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; }
+.subpop-offer-t { font-size: 28px; line-height: 1.12; font-weight: 300; letter-spacing: -0.02em; }
+.subpop-offer-s { font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); }
+.subpop-offer-cta { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin-top: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #fff; color: #0b0f33; font-size: 14px; font-weight: 500; }
+.subpop-main { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 36px 32px 28px; }
+.subpop-logo { height: 40px; width: auto; align-self: flex-start; margin-bottom: 8px; }
+.subpop-card .sub { padding: 0 !important; box-shadow: none !important; }
+.subpop-card .sub form, .subpop-card .sub { display: flex; flex-direction: column; gap: 12px; }
+.subpop-card .sub-title { font-size: 24px !important; line-height: 1.2; letter-spacing: -0.01em; }
+.subpop-card input[type='tel'], .subpop-card input[type='email'], .subpop-card input[type='text'] { width: 100%; }
+.subpop-mruk .subpop-offer-t { font-family: var(--mu-display); }
+.subpop-skywood .subpop-offer-t, .subpop-skywood .sub-title { font-family: var(--sw-display); }
+.subpop-skywood .subpop-eyebrow { background: var(--sw-bronze, #a8875a); border-radius: 2px; }
+.subpop-skywood .subpop-offer-cta { border-radius: 2px; }
+.mv7-offer-s { font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); max-width: 40ch; }
+.mv7-offer-p small { font-family: inherit; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, 0.75); }
+.mv7-offer-img > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+@media (max-width: 767px) {
+  .subpop-card.has-offer { grid-template-columns: 1fr; max-height: 92svh; overflow-y: auto; }
+  .subpop-offer { min-height: 200px; }
+  .subpop-offer-t { font-size: 22px; }
+  .subpop-main { padding: 22px 20px 24px; }
+}

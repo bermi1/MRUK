@@ -256,6 +256,15 @@ const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max
 const rows = (v: unknown, max: number) => (Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => !!x && typeof x === 'object').slice(0, max) : []);
 
 /** About block with safe shapes: whatever is stored, the page gets plain strings and same-site or https images. */
+/** Seasonal offer block; default (no block yet) is a general Christmas invitation to the deals page, no prices or percentages. */
+export function offerView(v: unknown, brand: BrandKey): CmsView['offer'] {
+  const o = (v && typeof v === 'object' ? v : null) as Record<string, unknown> | null;
+  const href = (x: unknown) => (typeof x === 'string' && /^\/(?!\/)[\w\-/?=&.]*$/.test(x) ? x : `/${brand}/deals`);
+  const img = (x: unknown) => (typeof x === 'string' && /^(\/(?!\/)|https:\/\/)[^\s]+$/.test(x) ? x : '');
+  if (!o) return { on: true, eyebrow: 'Christmas offer', title: 'Christmas offers are here', sub: "Subscribe for early access to this season's deals and new arrivals.", cta: 'See the offers', href: `/${brand}/deals`, img: '' };
+  return { on: o.on !== false, eyebrow: str(o.eyebrow, 40), title: str(o.title, 90), sub: str(o.sub, 200), cta: str(o.cta, 30) || 'See the offers', href: href(o.href), img: img(o.img) };
+}
+
 export function aboutView(v: unknown): AboutView {
   const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
   const img = (x: unknown) => (typeof x === 'string' && /^(\/(?!\/)|https:\/\/)[^\s]+$/.test(x) ? x : '');
@@ -283,6 +292,7 @@ export const getCms = cache(async (brand: BrandKey): Promise<CmsView> => {
     announcement: (m.announcement as string) ?? '',
     hero: (Array.isArray(m.hero) ? (m.hero as Partial<HeroSlide>[]) : []).map(heroDefaults),
     megaPromo: (m.megaPromo as CmsView['megaPromo']) ?? { eyebrow: '', title: '', cta: '', cat: '' },
+    offer: offerView(m.offer, brand),
     deals: (m.deals as CmsView['deals']) ?? [],
     seo: (m.seo as CmsView['seo']) ?? { title: '', desc: '', img: '' },
     hot: (m.hot as string[]) ?? [],

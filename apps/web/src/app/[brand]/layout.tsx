@@ -166,7 +166,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
         <Footer brand={brand} cats={cats} t={t} social={cms.social} payLater={payLater} />
-        <SubscribePopup brand={key} labels={subscribeLabels(t, brand.name)} close={t('pdClose')} />
+        <SubscribePopup brand={key} labels={subscribeLabels(t, brand.name)} close={t('pdClose')} logo={brand.logo} brandName={brand.name} offer={cms.offer} photo={sky ? '/img/lifestyle/skywood-pool.webp' : '/img/lifestyle/mruk-kitchen-airfryer.webp'} />
         <ContactFab
           brandName={brand.legal || brand.name}
           waHref={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)}

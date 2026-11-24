@@ -101,7 +101,7 @@ export default async function BrandHome({ params }: { params: Promise<{ brand: s
   return (
     <>
       {ld}
-      <MrukHome {...common} flash={flash} focus={focus} />
+      <MrukHome {...common} flash={flash} focus={focus} offer={cms.offer} />
       {awards}
     </>
   );
