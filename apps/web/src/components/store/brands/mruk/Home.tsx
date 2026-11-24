@@ -2,10 +2,9 @@ import Link from 'next/link';
 import type { BrandView, CategoryView, ProductView } from '@/lib/types';
 import type { MessageKey } from '@/lib/i18n';
 import { reviewsFor } from '@/lib/content';
-import { img } from '@/lib/img';
-import { fmt, initials } from '@/lib/format';
+import { fmt, waLink } from '@/lib/format';
 import type { BundleView, FlashDeal } from '@/server/catalog';
-import { AddBundleButton, AddButton } from '../../CartButtons';
+import { AddBundleButton } from '../../CartButtons';
 import { subscribeLabels } from '../../Footer';
 import { Subscribe } from '../../Subscribe';
 import { Countdown } from '../../Countdown';
@@ -17,26 +16,26 @@ import type { HeroLabels, HeroSlideView } from '../shared';
 import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIcon } from '../../../icons';
 import { MRUK_FILM } from './FilmHero';
 import { FilmsHero } from './FilmsHero';
+import { FilmTile } from './FilmTile';
 import { Spotlight } from './Spotlight';
 import { ShowcaseTabs } from './ShowcaseTabs';
 import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
 
-/** Lifestyle stills from the Mr UK kitchen film (real products in a Tanzanian home). */
+/** Stills from the Mr UK kitchen shoot; each is used once on the page. */
 const LIFE = {
-  statement: '/img/lifestyle/mruk-kitchen-cooking.webp',
-  main: '/img/lifestyle/mruk-kitchen-microwave.webp',
-  side: '/img/lifestyle/mruk-kitchen-airfryer.webp',
+  story: '/img/lifestyle/mruk-kitchen-cooking.webp',
+  microwave: '/img/lifestyle/mruk-kitchen-microwave.webp',
+  airfryer: '/img/lifestyle/mruk-kitchen-airfryer.webp',
 };
 
-function Head({ kicker, title, sub, action, light }: { kicker: string; title: string; sub?: string; action?: React.ReactNode; light?: boolean }) {
+function Head({ kicker, title, action }: { kicker?: string; title: string; action?: React.ReactNode }) {
   return (
-    <div className="mv-head" data-reveal>
+    <div className="mv7-head">
       <div>
-        <p className={`mx-kicker ${light ? 'light' : ''}`}>{kicker}</p>
-        <h2 className={`mx-h ${light ? 'light' : ''}`}>{title}</h2>
-        {sub && <p className="mx-p">{sub}</p>}
+        {kicker && <p className="mv7-kicker">{kicker}</p>}
+        <h2 className="mv7-h2">{title}</h2>
       </div>
       {action}
     </div>
@@ -45,18 +44,26 @@ function Head({ kicker, title, sub, action, light }: { kicker: string; title: st
 
 function More({ href, children, light }: { href: string; children: React.ReactNode; light?: boolean }) {
   return (
-    <Link href={href} className={`mx-textlink ${light ? 'light' : ''}`}>
+    <Link href={href} className={`mv7-link ${light ? 'light' : ''}`}>
       {children} <ArrowRightIcon size={16} className="i-arrow" />
     </Link>
   );
 }
 
 /**
- * Mr UK home (v5): the same calm rhythm as the Skywood home, in Mr UK's own language (navy and sky,
- * rounded forms, Archivo). Opening film first in the hero carousel, then a promise strip, a statement on a
- * lifestyle photo, collections as large product photographs, a kitchen lifestyle story, new arrivals,
- * offers, one product in focus, sets, Pay Later, how buying works, reviews, subscribe and showrooms.
- * Every section carries a product photo or a lifestyle photo; there are no drawn illustrations.
+ * Mr UK home (v7). Ten sections, one shopper question each, in this order:
+ *  1 film hero + trust line   — "is this a real brand for homes like mine?"
+ *  2 shop by category         — "where is my aisle?"
+ *  3 spotlight (CMS slides)   — "what are you proud of right now?"
+ *  4 best sellers / new       — "what do people like me buy?"
+ *  5 kitchen story            — "how does it look in a real home?"
+ *  6 deals and bundles        — "what is cheaper today?"
+ *  7 see it working (films)   — "will it really work in a power cut / on match night?"
+ *  8 Pay Later                — "can I afford it?"
+ *  9 reviews                  — "can I trust you?"
+ * 10 showrooms + subscribe    — "where can I see it, and how do I hear about offers?"
+ * Light surfaces throughout; navy only for the film hero and Pay Later. Every image appears once.
+ * Products without a photo, and single-item "bundles", are never merchandised.
  */
 export function MrukHome(props: {
   brand: BrandView;
@@ -70,142 +77,108 @@ export function MrukHome(props: {
   cities: string[];
   compare: string[];
   focus: ProductView | undefined;
-  /** Admin switch: false removes the Pay Later section, promise item and every monthly price. */
+  /** Admin switch: false removes the Pay Later section, trust item and every monthly price. */
   payLater: boolean;
   t: T;
 }) {
   const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, payLater, t } = props;
   const b = `/${brand.key}`;
   const perMonth = payLater ? t('perMonthShort') : '';
-  const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
+  const shown = products.filter((p) => p.img);
+  const best = shown.filter((p) => p.stock > 0).sort((x, y) => y.reviews - x.reviews || y.rating - x.rating).slice(0, 10);
+  const newest = [...shown].sort((x, y) => y.createdAt.localeCompare(x.createdAt)).slice(0, 10);
+  const deals = flash.filter((p) => p.img && p.stock > 0);
+  const sets = bundles.filter((d) => d.items.length >= 2 && d.items.every((p) => p.img)).slice(0, 3);
   const reviews = reviewsFor('mruk', payLater);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
+  const kitchen = cats.find((c) => c.id === 'kitchen');
+  const kitchenPicks = shown.filter((p) => p.cat === 'kitchen').slice(0, 3);
+  const tvCat = cats.find((c) => c.id === 'music-tv');
+  const genCat = cats.find((c) => c.id === 'generators');
   const catMeta = (c: CategoryView) => {
     const ps = products.filter((p) => p.cat === c.id);
-    return { from: ps.length ? Math.min(...ps.map((p) => p.price)) : 0, hero: ps.find((p) => p.img) };
+    return { from: ps.length ? Math.min(...ps.map((p) => p.price)) : 0, pic: c.img || ps.find((p) => p.img)?.img || '' };
   };
-  // Hero = video only: two caption-free lifestyle films from the Mr UK kitchen shoot, played one after the other.
   const films = [
     { src: MRUK_FILM.src, poster: MRUK_FILM.poster, label: t('mxFilm1') },
     { src: '/video/mruk-home-film.mp4', poster: '/video/mruk-home-film.webp', label: t('mxFilm2') },
   ];
-  // Spotlight = the CMS hero slides (Admin › CMS); without any, the "in focus" product.
   const spot: HeroSlideView[] = slides.length
     ? slides
     : focus
       ? [{ ...SPOT_BASE, eyebrow: focus.catName, title: productLabel(focus), img: focus.img, href: `${b}/p/${focus.id}`, price: focus.price, model: focus.model, name: focus.name, features: focus.features, pid: focus.stock > 0 ? focus.id : '', showPrice: true }]
       : [];
-
-  const best = [...products].sort((x, y) => y.reviews - x.reviews || y.rating - x.rating).slice(0, 10);
-  const rail = (list: (ProductView | FlashDeal)[], deals = false) => (
-    <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail">
-      {list.map((p) =>
-        deals && 'dealPrice' in p ? (
-          <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" price={p.dealPrice} was={p.price} badge={t('off', { n: p.off })} perMonth={perMonth} />
-        ) : (
-          <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
-        ),
-      )}
+  const rail = (list: ProductView[]) => (
+    <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail mv7-rail">
+      {list.map((p) => (
+        <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
+      ))}
     </Rail>
   );
-  // Shop by need: lifestyle picture per need (our shoot stills and film posters), three products each.
-  const NEED_PIC: Record<string, [MessageKey, string]> = {
-    generators: ['needGenerators', '/video/mruk-generators.webp'],
-    kitchen: ['needKitchen', LIFE.main],
-    fridges: ['needFridges', LIFE.statement],
-    'music-tv': ['needMusicTv', '/video/mruk-tv.webp'],
-    washing: ['needWashing', '/video/mruk-home-film.webp'],
-  };
-  const needs = cats
-    .filter((c) => NEED_PIC[c.id])
-    .slice(0, 4)
-    .map((c) => ({ cat: c, key: NEED_PIC[c.id]![0], pic: NEED_PIC[c.id]![1], items: products.filter((p) => p.cat === c.id && p.img).slice(0, 3) }));
-  // Technology story: the best-reviewed TV or generator with at least three features (else none).
-  const tech = [...products].filter((p) => (p.cat === 'music-tv' || p.cat === 'generators') && p.img && p.features.length >= 3 && !spot.some((s) => s.pid === p.id)).sort((x, y) => y.reviews - x.reviews)[0];
+  const wa = brand.whatsapp ? waLink(brand.whatsapp, `Hello ${brand.name}, I would like to visit a showroom.`) : '';
 
   return (
-    <div className="mu-home mv">
+    <div className="mu-home mv7">
+      {/* 1 · Film hero */}
       <FilmsHero
         films={films}
         eyebrow={t('filmEyebrow')}
         title={t('filmTitle')}
         sub={t('filmSub')}
         primary={{ href: `${b}/shop`, label: t('filmShop') }}
-        secondary={{ href: `${b}/deals`, label: t('filmDeals') }}
-        labels={{ pause: heroLabels.pause, play: heroLabels.play }}
+        secondary={{ href: `${b}/deals`, label: t('mv7Deals') }}
+        labels={{ pause: t('mv7PauseVideo'), play: t('pdPlay') }}
       />
-
-      {/* Service promise */}
-      <section className="mv-promise" aria-label={t('helpAndServices')}>
-        <div className="wrap mv-promise-in">
+      {/* Trust line: the four promises in one calm row, each linking to the detail */}
+      <nav className="mv7-trust" aria-label={t('helpAndServices')}>
+        <div className="wrap mv7-trust-in nsb">
           {(
             [
-              [<TruckIcon key="1" size={22} strokeWidth={1.4} />, t('trustDelivery'), t('trustDeliverySub'), `${b}/track`],
-              [<ShieldIcon key="2" size={22} strokeWidth={1.4} />, t('trustWarranty'), t('trustWarrantySub'), `${b}/support`],
-              payLater
-                ? ([<CardIcon key="3" size={22} strokeWidth={1.4} />, t('trustAdvance'), t('trustAdvanceSub'), `${b}/pay-later`] as const)
-                : ([<ChatIcon key="3" size={22} strokeWidth={1.4} />, t('trustSupport'), t('trustSupportSub'), `${b}/support#whatsapp`] as const),
-              [<PinIcon key="4" size={22} strokeWidth={1.4} />, t('trustShowrooms', { n: supplierCount }), t('trustShowroomsSub'), `${b}/suppliers`],
+              [<TruckIcon key="1" size={18} strokeWidth={1.4} />, t('trustDelivery'), `${b}/track`],
+              [<ShieldIcon key="2" size={18} strokeWidth={1.4} />, t('trustWarranty'), `${b}/support`],
+              payLater ? ([<CardIcon key="3" size={18} strokeWidth={1.4} />, t('trustAdvance'), `${b}/pay-later`] as const) : ([<ChatIcon key="3" size={18} strokeWidth={1.4} />, t('trustSupport'), `${b}/support#whatsapp`] as const),
+              [<PinIcon key="4" size={18} strokeWidth={1.4} />, t('trustShowrooms', { n: supplierCount }), `${b}/suppliers`],
             ] as const
-          ).map(([icon, a, s, href]) => (
-            <Link key={href} href={href} className="mv-promise-item">
-              <span className="mv-promise-ico">{icon}</span>
-              <span>
-                <b>{a}</b>
-                <span>{s}</span>
-              </span>
+          ).map(([icon, label, href]) => (
+            <Link key={href} href={href} className="mv7-trust-item">
+              {icon}
+              <span>{label}</span>
             </Link>
           ))}
         </div>
-      </section>
+      </nav>
 
-      {/* Statement on a lifestyle photo */}
-      <section className="mv-statement" data-reveal>
-        <img className="mv-statement-bg" src={LIFE.statement} alt="" loading="lazy" decoding="async" width={1600} height={900} />
-        <div className="wrap mv-statement-in">
-          <p className="mv-statement-t">{brand.tagline}.</p>
-          <p className="mv-statement-s">{t('mxStatement')}</p>
-        </div>
-      </section>
-
-      {/* Collections: one large product photograph per category */}
-      <section className="wrap mv-sec">
-        <Head kicker={t('collections')} title={t('collectionsTitle')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
-        <div className="mv-cols">
-          {cats.map((c, i) => {
+      {/* 2 · Shop by category */}
+      <section className="wrap mv7-sec">
+        <Head title={t('shopByCategory')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
+        <div className="mv7-cats nsb">
+          {cats.map((c) => {
             const m = catMeta(c);
-            const pic = c.img || m.hero?.img || '';
             return (
-              <Link key={c.id} href={`${b}/c/${c.id}`} className={`mv-col c${i}`} data-reveal style={{ ['--i' as string]: i % 3 }}>
-                <span className="mv-col-art" aria-hidden="true">
-                  <span className="mv-col-glow" />
-                  {pic && <SafeImg src={pic} alt="" />}
+              <Link key={c.id} href={`${b}/c/${c.id}`} className="mv7-cat">
+                <span className="mv7-cat-art" aria-hidden="true">
+                  {m.pic && <SafeImg src={m.pic} alt="" />}
                 </span>
-                <span className="mv-col-top">
-                  <span>{String(i + 1).padStart(2, '0')}</span>
-                  <span>{t('productsN', { n: c.count })}</span>
-                </span>
-                <span className="mv-col-cap">
-                  <span className="mv-col-name">{c.name}</span>
-                  {c.subs.length > 0 && <span className="mv-col-subs">{c.subs.slice(0, 3).join(' · ')}</span>}
-                  <span className="mv-col-foot">
-                    {m.from > 0 && <span>{t('fromPrice', { amount: fmt(m.from) })}</span>}
-                    <span className="mv-col-go">
-                      {t('explore')} <ArrowRightIcon size={14} />
-                    </span>
-                  </span>
-                </span>
+                <span className="mv7-cat-name">{c.name}</span>
+                {m.from > 0 && <span className="mv7-cat-from">{t('fromPrice', { amount: fmt(m.from) })}</span>}
               </Link>
             );
           })}
         </div>
       </section>
 
-      {/* Tabbed showcase: best sellers, new in, deals */}
-      <section className="mv-sec">
-        <div className="wrap">
-          <Head kicker={t('mxShowcase')} title={t('mxShowcaseTitle')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
+      {/* 3 · Spotlight: Admin › CMS slides */}
+      {spot.length > 0 && (
+        <section className="wrap mv7-sec mv7-spot">
+          <Spotlight slides={spot} labels={heroLabels} kicker={slides.length ? t('spotlight') : t('inFocus')} nav={{ prev: t('prev'), next: t('next') }} />
+        </section>
+      )}
+
+      {/* 4 · Best sellers / new arrivals */}
+      {best.length > 0 && (
+        <section className="wrap mv7-sec">
+          <Head title={t('mxShowcaseTitle')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
           <ShowcaseTabs
             label={t('mxShowcase')}
             tabs={[
@@ -213,159 +186,154 @@ export function MrukHome(props: {
               { id: 'new', label: t('newArrivals'), panel: rail(newest) },
             ]}
           />
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Shop by need: a lifestyle picture and the products that solve it */}
-      {needs.length > 0 && (
-        <section className="mv-sec">
-          <div className="wrap">
-            <Head kicker={t('shopByNeed')} title={t('shopByNeedSub')} />
-            <div className="mv-needs">
-              {needs.map((n, i) => (
-                <Link key={n.cat.id} href={`${b}/c/${n.cat.id}`} className={`mv-need ${i === 0 ? 'lead' : ''}`} data-reveal style={{ ['--i' as string]: i }}>
-                  <img className="mv-need-bg" src={n.pic} alt="" loading="lazy" decoding="async" />
-                  <span className="mv-need-shade" aria-hidden="true" />
-                  <span className="mv-need-copy">
-                    <span className="mv-need-t">{t(n.key)}</span>
-                    <span className="mv-need-s">{n.cat.name}</span>
-                  </span>
-                  <span className="mv-need-row" aria-hidden="true">
-                    {n.items.map((p) => (
-                      <span key={p.id} className="mv-need-p">
+      {/* 5 · Kitchen story: products in a real Tanzanian kitchen */}
+      <section className="wrap mv7-sec">
+        <div className="mv7-story">
+          <img className="mv7-story-main" src={LIFE.story} alt="" loading="lazy" decoding="async" width={1280} height={720} />
+          <div className="mv7-story-copy">
+            <p className="mv7-kicker">{t('mxLifeKicker')}</p>
+            <h2 className="mv7-h2">{t('mxLifeTitle')}</h2>
+            <p className="mv7-body">{t('mxLifeSub')}</p>
+            {kitchenPicks.length > 0 && (
+              <ul className="mv7-picks">
+                {kitchenPicks.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`${b}/p/${p.id}`}>
+                      <span className="mv7-pick-img">
                         <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="xs" />
                       </span>
-                    ))}
-                    <span className="mv-need-go">
-                      <ArrowRightIcon size={16} />
-                    </span>
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Offers (flash promotions) */}
-      {flash.length > 0 && (
-        <section className="mv-offers">
-          <div className="wrap mv-offers-in">
-            <div className="mv-offers-copy" data-reveal>
-              <p className="mx-kicker light">{t('flashDeals')}</p>
-              <h2 className="mx-h light">{t('flashDealsSub')}</h2>
-              <div className="mx-timer mv-timer">
-                <span>{t('endsIn')}</span>
-                <Countdown compact />
-              </div>
-              <More href={`${b}/deals`} light>
-                {t('seeDeals')}
-              </More>
-            </div>
-            <div className="mv-offers-list">
-              {flash.slice(0, 3).map((p, i) => (
-                <article key={p.id} className="mv-offer" data-reveal style={{ ['--i' as string]: i }}>
-                  <Link href={`${b}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.dealPrice)}`} />
-                  <div className="mv-offer-media">
-                    <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="md" />
-                    <span className="mv-offer-seal">−{p.off}%</span>
-                  </div>
-                  <span className="mv-offer-model">{p.model}</span>
-                  <h3>{p.name}</h3>
-                  <div className="mv-offer-foot">
-                    <div className="mv-offer-price">
-                      <b>{fmt(p.dealPrice)}</b>
-                      <s>{fmt(p.price)}</s>
-                    </div>
-                    {p.stock > 0 && <AddButton brand="mruk" id={p.id} name={p.name} className="mv-offer-add" />}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* In the spotlight: Admin › CMS slides, one product at a time */}
-      {spot.length > 0 && (
-        <section className="wrap mv-sec">
-          <Spotlight slides={spot} labels={heroLabels} kicker={slides.length ? t('spotlight') : t('inFocus')} />
-        </section>
-      )}
-
-      {/* Technology story (dark band): one hero product and its three strongest points */}
-      {tech && (
-        <section className="mv-tech">
-          <div className="wrap mv-tech-in">
-            <div className="mv-tech-copy" data-reveal>
-              <p className="mx-kicker light">{tech.catName}</p>
-              <h2 className="mx-h light">{productLabel(tech)}</h2>
-              <ul className="mv-tech-points">
-                {tech.features.slice(0, 3).map((f, k) => (
-                  <li key={f}>
-                    <span>{String(k + 1).padStart(2, '0')}</span>
-                    {f}
+                      <span className="mv7-pick-t">
+                        {p.name}
+                        <b>{fmt(p.price)}</b>
+                      </span>
+                    </Link>
                   </li>
                 ))}
               </ul>
-              <div className="mx-row">
-                <Link href={`${b}/p/${tech.id}`} className="mu-btn mu-btn-sky">
-                  {t('discover')} <ArrowRightIcon size={16} className="i-arrow" />
-                </Link>
-                <span className="mv-tech-price">{fmt(tech.price)}</span>
-              </div>
-            </div>
-            <div className="mv-tech-stage" aria-hidden="true" data-reveal>
-              <span className="mv-tech-glow" />
-              <div className="mv-tech-obj">{tech.img && <SafeImg src={tech.img} alt="" />}</div>
-              <div className="mv-tech-reflect">{tech.img && <SafeImg src={tech.img} alt="" />}</div>
-            </div>
+            )}
+            <More href={kitchen ? `${b}/c/${kitchen.id}` : `${b}/shop`}>{t('mxLifeCta')}</More>
           </div>
-        </section>
-      )}
+        </div>
+        <div className="mv7-story-pair">
+          <img src={LIFE.microwave} alt="" loading="lazy" decoding="async" width={1280} height={720} />
+          <img src={LIFE.airfryer} alt="" loading="lazy" decoding="async" width={1280} height={720} />
+        </div>
+      </section>
 
-      {/* Sets */}
-      {bundles.length > 0 && (
-        <section className="wrap mv-sec">
-          <Head kicker={t('dealsAndBundles')} title={t('bundlesTitle')} sub={t('bundlesSub')} action={<More href={`${b}/deals`}>{t('seeAll')}</More>} />
-          <div className="mv-sets">
-            {bundles.slice(0, 3).map((d, i) => (
-              <article key={d.title} className="mv-set" data-reveal style={{ ['--i' as string]: i }}>
-                <div className="mv-set-stack">
-                  {d.items.slice(0, 3).map((p) => (
-                    <span key={p.id} className="mv-set-piece">
-                      <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="sm" />
-                    </span>
-                  ))}
-                  <span className="mx-save mv-set-save">{t('saveN', { n: d.save })}</span>
-                </div>
-                <h3>{d.title}</h3>
-                <p className="mv-set-items">{d.items.map((p) => p.name).join(' + ')}</p>
-                <div className="mv-set-foot">
-                  <div className="mv-set-price">
-                    <s>{fmt(d.was)}</s>
-                    <b>{fmt(d.now)}</b>
+      {/* 6 · Deals and bundles (light band) */}
+      {(deals.length > 0 || sets.length > 0) && (
+        <section className="mv7-deals">
+          <div className="wrap">
+            <Head
+              kicker={t('mv7Deals')}
+              title={t('mv7DealsTitle')}
+              action={
+                deals.length > 0 ? (
+                  <div className="mv7-timer">
+                    <span>{t('endsIn')}</span>
+                    <Countdown compact />
                   </div>
-                  <AddBundleButton brand="mruk" ids={d.items.map((p) => p.id)} className="mu-btn mu-btn-navy mu-btn-sm" />
-                </div>
-              </article>
-            ))}
+                ) : undefined
+              }
+            />
+            <ShowcaseTabs
+              label={t('mv7Deals')}
+              tabs={[
+                ...(deals.length
+                  ? [
+                      {
+                        id: 'deals',
+                        label: t('flashDeals'),
+                        panel: (
+                          <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail mv7-rail">
+                            {deals.map((p) => (
+                              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" price={p.dealPrice} was={p.price} badge={`−${p.off}%`} perMonth={perMonth} />
+                            ))}
+                          </Rail>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(sets.length
+                  ? [
+                      {
+                        id: 'sets',
+                        label: t('bundlesTitle'),
+                        panel: (
+                          <div className="mv7-sets nsb">
+                            {sets.map((d) => (
+                              <article key={d.title} className="mv7-set">
+                                <div className="mv7-set-art">
+                                  {d.items.slice(0, 3).map((p) => (
+                                    <span key={p.id}>
+                                      <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="sm" />
+                                    </span>
+                                  ))}
+                                  <span className="mv7-save">{t('saveN', { n: d.save })}</span>
+                                </div>
+                                <h3 className="mv7-h3">{d.title}</h3>
+                                <p className="mv7-small">{d.items.map((p) => p.name).join(' + ')}</p>
+                                <div className="mv7-set-foot">
+                                  <p className="mv7-price">
+                                    {fmt(d.now)} <s>{fmt(d.was)}</s>
+                                  </p>
+                                  <AddBundleButton brand="mruk" ids={d.items.map((p) => p.id)} className="mv7-btn" />
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </div>
         </section>
       )}
 
-      {/* Pay Later */}
+      {/* 7 · See it working: product films, playing only while on screen */}
+      {(tvCat || genCat) && (
+        <section className="wrap mv7-sec">
+          <Head kicker={t('actionKicker')} title={t('actionTitle')} />
+          <div className="mv7-films">
+            {genCat && (
+              <Link href={`${b}/c/${genCat.id}`} className="mv7-film">
+                <FilmTile src="/video/mruk-generators.mp4" poster="/video/mruk-generators.webp" />
+                <span className="mv7-h3">{t('needGenerators')}</span>
+                <span className="mv7-link">
+                  {genCat.name} <ArrowRightIcon size={16} className="i-arrow" />
+                </span>
+              </Link>
+            )}
+            {tvCat && (
+              <Link href={`${b}/c/${tvCat.id}`} className="mv7-film">
+                <FilmTile src="/video/mruk-tv.mp4" poster="/video/mruk-tv.webp" />
+                <span className="mv7-h3">{t('needMusicTv')}</span>
+                <span className="mv7-link">
+                  {tvCat.name} <ArrowRightIcon size={16} className="i-arrow" />
+                </span>
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 8 · Pay Later: the one navy band */}
       {payLater && (
-        <section className="mv-pl">
-          <div className="wrap mv-pl-in" data-reveal>
+        <section className="mv7-pl">
+          <div className="wrap mv7-pl-in">
             <div>
-              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={46} height={36} loading="lazy" className="mv-az" />
-              <h2 className="mx-h light">{t('advanceTitle')}</h2>
+              <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={56} height={44} loading="lazy" className="mv7-az" />
+              <h2 className="mv7-h2 light">{t('advanceTitle')}</h2>
               <More href={`${b}/pay-later`} light>
                 {t('payLaterHow')}
               </More>
             </div>
-            <ol className="mv-pl-how">
+            <ol className="mv7-steps">
               {(
                 [
                   ['advanceStep1', 'advanceStep1Sub'],
@@ -374,11 +342,9 @@ export function MrukHome(props: {
                 ] as const
               ).map(([a, d], n) => (
                 <li key={a}>
-                  <span className="mv-pl-n">{String(n + 1).padStart(2, '0')}</span>
-                  <span>
-                    <b>{t(a)}</b>
-                    <small>{t(d)}</small>
-                  </span>
+                  <span className="mv7-step-n">{n + 1}</span>
+                  <b>{t(a)}</b>
+                  <span>{t(d)}</span>
                 </li>
               ))}
             </ol>
@@ -386,57 +352,21 @@ export function MrukHome(props: {
         </section>
       )}
 
-      {/* How buying works, beside a still from the film */}
-      <section className="wrap mv-sec" data-testid="mruk-journey">
-        <div className="mv-journey">
-          <div className="mv-journey-photo" aria-hidden="true">
-            <img src={MRUK_FILM.poster} alt="" loading="lazy" decoding="async" width={1600} height={900} />
-          </div>
-          <div>
-            <p className="mx-kicker">{t('journeyKicker')}</p>
-            <h2 className="mx-h">{t('journeyTitle')}</h2>
-            <ol className="mv-journey-steps">
-              {(
-                [
-                  ['journey1', 'journey1Sub'],
-                  ['journey2', 'journey2Sub'],
-                  ['journey3', 'journey3Sub'],
-                  ['journey4', 'journey4Sub'],
-                ] as const
-              ).map(([a, sb], k) => (
-                <li key={a}>
-                  <span className="mv-journey-n">{String(k + 1).padStart(2, '0')}</span>
-                  <span>
-                    <b>{t(a)}</b>
-                    <small>{t(sb)}</small>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      {/* Reviews */}
+      {/* 9 · Reviews */}
       {reviews.length > 0 && (
-        <section className="wrap mv-sec">
+        <section className="wrap mv7-sec">
           <Head
             kicker={t('reviewsTitle')}
             title={reviewCount > 0 ? t('swRated', { r: avg.toFixed(1), n: reviewCount.toLocaleString('en-US') }) : t('reviewsTitle')}
-            action={reviewCount > 0 ? <Stars value={avg} size={20} className="mx-stars" label={t('ratedOutOf', { r: avg.toFixed(1) })} /> : undefined}
+            action={reviewCount > 0 ? <Stars value={avg} size={18} className="mv7-stars" label={t('ratedOutOf', { r: avg.toFixed(1) })} /> : undefined}
           />
-          <div className="mv-reviews">
-            {reviews.slice(0, 3).map((r, i) => (
-              <figure key={r.name} className={`mv-review ${i === 0 ? 'lead' : ''}`} data-reveal style={{ ['--i' as string]: i }}>
-                <blockquote>“{r.q}”</blockquote>
+          <div className="mv7-reviews nsb">
+            {reviews.slice(0, 3).map((r) => (
+              <figure key={r.name} className="mv7-review">
+                <Stars value={5} size={14} className="mv7-stars" />
+                <blockquote>{r.q}</blockquote>
                 <figcaption>
-                  <span className="mv-review-av" aria-hidden="true">
-                    {initials(r.name)}
-                  </span>
-                  <span>
-                    <b>{r.name}</b>
-                    {r.city} · {r.product}
-                  </span>
+                  <b>{r.name}</b> · {r.city} · {r.product}
                 </figcaption>
               </figure>
             ))}
@@ -444,26 +374,31 @@ export function MrukHome(props: {
         </section>
       )}
 
-      <section className="wrap mv-sec" data-reveal>
-        <Subscribe brand="mruk" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
-      </section>
-
-      {/* Showrooms, on a lifestyle photo */}
-      <section className="wrap mv-sec mv-last">
-        <div className="mv-visit" data-reveal>
-          <img className="mv-visit-bg" src={img(LIFE.side, 1200)} alt="" loading="lazy" decoding="async" />
-          <div className="mv-visit-copy">
-            <p className="mx-kicker light">{t('visitUs')}</p>
-            <p className="mv-visit-t">{t('showroomsLine', { brand: brand.name, n: supplierCount })}</p>
-            <More href={`${b}/suppliers`} light>
-              {t('findNearest')}
-            </More>
+      {/* 10 · Showrooms (no stock photo we do not have: a calm panel with the real towns) + subscribe */}
+      <section className="wrap mv7-sec mv7-last">
+        <div className="mv7-visit">
+          <div>
+            <p className="mv7-kicker">{t('visitUs')}</p>
+            <h2 className="mv7-h2">{t('mv7Visit', { n: supplierCount, m: cities.length })}</h2>
+            <div className="mv7-row">
+              <Link href={`${b}/suppliers`} className="mv7-btn">
+                <PinIcon size={16} /> {t('findNearest')}
+              </Link>
+              {wa && (
+                <a href={wa} target="_blank" rel="noopener noreferrer" className="mv7-btn ghost">
+                  <ChatIcon size={16} /> {t('chatWhatsApp')}
+                </a>
+              )}
+            </div>
           </div>
-          <ul className="mv-visit-cities">
+          <ul className="mv7-towns" aria-label={t('visitUs')}>
             {cities.map((c) => (
               <li key={c}>{c}</li>
             ))}
           </ul>
+        </div>
+        <div className="mv7-sub">
+          <Subscribe brand="mruk" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
         </div>
       </section>
     </div>

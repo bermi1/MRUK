@@ -32,7 +32,26 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
   const refs = useRef<(HTMLVideoElement | null)[]>([]);
   const n = films.length;
 
-  useEffect(() => setOk(videoAllowed()), []);
+  // Films load only after the page has painted (window load + idle), so the poster stays the LCP and the
+  // first view is not slowed by video on mobile data.
+  useEffect(() => {
+    if (!videoAllowed()) return;
+    let idle = 0;
+    const start = () => {
+      const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      idle = w.requestIdleCallback ? w.requestIdleCallback(() => setOk(true), { timeout: 2500 }) : window.setTimeout(() => setOk(true), 1200);
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => {
+      window.removeEventListener('load', start);
+      const w = window as Window & { cancelIdleCallback?: (h: number) => void };
+      if (w.cancelIdleCallback) w.cancelIdleCallback(idle);
+      else window.clearTimeout(idle);
+    };
+  }, []);
+  // The next film starts downloading only once the current one is 70% through.
+  const preloadNext = progress > 0.7;
 
   // Start the active film from the beginning; keep the others paused and rewound.
   useEffect(() => {
@@ -85,8 +104,7 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
               muted
               playsInline
               loop={n === 1}
-              preload={k === 0 || k === (i + 1) % n ? 'auto' : 'metadata'}
-              poster={f.poster}
+              preload={k === i ? 'auto' : k === (i + 1) % n && preloadNext ? 'auto' : 'none'}
               tabIndex={-1}
               onEnded={() => n > 1 && setI((x) => (x + 1) % n)}
               onCanPlay={(e) => k === i && !paused && primeAutoplay(e.currentTarget)}
@@ -114,9 +132,9 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
         {ok && (
           <div className="mv-film-ctrl">
             {n > 1 && (
-              <div className="mv-film-tabs" role="tablist" aria-label={eyebrow}>
+              <div className="mv-film-tabs" role="group" aria-label={eyebrow}>
                 {films.map((f, k) => (
-                  <button key={f.src} type="button" role="tab" aria-selected={k === i} className={k === i ? 'on' : ''} onClick={() => setI(k)}>
+                  <button key={f.src} type="button" aria-pressed={k === i} className={k === i ? 'on' : ''} onClick={() => setI(k)}>
                     <span className="mv-film-l">{f.label}</span>
                     <span className="mv-film-bar">
                       <span style={{ transform: `scaleX(${k === i ? progress : k < i ? 1 : 0})` }} />

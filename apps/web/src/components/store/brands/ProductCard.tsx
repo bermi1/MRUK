@@ -3,7 +3,7 @@ import type { ProductView } from '@/lib/types';
 import { fmt } from '@/lib/format';
 import { img } from '@/lib/img';
 import { AddButton, CompareToggle } from '../CartButtons';
-import { PlusIcon } from '../../icons';
+import { PlusIcon, Stars } from '../../icons';
 import { PImg } from '../PImg';
 import { StockNote } from '../StockNote';
 
@@ -33,6 +33,11 @@ export function ProductCard({ p, brand, badge, was, price, perMonth, inCompare }
       <div className="pc-body">
         <span className="pc-model">{p.model}</span>
         <h3 className="pc-name">{p.name}</h3>
+        {p.reviews > 0 && (
+          <span className="pc-rate">
+            <Stars value={p.rating} size={12} /> {p.rating.toFixed(1)} <span>({p.reviews})</span>
+          </span>
+        )}
         <StockNote stock={p.stock} className="pc-stock" />
         <div className="pc-foot">
           <div>

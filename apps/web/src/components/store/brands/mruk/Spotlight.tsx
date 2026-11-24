@@ -8,10 +8,10 @@ import { SafeImg } from '../../SafeImg';
 import { fill, type HeroLabels, type HeroSlideView } from '../shared';
 
 /**
- * "In the spotlight": the CMS hero slides (Admin › CMS), one product at a time on a navy stage with its
- * reflection. Calm on purpose: no auto-advance; numbered tabs and arrows move between slides.
+ * "In the spotlight": the CMS hero slides (Admin › CMS), one product at a time.
+ * Calm on purpose: no auto-advance; numbered buttons and arrows move between slides.
  */
-export function Spotlight({ slides, labels, kicker }: { slides: HeroSlideView[]; labels: HeroLabels; kicker: string }) {
+export function Spotlight({ slides, labels, kicker, nav }: { slides: HeroSlideView[]; labels: HeroLabels; kicker: string; nav?: { prev: string; next: string } }) {
   const [i, setI] = useState(0);
   const n = slides.length;
   const s = slides[i % Math.max(n, 1)];
@@ -57,17 +57,17 @@ export function Spotlight({ slides, labels, kicker }: { slides: HeroSlideView[];
         </div>
         {n > 1 && (
           <div className="mv-spot-nav">
-            <button type="button" onClick={() => go(i - 1)} aria-label={labels.slideN.replace('{n}', String(((i - 1 + n) % n) + 1))}>
+            <button type="button" onClick={() => go(i - 1)} aria-label={nav?.prev ?? 'Previous'}>
               <ChevronLeftIcon size={18} />
             </button>
-            <div className="mv-spot-tabs" role="tablist">
+            <div className="mv-spot-tabs" role="group" aria-label={kicker}>
               {slides.map((x, k) => (
-                <button key={k} type="button" role="tab" aria-selected={k === i} aria-label={fill(labels.slideN, { n: k + 1 })} className={k === i ? 'on' : ''} onClick={() => go(k)}>
+                <button key={k} type="button" aria-pressed={k === i} aria-label={`${String(k + 1).padStart(2, '0')}, ${fill(labels.slideN, { n: k + 1 })}`} className={k === i ? 'on' : ''} onClick={() => go(k)}>
                   {String(k + 1).padStart(2, '0')}
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => go(i + 1)} aria-label={labels.slideN.replace('{n}', String(((i + 1) % n) + 1))}>
+            <button type="button" onClick={() => go(i + 1)} aria-label={nav?.next ?? 'Next'}>
               <ChevronRightIcon size={18} />
             </button>
           </div>
