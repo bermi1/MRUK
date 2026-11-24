@@ -1435,3 +1435,5 @@ textarea.input { resize: vertical; }
   .subpop-offer-t { font-size: 22px; }
   .subpop-main { padding: 22px 20px 24px; }
 }
+/* Gallery with a single photo (no thumbnails): the photo takes the full width */
+@media (min-width: 901px) { .pdp-gallery:not(:has(.thumbs)) { grid-template-columns: minmax(0, 1fr); } }

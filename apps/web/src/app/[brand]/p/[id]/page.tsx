@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
-import { PImg } from '@/components/store/PImg';
-import { ArrowRightIcon, ChatIcon, PinIcon, SparkleIcon, Stars } from '@/components/icons';
+import { ArrowRightIcon, ChatIcon, PinIcon, Stars } from '@/components/icons';
 import { Highlights } from '@/components/store/pdp/Highlights';
 import { ProductDetails, type DetailSection } from '@/components/store/pdp/ProductDetails';
 import { StickyBuyBar } from '@/components/store/pdp/StickyBuyBar';
@@ -16,9 +15,6 @@ import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
 import { productLabel, publicUrl } from '@/lib/site';
 import { breadcrumbLd, graph, pageMeta, productDescription, productLd, productTitle } from '@/server/seo';
 import { payLaterOn } from '@/server/paylater';
-import { productMedia } from '@/lib/product-media';
-import { reviewsFor } from '@/lib/content';
-import { ProductStory } from '@/components/store/pdp/Story';
 import { CompareSimilar } from '@/components/store/pdp/CompareSimilar';
 import { cleanSpecs, deliveryFee, featureFacts, FREE_DELIVERY_THRESHOLD, highlights, REGIONS } from '@bt/core';
 
@@ -227,11 +223,10 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     zoom: t('pdZoom'),
     close: t('pdClose'),
   };
-  const media = productMedia(p);
+  // Only this product's own media: its photos and, when staff added one, its video (no generic category films).
+  const media = { video: p.video ? { src: p.video, poster: p.images[0] ?? '' } : null, lifestyle: [] as string[] };
   // Similar models to compare: same category, closest in price.
   const similar = related.filter((x) => x.img).sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price)).slice(0, 2);
-  // Customer voices: those about this category first (same brand), then the rest.
-  const voices = reviewsFor(key, payLater).sort((a, b) => Number(b.product.toLowerCase().includes(p.sub.toLowerCase())) - Number(a.product.toLowerCase().includes(p.sub.toLowerCase())));
 
   return (
     <div className="wrap pdp-page" style={{ paddingTop: 24 }}>
@@ -241,7 +236,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         <Link href={`/${key}`}>{t('home')}</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
       <div className="pdp">
-        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} labels={galleryLabels} video={media.video} lifestyle={media.lifestyle} />
+        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} labels={galleryLabels} video={media.video} />
         <div className="pdp-info">
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}
@@ -267,11 +262,6 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             <i aria-hidden="true" />
             {stockText}
           </div>
-          {p.price >= 1000 && (
-            <div className="earn-pts">
-              <SparkleIcon size={16} /> {t('earnPoints', { n: Math.floor(p.price / 1000).toLocaleString('en-US') })}
-            </div>
-          )}
           <BuyBox
             brand={key}
             product={{ id: p.id, name: p.name, model: p.model, price: p.price, stock: p.stock, img: p.img, features: p.features }}
@@ -298,20 +288,6 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       </div>
-      <nav className="pdp-subnav nsb" aria-label={t('pdJump')}>
-        {features.length > 0 && <a href="#features-story">{t('pdLove')}</a>}
-        {media.video && <a href="#video">{t('pdVideo')}</a>}
-        {media.lifestyle.length > 1 && <a href="#in-home">{t('pdInHome')}</a>}
-        {similar.length > 0 && <a href="#compare">{t('pdCompare')}</a>}
-        {p.reviews > 0 && <a href="#reviews">{t('reviewsTitle')}</a>}
-        <a href="#pdx-title">{t('pdDetails')}</a>
-      </nav>
-      <ProductStory
-        p={p}
-        media={media}
-        reviews={voices}
-        t={{ love: t('pdLove'), action: t('pdAction'), actionSub: t('pdActionSub', { name: p.name }), home: t('pdInHome'), homeSub: t('pdInHomeSub'), rated: t('pdRated', { r: p.rating.toFixed(1) }), reviewsN: t('pdReviewsN', { n: p.reviews.toLocaleString('en-US') }), play: t('pdPlay'), voices: t('reviewsTitle') }}
-      />
       <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis') }} />
       <ProductDetails title={t('pdDetails')} sections={sections} />
       <StickyBuyBar
@@ -325,35 +301,6 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         stock={p.stock}
         labels={{ addToCart: t('addToCart'), outOfStock: t('outOfStock') }}
       />
-      {related.length > 0 && (
-        <>
-          <div className="row" style={{ alignItems: 'flex-end', marginTop: 56 }}>
-            <h2 style={{ margin: 0, fontSize: 'clamp(20px, 2.4vw, 30px)', fontWeight: 600, letterSpacing: '-.02em' }}>{t('moreIn', { cat: p.catName })}</h2>
-            <Link href={`/${key}/c/${p.cat}`} className="link-u">
-              {t('viewCategory')}
-            </Link>
-          </div>
-          <div className="rail nsb">
-            {related.map((r) => (
-              <Link key={r.id} href={`/${key}/p/${r.id}`} className="related">
-                <PImg src={r.img} alt="" model={r.model} sub={r.sub} size="xs" style={{ height: 100 }} />
-                <div>
-                  <div style={{ fontSize: 14.5, fontWeight: 600, lineHeight: 1.25 }}>{r.name}</div>
-                  <div style={{ fontSize: 14, marginTop: 4 }}>
-                    {fmt(r.price)}
-                    {r.off > 0 && <s style={{ color: 'var(--muted)', fontSize: 12, marginLeft: 6 }}>{fmt(r.listPrice)}</s>}
-                  </div>
-                  {payLater && (
-                    <div className="monthly" style={{ fontSize: 12 }}>
-                      {fmt(r.price / 12)}/mo
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
