@@ -32,7 +32,7 @@ const LIFE = {
 
 function Head({ kicker, title, action }: { kicker?: string; title: string; action?: React.ReactNode }) {
   return (
-    <div className="mv7-head">
+    <div className="mv7-head" data-reveal>
       <div>
         {kicker && <p className="mv7-kicker">{kicker}</p>}
         <h2 className="mv7-h2">{title}</h2>
@@ -116,6 +116,10 @@ export function MrukHome(props: {
       ))}
     </Rail>
   );
+  // Hero key product: the first CMS slide's product, else the best seller.
+  const keyProd = products.find((p) => p.id === slides[0]?.pid && p.img) ?? best[0];
+  // Offer banner: the deepest live deal.
+  const topDeal = [...deals].sort((a, c) => c.off - a.off)[0];
   const wa = brand.whatsapp ? waLink(brand.whatsapp, `Hello ${brand.name}, I would like to visit a showroom.`) : '';
 
   return (
@@ -129,6 +133,7 @@ export function MrukHome(props: {
         primary={{ href: `${b}/shop`, label: t('filmShop') }}
         secondary={{ href: `${b}/deals`, label: t('mv7Deals') }}
         labels={{ pause: t('mv7PauseVideo'), play: t('pdPlay') }}
+        feature={keyProd ? { href: `${b}/p/${keyProd.id}`, name: keyProd.name, model: keyProd.model, sub: keyProd.sub, img: keyProd.img, price: fmt(keyProd.price), kicker: t('mv7KeyProd') } : undefined}
       />
       {/* Trust line: the four promises in one calm row, each linking to the detail */}
       <nav className="mv7-trust" aria-label={t('helpAndServices')}>
@@ -152,7 +157,7 @@ export function MrukHome(props: {
       {/* 2 · Shop by category */}
       <section className="wrap mv7-sec">
         <Head title={t('shopByCategory')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
-        <div className="mv7-cats nsb">
+        <div className="mv7-cats nsb" data-reveal>
           {cats.map((c) => {
             const m = catMeta(c);
             return (
@@ -167,6 +172,56 @@ export function MrukHome(props: {
           })}
         </div>
       </section>
+
+      {/* Offer banner (blue): the deepest live deal, one tap to the deals page */}
+      {topDeal && (
+        <section className="wrap mv7-sec">
+          <Link href={`${b}/deals`} className="mv7-offer" data-reveal>
+            <span className="mv7-offer-copy">
+              <span className="mv7-kicker light">{t('mv7Deals')}</span>
+              <span className="mv7-offer-t">{t('mv7OfferT', { n: topDeal.off, name: topDeal.name })}</span>
+              <span className="mv7-offer-p">
+                {fmt(topDeal.dealPrice)} <s>{fmt(topDeal.price)}</s>
+              </span>
+              <span className="mv7-offer-cta">
+                {t('seeDeals')} <ArrowRightIcon size={16} className="i-arrow" />
+              </span>
+            </span>
+            <span className="mv7-offer-img" aria-hidden="true">
+              <PImg src={topDeal.img} alt="" model={topDeal.model} sub={topDeal.sub} size="md" />
+            </span>
+          </Link>
+        </section>
+      )}
+
+      {/* 7 · See it working: product films, playing only while on screen */}
+      {(tvCat || genCat) && (
+        <section className="mv7-blue mv7-films-band">
+          <div className="wrap">
+          <Head kicker={t('actionKicker')} title={t('actionTitle')} />
+          <div className="mv7-films" data-reveal>
+            {genCat && (
+              <Link href={`${b}/c/${genCat.id}`} className="mv7-film">
+                <FilmTile src="/video/mruk-generators.mp4" poster="/video/mruk-generators.webp" />
+                <span className="mv7-h3">{t('needGenerators')}</span>
+                <span className="mv7-link">
+                  {genCat.name} <ArrowRightIcon size={16} className="i-arrow" />
+                </span>
+              </Link>
+            )}
+            {tvCat && (
+              <Link href={`${b}/c/${tvCat.id}`} className="mv7-film">
+                <FilmTile src="/video/mruk-tv.mp4" poster="/video/mruk-tv.webp" />
+                <span className="mv7-h3">{t('needMusicTv')}</span>
+                <span className="mv7-link">
+                  {tvCat.name} <ArrowRightIcon size={16} className="i-arrow" />
+                </span>
+              </Link>
+            )}
+          </div>
+          </div>
+        </section>
+      )}
 
       {/* 3 · Spotlight: Admin › CMS slides */}
       {spot.length > 0 && (
@@ -191,7 +246,7 @@ export function MrukHome(props: {
 
       {/* 5 · Kitchen story: products in a real Tanzanian kitchen */}
       <section className="wrap mv7-sec">
-        <div className="mv7-story">
+        <div className="mv7-story" data-reveal>
           <img className="mv7-story-main" src={LIFE.story} alt="" loading="lazy" decoding="async" width={1280} height={720} />
           <div className="mv7-story-copy">
             <p className="mv7-kicker">{t('mxLifeKicker')}</p>
@@ -217,7 +272,7 @@ export function MrukHome(props: {
             <More href={kitchen ? `${b}/c/${kitchen.id}` : `${b}/shop`}>{t('mxLifeCta')}</More>
           </div>
         </div>
-        <div className="mv7-story-pair">
+        <div className="mv7-story-pair" data-reveal>
           <img src={LIFE.microwave} alt="" loading="lazy" decoding="async" width={1280} height={720} />
           <img src={LIFE.airfryer} alt="" loading="lazy" decoding="async" width={1280} height={720} />
         </div>
@@ -295,34 +350,7 @@ export function MrukHome(props: {
         </section>
       )}
 
-      {/* 7 · See it working: product films, playing only while on screen */}
-      {(tvCat || genCat) && (
-        <section className="wrap mv7-sec">
-          <Head kicker={t('actionKicker')} title={t('actionTitle')} />
-          <div className="mv7-films">
-            {genCat && (
-              <Link href={`${b}/c/${genCat.id}`} className="mv7-film">
-                <FilmTile src="/video/mruk-generators.mp4" poster="/video/mruk-generators.webp" />
-                <span className="mv7-h3">{t('needGenerators')}</span>
-                <span className="mv7-link">
-                  {genCat.name} <ArrowRightIcon size={16} className="i-arrow" />
-                </span>
-              </Link>
-            )}
-            {tvCat && (
-              <Link href={`${b}/c/${tvCat.id}`} className="mv7-film">
-                <FilmTile src="/video/mruk-tv.mp4" poster="/video/mruk-tv.webp" />
-                <span className="mv7-h3">{t('needMusicTv')}</span>
-                <span className="mv7-link">
-                  {tvCat.name} <ArrowRightIcon size={16} className="i-arrow" />
-                </span>
-              </Link>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* 8 · Pay Later: the one navy band */}
+      {/* 8 · Pay Later (blue band) */}
       {payLater && (
         <section className="mv7-pl">
           <div className="wrap mv7-pl-in">
@@ -360,7 +388,7 @@ export function MrukHome(props: {
             title={reviewCount > 0 ? t('swRated', { r: avg.toFixed(1), n: reviewCount.toLocaleString('en-US') }) : t('reviewsTitle')}
             action={reviewCount > 0 ? <Stars value={avg} size={18} className="mv7-stars" label={t('ratedOutOf', { r: avg.toFixed(1) })} /> : undefined}
           />
-          <div className="mv7-reviews nsb">
+          <div className="mv7-reviews nsb" data-reveal>
             {reviews.slice(0, 3).map((r) => (
               <figure key={r.name} className="mv7-review">
                 <Stars value={5} size={14} className="mv7-stars" />
@@ -376,7 +404,7 @@ export function MrukHome(props: {
 
       {/* 10 · Showrooms (no stock photo we do not have: a calm panel with the real towns) + subscribe */}
       <section className="wrap mv7-sec mv7-last">
-        <div className="mv7-visit">
+        <div className="mv7-visit" data-reveal>
           <div>
             <p className="mv7-kicker">{t('visitUs')}</p>
             <h2 className="mv7-h2">{t('mv7Visit', { n: supplierCount, m: cities.length })}</h2>

@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { notFound } from 'next/navigation';
 import { AppBar, TabBar } from '@/components/store/AppChrome';
-import { Footer } from '@/components/store/Footer';
+import { Footer, subscribeLabels } from '@/components/store/Footer';
+import { SubscribePopup } from '@/components/store/SubscribePopup';
 import { MrukHeader } from '@/components/store/brands/mruk/Header';
 import { MrukMobileMenu } from '@/components/store/brands/mruk/MobileMenu';
 import type { HeaderProps, MegaProduct, MobileMenuProps } from '@/components/store/brands/shared';
@@ -165,6 +166,7 @@ export default async function BrandLayout({ children, params }: { children: Reac
         {sky ? <SkywoodHeader {...header} /> : <MrukHeader {...header} />}
         <main id="main">{children}</main>
         <Footer brand={brand} cats={cats} t={t} social={cms.social} payLater={payLater} />
+        <SubscribePopup brand={key} labels={subscribeLabels(t, brand.name)} close={t('pdClose')} />
         <ContactFab
           brandName={brand.legal || brand.name}
           waHref={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)}

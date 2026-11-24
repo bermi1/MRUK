@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRightIcon, PauseIcon, PlayIcon } from '@/components/icons';
 import { primeAutoplay, videoAllowed } from '../HeroMedia';
+import { PImg } from '../../PImg';
 
 export interface Film {
   src: string;
@@ -16,7 +17,7 @@ export interface Film {
  * only after mount and only where motion and data allow, so slow or data-saving phones keep the photo.
  * If the browser refuses autoplay, the poster simply stays. The pause button stops the film in place.
  */
-export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labels }: {
+export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labels, feature }: {
   films: Film[];
   eyebrow: string;
   title: string;
@@ -24,6 +25,8 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
   primary: { href: string; label: string };
   secondary: { href: string; label: string };
   labels: { pause: string; play: string };
+  /** Key product shown on the hero (bottom-left glass card). */
+  feature?: { href: string; name: string; model: string; sub: string; img: string; price: string; kicker: string };
 }) {
   const [ok, setOk] = useState(false);
   const [i, setI] = useState(0);
@@ -129,6 +132,19 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
             </Link>
           </div>
         </div>
+        {feature && (
+          <Link href={feature.href} className="mv7-hero-prod">
+            <span className="mv7-hero-prod-img">
+              <PImg src={feature.img} alt="" model={feature.model} sub={feature.sub} size="sm" />
+            </span>
+            <span className="mv7-hero-prod-t">
+              <small>{feature.kicker}</small>
+              {feature.name}
+              <b>{feature.price}</b>
+            </span>
+            <ArrowRightIcon size={16} className="i-arrow" />
+          </Link>
+        )}
         {ok && (
           <div className="mv-film-ctrl">
             {n > 1 && (

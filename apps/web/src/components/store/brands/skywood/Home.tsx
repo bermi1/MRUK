@@ -70,7 +70,7 @@ export function SkywoodHome(props: {
   const { brand, slides, heroLabels, cats, products, flash, bundles, supplierCount, cities, compare, focus, payLater, t } = props;
   const b = `/${brand.key}`;
   const perMonth = payLater ? t('perMonthShort') : '';
-  const newest = [...products].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
+  const newest = [...products].filter((p) => p.img).sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
   const reviews = reviewsFor('skywood', payLater);
   // Opening film (real Skywood lifestyle footage, no captions or graphics) comes first unless the CMS already set a video slide.
   const heroSlides: HeroSlideView[] = slides.some((x) => x.video)
@@ -202,7 +202,7 @@ export function SkywoodHome(props: {
               </More>
             </div>
             <div className="sw-offers-list">
-              {flash.slice(0, 3).map((p, i) => (
+              {flash.filter((p) => p.stock > 0).slice(0, 3).map((p, i) => (
                 <article key={p.id} className="sw-offer" data-reveal style={{ ['--i' as string]: i }}>
                   <Link href={`${b}/p/${p.id}`} className="stretch" aria-label={`${p.name}, ${fmt(p.dealPrice)}`} />
                   <div className="sw-offer-media">
