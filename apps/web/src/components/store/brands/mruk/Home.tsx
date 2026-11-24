@@ -119,7 +119,8 @@ export function MrukHome(props: {
   // Hero key product: the first CMS slide's product, else the best seller.
   const keyProd = products.find((p) => p.id === slides[0]?.pid && p.img) ?? best[0];
   // Offer banner: the deepest live deal.
-  const topDeal = [...deals].sort((a, c) => c.off - a.off)[0];
+  // Prefer a deal whose photo is hosted with the site (always loads), then the biggest saving.
+  const topDeal = [...deals].sort((a, c) => Number(c.img.startsWith('/')) - Number(a.img.startsWith('/')) || c.off - a.off)[0];
   const wa = brand.whatsapp ? waLink(brand.whatsapp, `Hello ${brand.name}, I would like to visit a showroom.`) : '';
 
   return (

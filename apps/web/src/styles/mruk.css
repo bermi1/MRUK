@@ -1462,3 +1462,19 @@
 .mv7 .mv-films .mu-film-in { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 28px 32px; }
 .mv7 .mv-films .mu-film-copy { grid-column: 1 / -1; }
 @media (max-width: 767px) { .mv7 .mv-films .mu-film-in { grid-template-columns: minmax(0, 1fr); gap: 16px; } }
+/* Hero film fits the screen: desktop follows the film's 16:9 shape (capped to the viewport below the header);
+   phones show the whole film as a 16:9 block with the copy underneath on navy, nothing cropped. */
+@media (min-width: 768px) {
+  .mv7 .mv-films { min-height: 0; height: min(56.25vw, calc(100svh - 136px)); max-height: 900px; }
+}
+@media (max-width: 767px) {
+  .mv7 .mv-films { display: block; min-height: 0; background: var(--mu-navy-d); }
+  .mv7 .mv-films .mu-film-media { position: relative; aspect-ratio: 16 / 9; }
+  .mv7 .mv-films .mu-film-shade { background: linear-gradient(0deg, rgba(18, 22, 74, 0.55) 0%, rgba(18, 22, 74, 0) 40%); }
+  .mv7 .mv-films .mu-film-in { padding-top: 24px; padding-bottom: 28px; }
+}
+/* Today's deals: bigger product image in the offer banner */
+.mv7-offer { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); padding: 32px 48px; }
+.mv7-offer-img { height: 380px; }
+.mv7-offer-img .pimg > img { padding: 2%; }
+@media (max-width: 767px) { .mv7-offer-img { height: 280px; } .mv7-offer { padding: 24px; } }
