@@ -19,6 +19,7 @@ import { payLaterOn } from '@/server/paylater';
 import { productMedia } from '@/lib/product-media';
 import { reviewsFor } from '@/lib/content';
 import { ProductStory } from '@/components/store/pdp/Story';
+import { CompareSimilar } from '@/components/store/pdp/CompareSimilar';
 import { cleanSpecs, deliveryFee, featureFacts, FREE_DELIVERY_THRESHOLD, highlights, REGIONS } from '@bt/core';
 
 /** Server-side title, description, canonical and OG/Twitter card (image, model, name, price in TZS). */
@@ -227,6 +228,8 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     close: t('pdClose'),
   };
   const media = productMedia(p);
+  // Similar models to compare: same category, closest in price.
+  const similar = related.filter((x) => x.img).sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price)).slice(0, 2);
   // Customer voices: those about this category first (same brand), then the rest.
   const voices = reviewsFor(key, payLater).sort((a, b) => Number(b.product.toLowerCase().includes(p.sub.toLowerCase())) - Number(a.product.toLowerCase().includes(p.sub.toLowerCase())));
 
@@ -295,12 +298,21 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       </div>
+      <nav className="pdp-subnav nsb" aria-label={t('pdJump')}>
+        {features.length > 0 && <a href="#features-story">{t('pdLove')}</a>}
+        {media.video && <a href="#video">{t('pdVideo')}</a>}
+        {media.lifestyle.length > 1 && <a href="#in-home">{t('pdInHome')}</a>}
+        {similar.length > 0 && <a href="#compare">{t('pdCompare')}</a>}
+        {p.reviews > 0 && <a href="#reviews">{t('reviewsTitle')}</a>}
+        <a href="#pdx-title">{t('pdDetails')}</a>
+      </nav>
       <ProductStory
         p={p}
         media={media}
         reviews={voices}
         t={{ love: t('pdLove'), action: t('pdAction'), actionSub: t('pdActionSub', { name: p.name }), home: t('pdInHome'), homeSub: t('pdInHomeSub'), rated: t('pdRated', { r: p.rating.toFixed(1) }), reviewsN: t('pdReviewsN', { n: p.reviews.toLocaleString('en-US') }), play: t('pdPlay'), voices: t('reviewsTitle') }}
       />
+      <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis') }} />
       <ProductDetails title={t('pdDetails')} sections={sections} />
       <StickyBuyBar
         brand={key}

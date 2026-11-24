@@ -21,7 +21,7 @@ export function ProductStory({ p, media, reviews, t }: {
   return (
     <div className="pstory">
       {feats.length > 0 && (
-        <section className="pst-feats" aria-label={t.love}>
+        <section className="pst-feats" id="features-story" aria-label={t.love}>
           <p className="pst-kicker">{t.love}</p>
           {feats.map((f, k) => {
             const src = pics[k] ?? p.images[0] ?? '';
@@ -45,7 +45,7 @@ export function ProductStory({ p, media, reviews, t }: {
       )}
 
       {media.video && (
-        <section className="pst-video" aria-label={t.action}>
+        <section className="pst-video" id="video" aria-label={t.action}>
           <div className="pst-video-head">
             <p className="pst-kicker light">{t.action}</p>
             <h2>{t.actionSub}</h2>
@@ -55,7 +55,7 @@ export function ProductStory({ p, media, reviews, t }: {
       )}
 
       {life.length > 1 && (
-        <section className="pst-home" aria-label={t.home}>
+        <section className="pst-home" id="in-home" aria-label={t.home}>
           <div className="pst-home-head">
             <p className="pst-kicker">{t.home}</p>
             <h2>{t.homeSub}</h2>
@@ -69,7 +69,7 @@ export function ProductStory({ p, media, reviews, t }: {
       )}
 
       {p.reviews > 0 && (
-        <section className="pst-reviews" aria-label={t.voices}>
+        <section className="pst-reviews" id="reviews" aria-label={t.voices}>
           <div className="pst-score">
             <b>{p.rating.toFixed(1)}</b>
             <Stars value={p.rating} size={18} className="pst-stars" />
