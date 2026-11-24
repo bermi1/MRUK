@@ -1497,3 +1497,13 @@
   .mv7 .mv-film-tabs button { min-height: 40px; }
 }
 @media (min-width: 768px) { .mv7-sets { grid-auto-columns: calc((100% - (var(--n, 3) - 1) * 24px) / var(--n, 3)); } .mv7-set-art { aspect-ratio: auto; height: 240px; } }
+/* Compact header after scrolling: the category row folds away (returns near the top of the page) */
+.mu-nav { max-height: 52px; overflow: hidden; transition: max-height 0.3s var(--ease), border-color 0.3s; }
+.mu-hdr.is-compact .mu-nav { max-height: 0; border-color: transparent; }
+/* Hero text sized to leave the film visible; the hero grows to fit its content on short screens */
+@media (min-width: 768px) {
+  .mv7 .mv-films { height: auto; min-height: min(56.25vw, calc(100svh - 136px)); }
+  .mv7 .mv-films h1 { font-size: clamp(34px, 3.4vw, 50px); line-height: 1.08; max-width: 15ch; }
+  .mv7 .mv-films .mu-film-sub { font-size: 15.5px; line-height: 24px; }
+  .mv7 .mv-films .mu-film-in { padding-top: 48px; padding-bottom: 40px; }
+}

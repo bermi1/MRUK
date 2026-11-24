@@ -8,7 +8,7 @@ import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { LangSwitch } from '../../LangSwitch';
 import { PayLaterMenu } from '../PayLaterMenu';
-import { fill, useAuthModal, useMegaMenu, useOverlay, useScrolled, type HeaderProps } from '../shared';
+import { fill, useAuthModal, useCompact, useMegaMenu, useOverlay, useScrolled, type HeaderProps } from '../shared';
 
 /**
  * Skywood header: two quiet rows. Row one: menu and search (left), centred logo, account /
@@ -20,6 +20,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(24);
+  const compact = useCompact();
   const path = usePathname();
   const router = useRouter();
   const [menu, setMenu] = useState(false);
@@ -43,7 +44,7 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
         <p>{cms.announcement}</p>
         <LangSwitch locale={locale} label={labels.language} className="sw-lang" />
       </div>
-      <header className={`sw-hdr d-only ${over ? 'is-over' : ''} ${scrolled ? 'is-scrolled' : ''}`} onMouseLeave={m.leave} onMouseEnter={m.keep}>
+      <header className={`sw-hdr d-only ${over ? 'is-over' : ''} ${scrolled ? 'is-scrolled' : ''} ${compact && !m.open && !search ? 'is-compact' : ''}`} onMouseLeave={m.leave} onMouseEnter={m.keep}>
         <div className="sw-hdr-in">
           <div className="sw-left">
             <button type="button" className="sw-menu-btn" onClick={() => setMenu(true)} aria-expanded={menu} aria-controls="sw-index">

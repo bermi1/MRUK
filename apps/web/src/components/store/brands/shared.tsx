@@ -166,6 +166,28 @@ export function useOverlay(open: boolean, onClose: () => void, panel: React.RefO
 }
 
 /** True once the page has scrolled past `y` (rAF-throttled, passive). */
+/**
+ * Compact header after scrolling: true once the page is scrolled past `down`, false again only near the top
+ * (below `up`). The gap between the two stops the header flickering when its own height changes.
+ */
+export function useCompact(down = 220, up = 30) {
+  const [c, setC] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const on = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setC((was) => (was ? window.scrollY > up : window.scrollY > down)));
+    };
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', on);
+    };
+  }, [down, up]);
+  return c;
+}
+
 export function useScrolled(y = 24) {
   const [s, setS] = useState(false);
   useEffect(() => {

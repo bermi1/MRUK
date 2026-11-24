@@ -7,7 +7,7 @@ import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { LangSwitch } from '../../LangSwitch';
 import { PayLaterMenu } from '../PayLaterMenu';
-import { fill, useAuthModal, useMegaMenu, useScrolled, type HeaderProps } from '../shared';
+import { fill, useAuthModal, useCompact, useMegaMenu, useScrolled, type HeaderProps } from '../shared';
 
 const Caret = () => (
   <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -24,6 +24,8 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
   const m = useMegaMenu();
   const { openAuth, modal } = useAuthModal(brand, user);
   const scrolled = useScrolled(40);
+  // After scrolling, the category row folds away so the page (and the hero film) get the room; it returns at the top.
+  const compact = useCompact();
   const path = usePathname();
   const router = useRouter();
   const b = `/${brand.key}`;
@@ -45,7 +47,7 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
   );
 
   return (
-    <header className={`mu-hdr d-only ${scrolled ? 'is-scrolled' : ''} ${m.open ? 'is-open' : ''}`} onMouseLeave={m.leave} onMouseEnter={m.keep}>
+    <header className={`mu-hdr d-only ${scrolled ? 'is-scrolled' : ''} ${compact && !m.open ? 'is-compact' : ''} ${m.open ? 'is-open' : ''}`} onMouseLeave={m.leave} onMouseEnter={m.keep}>
       <div className="mu-util">
         <div className="wrap">
           <p className="mu-ann">

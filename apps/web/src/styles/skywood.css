@@ -810,3 +810,8 @@ body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-count { background: #
 body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-bag { border-left-color: rgba(255, 255, 255, 0.3); }
 body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats { border-top-color: rgba(255, 255, 255, 0.16); }
 body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats-sep { background: rgba(255, 255, 255, 0.4); }
+/* Compact header after scrolling (category row folds away) and calmer hero type so the film shows */
+.sw-cats { max-height: 50px; overflow: hidden; transition: max-height 0.4s var(--sw-slow), border-color 0.4s; }
+.sw-hdr.is-compact .sw-cats { max-height: 0; border-top-color: transparent; }
+.sw-hero h1 { font-size: clamp(38px, 4vw, 64px); }
+.sw-hero-sub { font-size: 15.5px; }
