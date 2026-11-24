@@ -124,6 +124,13 @@ export interface AboutView {
   awards: AwardView[];
   /** Leadership shown on the About page (photo optional). */
   leaders: { name: string; role: string; bio: string; img: string }[];
+  /** Optional: short line above the headline, mission, vision, values, where to find us, closing line. */
+  eyebrow: string;
+  mission: string;
+  vision: string;
+  values: { title: string; text: string }[];
+  visit: string;
+  closing: string;
 }
 
 export const SOCIAL_KEYS = ['facebook', 'instagram', 'tiktok', 'youtube', 'x', 'linkedin'] as const;

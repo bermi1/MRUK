@@ -22,14 +22,23 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
   const [brand, cms, suppliers, t] = await Promise.all([getBrand(key), getCms(key), getSuppliers(key), getT()]);
   const a = cms.about;
   const b = `/${key}`;
+  // Lifestyle photos from the brand shoots (real footage stills), one for the header and one for "find us".
+  const PHOTOS: Record<string, [string, string]> = {
+    skywood: ['/img/lifestyle/skywood-living.webp', '/img/lifestyle/skywood-pool.webp'],
+    mruk: ['/img/lifestyle/mruk-kitchen-cooking.webp', '/img/lifestyle/mruk-kitchen-microwave.webp'],
+  };
+  const [hero, visitImg] = PHOTOS[key] ?? ['', ''];
   const paragraphs = a.story.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   return (
     <div className="wrap page-top about">
       <JsonLd data={graph(organizationLd(brand, cms), { '@type': 'AboutPage', url: publicUrl(key, '/about'), name: `About ${brand.name}`, description: a.intro || undefined }, breadcrumbLd(brand, [{ name: t('aboutUs'), path: '/about' }]), ...leadersLd(brand, a.leaders))} />
-      <header className="about-head">
-        <p className="about-kicker">{t('aboutUs')}</p>
-        <h1>{a.headline || brand.name}</h1>
-        {a.intro && <p className="about-intro">{a.intro}</p>}
+      <header className={`about-head ${hero ? 'has-photo' : ''}`}>
+        {hero && <img className="about-hero-img" src={hero} alt="" fetchPriority="high" decoding="async" width={1600} height={900} />}
+        <div className="about-head-in">
+          <p className="about-kicker">{a.eyebrow || t('aboutUs')}</p>
+          <h1>{a.headline || brand.name}</h1>
+          {a.intro && <p className="about-intro">{a.intro}</p>}
+        </div>
       </header>
 
       {a.facts.length > 0 && (
@@ -54,6 +63,38 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
         </section>
       )}
 
+      {(a.mission || a.vision) && (
+        <section className="about-sec about-mv" aria-label={`${t('aboutMission')}, ${t('aboutVision')}`}>
+          {a.mission && (
+            <div>
+              <p className="about-kicker">{t('aboutMission')}</p>
+              <p className="about-mv-t">{a.mission}</p>
+            </div>
+          )}
+          {a.vision && (
+            <div>
+              <p className="about-kicker">{t('aboutVision')}</p>
+              <p className="about-mv-t">{a.vision}</p>
+            </div>
+          )}
+        </section>
+      )}
+
+      {a.values.length > 0 && (
+        <section className="about-sec" aria-labelledby="about-values">
+          <h2 id="about-values">{t('aboutValues')}</h2>
+          <ol className="about-values">
+            {a.values.map((v, i) => (
+              <li key={v.title}>
+                <span className="about-val-n">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{v.title}</h3>
+                {v.text && <p>{v.text}</p>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       {a.activities.length > 0 && (
         <section className="about-sec" aria-labelledby="about-activities">
           <h2 id="about-activities">{t('aboutActivities')}</h2>
@@ -65,6 +106,21 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {a.visit && (
+        <section className="about-sec about-visit" aria-labelledby="about-visit">
+          {visitImg && <img src={visitImg} alt="" loading="lazy" decoding="async" width={1280} height={720} />}
+          <div>
+            <h2 id="about-visit">{t('aboutVisit')}</h2>
+            <p>{a.visit}</p>
+            {suppliers.length > 0 && (
+              <Link href={`${b}/suppliers`} className="about-btn solid">
+                {t('suppliersNearYou')}
+              </Link>
+            )}
+          </div>
         </section>
       )}
 
@@ -106,6 +162,8 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
           </ul>
         </section>
       )}
+
+      {a.closing && <p className="about-closing">{a.closing}</p>}
 
       <nav className="about-cta" aria-label={brand.name}>
         <Link href={`${b}/shop`} className="about-btn solid">

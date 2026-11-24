@@ -377,13 +377,35 @@
     },
     skywood: {
       social: { instagram: 'https://www.instagram.com/skywood_tz/' },
-      // About page (Admin › CMS › About). Placeholder story until the client supplies the Skywood profile; no awards listed.
+      // About page (Admin › CMS › About), from the Skywood brand profile supplied by the client.
       about: {
-        headline: 'Home electronics for modern Tanzanian living',
-        intro: 'Skywood is a home electronics and appliance brand sold in Tanzania through showrooms and authorised dealers, alongside its sister brand Mr UK.',
-        story: '',
-        facts: [],
-        activities: [],
+        eyebrow: 'A home. More distinctly yours.',
+        headline: 'Beyond limits. Modern living, redefined.',
+        intro: 'Skywood brings together Italian product design, advanced technology and a lasting commitment to performance, for people who never settle for less.',
+        story: 'Some things simply belong in your home. They feel right in the space, work beautifully in your daily rituals, and make ordinary moments a little more rewarding.\n\nSkywood was created for those who expect that feeling from the things they choose. Founded to serve the high-end market and people who never settle for less, the brand brings together Italian product design, advanced technology, and a lasting commitment to performance.\n\nThe result is an experience shaped around more than an appliance: the pleasure of a beautifully considered kitchen, the welcome comfort of a cool room, the ease of a well-run home, and the warmth of music shared with people you love.\n\nIn 2023, Skywood officially entered the Tanzanian market, with MR UK Corporation as its sole distributor in the African market: an invitation to discover a new expression of modern living, refined in design, thoughtful in function, and made for people with a clear sense of what they want from home.',
+        facts: [
+          { label: 'Design', value: 'Italian product design' },
+          { label: 'In Tanzania since', value: '2023' },
+          { label: 'Sole distributor in Africa', value: 'MR UK Corporation' },
+          { label: 'Showrooms', value: 'Dar es Salaam, Arusha, Kahama, Dodoma' }
+        ],
+        mission: 'To elevate everyday living through thoughtfully designed appliances that unite advanced technology, enduring performance, and a more beautiful experience of home.',
+        vision: "To become one of Africa's most admired home appliance brands, bringing a distinctive standard of design, innovation, and care into the homes of those who expect more.",
+        values: [
+          { title: 'Design that draws you in', text: 'Italian product design brings a considered presence to the spaces you call your own.' },
+          { title: 'Technology in tune with life', text: 'Advanced technology should feel intuitive, useful, and quietly impressive in daily use.' },
+          { title: 'Performance with presence', text: 'Dependable performance gives you the confidence to enjoy the experience, day after day.' },
+          { title: 'Value in every detail', text: 'From the product you select to the support that follows, every interaction reflects the care behind the brand.' }
+        ],
+        activities: [
+          { title: 'Entertainment', text: 'Subwoofers, soundbars, music systems and portable speakers bring richer sound to the moments you share.' },
+          { title: 'Refrigeration', text: 'Refrigerators and freezers keep ingredients close at hand and daily routines in effortless flow.' },
+          { title: 'The kitchen', text: 'Cookers, ovens, hobs, microwaves, blenders, kettles and water dispensers make room for both the everyday and the inspired.' },
+          { title: 'Climate', text: 'Air conditioners, tower fans and air coolers bring welcome comfort to your surroundings.' },
+          { title: 'Laundry', text: 'Washing machines lend ease to a task that is part of every home.' }
+        ],
+        visit: 'The Skywood experience begins at our showroom on Magila Street in Kariakoo, Dar es Salaam, with branches in Arusha, Kahama and Dodoma. Across Tanzania, authorised Skywood distributors bring the collection to business hubs in every region, so wherever you are you can discover the products, explore the details and find the pieces that feel right for your home.',
+        closing: 'Skywood. Beyond limits. A home that feels more distinctly yours.',
         // The client confirmed the group's awards are shown on both brands.
         awards: [
           { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: 'MR UK Corporation', img: '/img/awards/africa-company-of-the-year-2026.webp' },
@@ -404,7 +426,7 @@
         { title: 'Party ready', items: ['skywood-q9', 'skywood-boombox-3'], save: 10, tag: 'Bundle' },
         { title: 'Beat the heat', items: ['skywood-csdc-12k', 'skywood-tf4201trl'], save: 9, tag: 'Bundle' }
       ],
-      seo: { title: 'Skywood — Beyond Limits', desc: 'Home appliances and electronics: refrigerators, cookers, music systems and more.', img: '' },
+      seo: { title: 'Skywood — Beyond Limits. Modern Living Redefined.', desc: 'Italian-designed home appliances and sound for modern Tanzanian living: kitchen, refrigeration, climate, laundry and entertainment.', img: '' },
       overrides: {}, custom: []
     }
   };

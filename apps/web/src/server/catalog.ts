@@ -267,6 +267,12 @@ export function aboutView(v: unknown): AboutView {
     activities: rows(o.activities, 12).map((a) => ({ title: str(a.title, 80), text: str(a.text, 400) })).filter((a) => a.title),
     awards: rows(o.awards, 12).map((a) => ({ title: str(a.title, 120), org: str(a.org, 120), year: str(a.year, 20), recipient: str(a.recipient, 120), img: img(a.img) })).filter((a) => a.title),
     leaders: rows(o.leaders, 12).map((l) => ({ name: str(l.name, 80), role: str(l.role, 80), bio: str(l.bio, 500), img: img(l.img) })).filter((l) => l.name),
+    eyebrow: str(o.eyebrow, 80),
+    mission: str(o.mission, 400),
+    vision: str(o.vision, 400),
+    values: rows(o.values, 6).map((v) => ({ title: str(v.title, 80), text: str(v.text, 300) })).filter((v) => v.title),
+    visit: str(o.visit, 600),
+    closing: str(o.closing, 160),
   };
 }
 

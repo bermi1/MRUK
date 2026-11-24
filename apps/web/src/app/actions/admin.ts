@@ -620,7 +620,30 @@ export async function saveAboutAction(brand: string, fd: FormData): Promise<Acti
       if (hasFile) img = await storePublicImage(file, `cms/${b}-leader-${i + 1}`);
       leaders.push({ name, role, bio: textZ(500).parse(f[`ld_bio_${i}`] ?? ''), img });
     }
-    const about = { headline: textZ(120).parse(f.headline ?? ''), intro: textZ(400).parse(f.intro ?? ''), story: z.string().trim().max(4000, 'Keep the story under 4,000 characters').parse(f.story ?? ''), facts, activities, awards, leaders };
+    const values: { title: string; text: string }[] = [];
+    for (let i = 0; i < count('val_count', 7); i++) {
+      if (checkbox(f[`val_remove_${i}`])) continue;
+      const title = textZ(80).parse(f[`val_title_${i}`] ?? '');
+      const text = textZ(300).parse(f[`val_text_${i}`] ?? '');
+      if (!title && !text) continue;
+      if (!title) throw new Error(`Value ${i + 1}: enter a title`);
+      values.push({ title, text });
+    }
+    const about = {
+      headline: textZ(120).parse(f.headline ?? ''),
+      intro: textZ(400).parse(f.intro ?? ''),
+      story: z.string().trim().max(4000, 'Keep the story under 4,000 characters').parse(f.story ?? ''),
+      facts,
+      activities,
+      awards,
+      leaders,
+      eyebrow: textZ(80).parse(f.eyebrow ?? ''),
+      mission: textZ(400).parse(f.mission ?? ''),
+      vision: textZ(400).parse(f.vision ?? ''),
+      values,
+      visit: textZ(600).parse(f.visit ?? ''),
+      closing: textZ(160).parse(f.closing ?? ''),
+    };
     await setCms(ctx, b, 'about', about);
     return { message: 'About page published' };
   });

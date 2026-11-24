@@ -264,6 +264,10 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
               <AForm action={saveAboutAction.bind(null, brand)} submit="Publish About page" label="About page">
                 <div className="ad-form">
                   <label className="ad-field full">
+                    Line above the headline (optional)
+                    <input name="eyebrow" defaultValue={about.eyebrow} maxLength={80} />
+                  </label>
+                  <label className="ad-field full">
                     Headline
                     <input name="headline" defaultValue={about.headline} maxLength={120} />
                   </label>
@@ -275,7 +279,46 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                     Our story (leave an empty line between paragraphs)
                     <textarea name="story" defaultValue={about.story} maxLength={4000} rows={9} />
                   </label>
+                  <label className="ad-field">
+                    Mission (optional)
+                    <textarea name="mission" defaultValue={about.mission} maxLength={400} rows={3} />
+                  </label>
+                  <label className="ad-field">
+                    Vision (optional)
+                    <textarea name="vision" defaultValue={about.vision} maxLength={400} rows={3} />
+                  </label>
+                  <label className="ad-field full">
+                    Where to find us (optional)
+                    <textarea name="visit" defaultValue={about.visit} maxLength={600} rows={3} />
+                  </label>
+                  <label className="ad-field full">
+                    Closing line (optional)
+                    <input name="closing" defaultValue={about.closing} maxLength={160} />
+                  </label>
                 </div>
+
+                <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
+                  Values
+                </h3>
+                <p className="ad-sub">What the brand stands for, up to 6. Fill the last row to add one.</p>
+                <input type="hidden" name="val_count" value={Math.min(about.values.length + 1, 6)} />
+                {[...about.values, { title: '', text: '' }].slice(0, 6).map((x, i) => (
+                  <div key={`v${aboutVersion}:${i}`} className="ad-form" style={{ marginTop: 8 }}>
+                    <label className="ad-field">
+                      {i === about.values.length ? 'New value title' : 'Value title'}
+                      <input name={`val_title_${i}`} defaultValue={x.title} maxLength={80} />
+                    </label>
+                    <label className="ad-field">
+                      Text
+                      <input name={`val_text_${i}`} defaultValue={x.text} maxLength={300} />
+                    </label>
+                    {i < about.values.length && (
+                      <label className="ad-check">
+                        <input type="checkbox" name={`val_remove_${i}`} /> Remove
+                      </label>
+                    )}
+                  </div>
+                ))}
 
                 <h3 className="ad-h" style={{ fontSize: 13.5, marginTop: 18 }}>
                   Key facts

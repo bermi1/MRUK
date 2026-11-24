@@ -1377,3 +1377,30 @@ textarea.input { resize: vertical; }
 .pdp-page { --stick: 136px; }
 [data-brand='skywood'] .pdp-page { --stick: 125px; }
 @media (max-width: 767px) { .pdp-page { --stick: 60px; } [data-brand='skywood'] .pdp-page { --stick: 58px; } }
+
+/* About: photo header, mission/vision, values, find us, closing */
+.about-head.has-photo { position: relative; max-width: none; margin: 0 calc(50% - 50vw); padding: clamp(120px, 18vw, 220px) max(16px, calc(50vw - 520px)) clamp(40px, 6vw, 72px); color: #fff; overflow: hidden; isolation: isolate; }
+.about-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.about-head.has-photo::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(12, 10, 8, 0.82) 0%, rgba(12, 10, 8, 0.35) 60%, rgba(12, 10, 8, 0.15) 100%); }
+.about-head.has-photo .about-head-in { max-width: 720px; }
+.about-head.has-photo h1, .about-head.has-photo .about-intro { color: #fff; }
+.about-head.has-photo .about-kicker { color: rgba(255, 255, 255, 0.85); }
+.about-head.has-photo h1 { font-size: clamp(32px, 4.6vw, 56px); font-weight: 300; line-height: 1.06; }
+.about-mv { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.about-mv > div { padding: 28px; border-radius: var(--rs); background: var(--surface, #f6f4ef); }
+.about-mv-t { margin: 0; font-size: 19px; line-height: 1.5; font-weight: 300; color: var(--ink); }
+.about-values { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; border-top: 1px solid var(--border); }
+.about-values li { padding: 22px 22px 22px 0; border-bottom: 1px solid var(--border); }
+.about-val-n { font-size: 12px; letter-spacing: 0.12em; color: var(--muted2); }
+.about-values h3 { margin: 8px 0 0; font-size: 17px; font-weight: 500; color: var(--ink); }
+.about-values p { margin: 8px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--muted2); }
+.about-visit { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: center; }
+.about-visit img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--rs); display: block; }
+.about-visit p { margin: 0 0 20px; font-size: 16px; line-height: 1.7; color: var(--text); }
+.about-closing { margin: 64px 0 0; text-align: center; font-size: clamp(22px, 2.6vw, 32px); font-weight: 300; letter-spacing: -0.01em; color: var(--ink); }
+[data-brand='skywood'] .about-head.has-photo h1, [data-brand='skywood'] .about-closing, [data-brand='skywood'] .about-mv-t { font-family: var(--sw-display); }
+[data-brand='skywood'] .about-kicker, [data-brand='skywood'] .about-val-n { color: var(--sw-bronze); }
+[data-brand='skywood'] .about-head.has-photo .about-kicker { color: var(--sw-gold-hi); }
+[data-brand='skywood'] .about-mv > div { background: var(--sw-stone); border-radius: 2px; }
+@media (max-width: 767px) { .about-mv, .about-visit { grid-template-columns: 1fr; } }
+.about-hero-img { object-position: 50% 30%; }
