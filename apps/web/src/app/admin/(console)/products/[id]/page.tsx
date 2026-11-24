@@ -28,7 +28,7 @@ export default async function EditProductPage({ params, searchParams }: { params
       <ProductEditor
         brands={[p.brandKey as 'mruk' | 'skywood']}
         categories={categories}
-        initial={{ id: p.id, brand: p.brandKey as 'mruk' | 'skywood', category: p.category.slug, sub: p.sub, model: p.model, name: p.name, price: p.price.toLocaleString('en-US'), stock: String(p.stock), features: p.features, description: p.description, specs, images: p.images, hidden: p.hidden }}
+        initial={{ id: p.id, brand: p.brandKey as 'mruk' | 'skywood', category: p.category.slug, sub: p.sub, model: p.model, name: p.name, price: p.price.toLocaleString('en-US'), stock: String(p.stock), features: p.features, description: p.description, specs, images: p.images, video: p.video, hidden: p.hidden }}
       />
     </div>
   );

@@ -86,6 +86,7 @@ export function toView(p: DbProduct): ProductView {
     specs: Array.isArray(p.specs) ? (p.specs as { label: string; value: string }[]) : [],
     img: p.images[0] ?? '',
     images: p.images,
+    video: p.video,
     tag: p.tag,
     rating: p.rating,
     reviews: p.reviews,

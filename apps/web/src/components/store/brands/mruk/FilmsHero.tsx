@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRightIcon, PauseIcon, PlayIcon } from '@/components/icons';
-import { videoAllowed } from '../HeroMedia';
+import { primeAutoplay, videoAllowed } from '../HeroMedia';
 
 export interface Film {
   src: string;
@@ -75,6 +75,11 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
               key={f.src}
               ref={(el) => {
                 refs.current[k] = el;
+                if (el) {
+                  el.muted = true;
+                  el.defaultMuted = true;
+                  el.setAttribute('muted', '');
+                }
               }}
               className={`mu-film-img mv-film-v ${k === i ? 'on' : ''}`}
               muted
@@ -84,6 +89,7 @@ export function FilmsHero({ films, eyebrow, title, sub, primary, secondary, labe
               poster={f.poster}
               tabIndex={-1}
               onEnded={() => n > 1 && setI((x) => (x + 1) % n)}
+              onCanPlay={(e) => k === i && !paused && primeAutoplay(e.currentTarget)}
               onTimeUpdate={(e) => k === i && setProgress(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
             >
               <source src={f.src} type="video/mp4" />

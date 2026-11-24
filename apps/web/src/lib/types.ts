@@ -51,6 +51,8 @@ export interface ProductView {
   specs?: { label: string; value: string }[];
   img: string;
   images: string[];
+  /** Optional product video (Admin › Products); empty = the category's film, if any. */
+  video?: string;
   tag: string;
   rating: number;
   reviews: number;

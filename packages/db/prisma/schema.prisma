@@ -66,6 +66,8 @@ model Product {
   /// Structured specifications: [{ "label": "Capacity", "value": "350 L" }]
   specs      Json     @default("[]")
   images     String[]
+  /// Optional product video (MP4/WebM): a /video/... file or an https link. Shown in the gallery and video band.
+  video      String   @default("")
   tag        String   @default("")
   hidden     Boolean  @default(false)
   rating     Float    @default(4.7)

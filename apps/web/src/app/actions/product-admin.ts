@@ -89,6 +89,12 @@ const productZ = z.object({
   description: z.string().trim().max(2000, 'Description: keep it under 2,000 characters').default(''),
   specs: z.array(z.object({ label: z.string().trim().max(40, 'Spec name: under 40 characters'), value: z.string().trim().max(120, 'Spec value: under 120 characters') })).max(20, 'At most 20 specifications').default([]),
   images: z.array(z.string().max(300)).max(8, 'At most 8 photos'),
+  video: z
+    .string()
+    .trim()
+    .max(300)
+    .refine((v) => v === '' || /^(\/video\/[\w.-]+|https:\/\/[^\s"'<>]+)\.(mp4|webm)(\?[^\s"'<>]*)?$/i.test(v), 'Video: an .mp4 or .webm link (https://…) or a /video/… file')
+    .default(''),
   hidden: z.boolean().default(false),
 });
 export type ProductInput = z.input<typeof productZ>;
@@ -115,7 +121,7 @@ export async function saveProductAction(input: ProductInput): Promise<ActionResu
     if (images.some((u) => !own.has(u) && !upload.test(u))) throw new Error('A photo could not be verified. Upload it again.');
     const features = [...new Set(p.features.filter(Boolean))];
     const specs = p.specs.filter((s) => s.label && s.value);
-    const data = { categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: p.price, stock: p.stock, features: features.length ? features : ['New arrival'], description: p.description, specs: specs as Prisma.InputJsonValue, images, hidden: p.hidden };
+    const data = { categoryId: cat.id, sub: p.sub, model: p.model, name: p.name, price: p.price, stock: p.stock, features: features.length ? features : ['New arrival'], description: p.description, specs: specs as Prisma.InputJsonValue, images, video: p.video, hidden: p.hidden };
     const embeddingText = [p.model, p.name, p.sub, cat.name, ...features, p.description, ...specs.map((s) => `${s.label}: ${s.value}`)].filter(Boolean).join(' | ');
 
     let id: string;
@@ -127,6 +133,7 @@ export async function saveProductAction(input: ProductInput): Promise<ActionResu
       if (current.description !== data.description) changed.push('description');
       if (JSON.stringify(current.specs) !== JSON.stringify(specs)) changed.push('specs');
       if (JSON.stringify(current.images) !== JSON.stringify(images)) changed.push('images');
+      if (current.video !== data.video) changed.push('video');
       await audit(ctx.email, 'product.update', 'Product', id, { changed, ...(current.price !== p.price ? { price: { from: current.price, to: p.price } } : {}), ...(current.stock !== p.stock ? { stock: { from: current.stock, to: p.stock } } : {}) });
     } else {
       const base = `${brand}-${slugify(p.model) || 'product'}`;

@@ -16,6 +16,9 @@ import { JsonLd, OgProduct } from '@/components/seo/JsonLd';
 import { productLabel, publicUrl } from '@/lib/site';
 import { breadcrumbLd, graph, pageMeta, productDescription, productLd, productTitle } from '@/server/seo';
 import { payLaterOn } from '@/server/paylater';
+import { productMedia } from '@/lib/product-media';
+import { reviewsFor } from '@/lib/content';
+import { ProductStory } from '@/components/store/pdp/Story';
 import { cleanSpecs, deliveryFee, featureFacts, FREE_DELIVERY_THRESHOLD, highlights, REGIONS } from '@bt/core';
 
 /** Server-side title, description, canonical and OG/Twitter card (image, model, name, price in TZS). */
@@ -218,7 +221,14 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     next: t('pdNext'),
     photo: t('pdPhoto', { n: '{n}' }),
     thumbs: t('pdPhotos', { name: productLabel(p) }),
+    video: t('pdVideo'),
+    lifestyle: t('pdInHome'),
+    zoom: t('pdZoom'),
+    close: t('pdClose'),
   };
+  const media = productMedia(p);
+  // Customer voices: those about this category first (same brand), then the rest.
+  const voices = reviewsFor(key, payLater).sort((a, b) => Number(b.product.toLowerCase().includes(p.sub.toLowerCase())) - Number(a.product.toLowerCase().includes(p.sub.toLowerCase())));
 
   return (
     <div className="wrap pdp-page" style={{ paddingTop: 24 }}>
@@ -228,7 +238,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         <Link href={`/${key}`}>{t('home')}</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
       <div className="pdp">
-        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} labels={galleryLabels} />
+        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} labels={galleryLabels} video={media.video} lifestyle={media.lifestyle} />
         <div className="pdp-info">
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}
@@ -285,6 +295,12 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       </div>
+      <ProductStory
+        p={p}
+        media={media}
+        reviews={voices}
+        t={{ love: t('pdLove'), action: t('pdAction'), actionSub: t('pdActionSub', { name: p.name }), home: t('pdInHome'), homeSub: t('pdInHomeSub'), rated: t('pdRated', { r: p.rating.toFixed(1) }), reviewsN: t('pdReviewsN', { n: p.reviews.toLocaleString('en-US') }), play: t('pdPlay'), voices: t('reviewsTitle') }}
+      />
       <ProductDetails title={t('pdDetails')} sections={sections} />
       <StickyBuyBar
         brand={key}

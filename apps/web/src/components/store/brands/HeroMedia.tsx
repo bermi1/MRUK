@@ -3,14 +3,32 @@ import { useEffect, useRef, useState } from 'react';
 
 type Conn = { saveData?: boolean; effectiveType?: string };
 
-/** True when a background video may load: no reduced motion, no Save-Data, not on a 2G/3G-class connection. */
+/**
+ * True when a background video may load: no reduced motion, no Save-Data, not on a 2G-class connection.
+ * 3G is allowed: many Tanzanian phones report "3g" on usable mobile data, and the films are small
+ * (about 1 MB each) and load after the poster photo, which stays the first paint (LCP).
+ */
 export function videoAllowed(): boolean {
   if (typeof window === 'undefined') return false;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
   const c = (navigator as Navigator & { connection?: Conn }).connection;
   if (c?.saveData) return false;
-  if (c?.effectiveType && /(^|-)2g$|^3g$/.test(c.effectiveType)) return false;
+  if (c?.effectiveType && /(^|-)2g$/.test(c.effectiveType)) return false;
   return true;
+}
+
+/**
+ * Make a background video autoplay everywhere: iOS Safari only autoplays when the element is muted at the
+ * moment it loads (React sets the muted property late, not the attribute), so set both, then ask it to play.
+ */
+export function primeAutoplay(v: HTMLVideoElement | null) {
+  if (!v) return;
+  v.muted = true;
+  v.defaultMuted = true;
+  v.setAttribute('muted', '');
+  v.setAttribute('playsinline', '');
+  const p = v.play();
+  if (p) p.catch(() => undefined);
 }
 
 /**
@@ -27,7 +45,7 @@ export function HeroVideo({ src, poster, className }: { src: string; poster?: st
   if (!ok || failed || !src) return null;
   const type = src.endsWith('.webm') ? 'video/webm' : 'video/mp4';
   return (
-    <video className={className} muted autoPlay loop playsInline preload="metadata" poster={poster || undefined} aria-hidden="true" tabIndex={-1} onError={() => setFailed(true)}>
+    <video ref={primeAutoplay} className={className} muted autoPlay loop playsInline preload="metadata" poster={poster || undefined} aria-hidden="true" tabIndex={-1} onError={() => setFailed(true)} onCanPlay={(e) => primeAutoplay(e.currentTarget)}>
       <source src={src} type={type} onError={() => setFailed(true)} />
     </video>
   );

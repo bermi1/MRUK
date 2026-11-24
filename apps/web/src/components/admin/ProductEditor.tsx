@@ -25,6 +25,8 @@ export interface EditorProduct {
   description: string;
   specs: { label: string; value: string }[];
   images: string[];
+  /** Optional product video link (.mp4 / .webm). */
+  video?: string;
   hidden: boolean;
 }
 
@@ -153,6 +155,7 @@ export function ProductEditor({ initial, brands, categories, canHide = true }: {
         description: p.description,
         specs: p.specs.filter((s) => s.label.trim() || s.value.trim()),
         images: p.images,
+        video: (p.video ?? '').trim(),
         hidden: p.hidden,
       });
       if (!r.ok) return setServerErr({ text: r.error, field: r.field });
@@ -346,6 +349,11 @@ export function ProductEditor({ initial, brands, categories, canHide = true }: {
             Description
             <textarea name="description" rows={4} maxLength={2000} value={p.description} placeholder="Who it is for, what it does well, what is in the box." onChange={(e) => set('description', e.target.value)} />
             <small className="ad-muted">{p.description.length} / 2,000</small>
+          </label>
+          <label className="ad-field">
+            Product video (optional)
+            <input name="video" type="text" inputMode="url" maxLength={300} value={p.video ?? ''} placeholder="https://…/product.mp4" onChange={(e) => set('video', e.target.value)} />
+            <small className="ad-muted">An .mp4 or .webm link. Shown in the photo gallery and as a video band on the product page. Leave empty to use the category film.</small>
           </label>
           <datalist id="spec-labels">
             {SPEC_SUGGESTIONS.map((s) => (

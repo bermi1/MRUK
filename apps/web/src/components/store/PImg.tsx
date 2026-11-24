@@ -2,6 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { modelShort } from '@/lib/format';
 import { img, imgSet } from '@/lib/img';
+import kinds from '@/lib/image-kinds.json';
+
+// Bundled photos without transparency: 'flat' (white background) blends into the tile, 'photo' fills the frame.
+const FLAT = new Set<string>(kinds.flat);
+const PHOTO = new Set<string>(kinds.photo);
+const kindOf = (src: string) => (PHOTO.has(src) ? 'k-photo' : FLAT.has(src) ? 'k-flat' : '');
 
 /**
  * Product image on a brand-coloured tile. Remote photos that fail to load
@@ -21,7 +27,7 @@ export function PImg({ src, alt, model, sub, size = 'md', cover = false, classNa
   const show = src && !broken;
   const fs = { xs: 11, sm: 13, md: 16, lg: 26, xl: 72 }[size];
   return (
-    <div className={`pimg ${cover ? 'cover' : ''} ${className}`} style={style}>
+    <div className={`pimg ${cover ? 'cover' : ''} ${show ? kindOf(src) : ''} ${className}`} style={style}>
       {show ? (
         <img ref={ref} src={img(src, W1[size])} srcSet={imgSet(src, W1[size], W2[size])} sizes={`${W1[size]}px`} alt={alt} loading={size === 'xl' ? 'eager' : 'lazy'} fetchPriority={size === 'xl' ? 'high' : undefined} decoding="async" onError={() => setBroken(true)} />
       ) : (

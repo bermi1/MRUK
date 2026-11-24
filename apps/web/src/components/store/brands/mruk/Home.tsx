@@ -18,6 +18,7 @@ import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIc
 import { MRUK_FILM } from './FilmHero';
 import { FilmsHero } from './FilmsHero';
 import { Spotlight } from './Spotlight';
+import { ShowcaseTabs } from './ShowcaseTabs';
 import { productLabel } from '@/lib/site';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
@@ -80,7 +81,6 @@ export function MrukHome(props: {
   const reviews = reviewsFor('mruk', payLater);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
-  const kitchen = cats.find((c) => c.id === 'kitchen');
   const catMeta = (c: CategoryView) => {
     const ps = products.filter((p) => p.cat === c.id);
     return { from: ps.length ? Math.min(...ps.map((p) => p.price)) : 0, hero: ps.find((p) => p.img) };
@@ -96,6 +96,33 @@ export function MrukHome(props: {
     : focus
       ? [{ ...SPOT_BASE, eyebrow: focus.catName, title: productLabel(focus), img: focus.img, href: `${b}/p/${focus.id}`, price: focus.price, model: focus.model, name: focus.name, features: focus.features, pid: focus.stock > 0 ? focus.id : '', showPrice: true }]
       : [];
+
+  const best = [...products].sort((x, y) => y.reviews - x.reviews || y.rating - x.rating).slice(0, 10);
+  const rail = (list: (ProductView | FlashDeal)[], deals = false) => (
+    <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail">
+      {list.map((p) =>
+        deals && 'dealPrice' in p ? (
+          <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" price={p.dealPrice} was={p.price} badge={t('off', { n: p.off })} perMonth={perMonth} />
+        ) : (
+          <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
+        ),
+      )}
+    </Rail>
+  );
+  // Shop by need: lifestyle picture per need (our shoot stills and film posters), three products each.
+  const NEED_PIC: Record<string, [MessageKey, string]> = {
+    generators: ['needGenerators', '/video/mruk-generators.webp'],
+    kitchen: ['needKitchen', LIFE.main],
+    fridges: ['needFridges', LIFE.statement],
+    'music-tv': ['needMusicTv', '/video/mruk-tv.webp'],
+    washing: ['needWashing', '/video/mruk-home-film.webp'],
+  };
+  const needs = cats
+    .filter((c) => NEED_PIC[c.id])
+    .slice(0, 4)
+    .map((c) => ({ cat: c, key: NEED_PIC[c.id]![0], pic: NEED_PIC[c.id]![1], items: products.filter((p) => p.cat === c.id && p.img).slice(0, 3) }));
+  // Technology story: the best-reviewed TV or generator with at least three features (else none).
+  const tech = [...products].filter((p) => (p.cat === 'music-tv' || p.cat === 'generators') && p.img && p.features.length >= 3 && !spot.some((s) => s.pid === p.id)).sort((x, y) => y.reviews - x.reviews)[0];
 
   return (
     <div className="mu-home mv">
@@ -175,33 +202,50 @@ export function MrukHome(props: {
         </div>
       </section>
 
-      {/* Kitchen lifestyle story */}
-      <section className="mx-life mv-life">
-        <div className="wrap mx-life-in">
-          <div className="mx-life-media" data-reveal>
-            <img src={LIFE.main} alt="" loading="lazy" decoding="async" className="mx-life-main" width={1600} height={900} />
-            <img src={LIFE.side} alt="" loading="lazy" decoding="async" className="mx-life-side" width={1600} height={900} />
-          </div>
-          <div className="mx-life-copy" data-reveal>
-            <p className="mx-kicker">{t('mxLifeKicker')}</p>
-            <h2 className="mx-h">{t('mxLifeTitle')}</h2>
-            <p className="mx-p">{t('mxLifeSub')}</p>
-            <More href={kitchen ? `${b}/c/${kitchen.id}` : `${b}/shop`}>{t('mxLifeCta')}</More>
-          </div>
+      {/* Tabbed showcase: best sellers, new in, deals */}
+      <section className="mv-sec">
+        <div className="wrap">
+          <Head kicker={t('mxShowcase')} title={t('mxShowcaseTitle')} action={<More href={`${b}/shop`}>{t('viewAll')}</More>} />
+          <ShowcaseTabs
+            label={t('mxShowcase')}
+            tabs={[
+              { id: 'best', label: t('mxBest'), panel: rail(best) },
+              { id: 'new', label: t('newArrivals'), panel: rail(newest) },
+            ]}
+          />
         </div>
       </section>
 
-      {/* New arrivals */}
-      <section className="mv-sec mv-arrivals">
-        <div className="wrap">
-          <Head kicker={t('newArrivals')} title={t('newArrivalsSub', { brand: brand.name })} />
-          <Rail labels={{ prev: t('prev'), next: t('next') }} className="mu-rail">
-            {newest.map((p) => (
-              <ProductCard key={p.id} p={p} inCompare={compare.includes(p.id)} brand="mruk" badge={p.tag || undefined} perMonth={perMonth} />
-            ))}
-          </Rail>
-        </div>
-      </section>
+      {/* Shop by need: a lifestyle picture and the products that solve it */}
+      {needs.length > 0 && (
+        <section className="mv-sec">
+          <div className="wrap">
+            <Head kicker={t('shopByNeed')} title={t('shopByNeedSub')} />
+            <div className="mv-needs">
+              {needs.map((n, i) => (
+                <Link key={n.cat.id} href={`${b}/c/${n.cat.id}`} className={`mv-need ${i === 0 ? 'lead' : ''}`} data-reveal style={{ ['--i' as string]: i }}>
+                  <img className="mv-need-bg" src={n.pic} alt="" loading="lazy" decoding="async" />
+                  <span className="mv-need-shade" aria-hidden="true" />
+                  <span className="mv-need-copy">
+                    <span className="mv-need-t">{t(n.key)}</span>
+                    <span className="mv-need-s">{n.cat.name}</span>
+                  </span>
+                  <span className="mv-need-row" aria-hidden="true">
+                    {n.items.map((p) => (
+                      <span key={p.id} className="mv-need-p">
+                        <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="xs" />
+                      </span>
+                    ))}
+                    <span className="mv-need-go">
+                      <ArrowRightIcon size={16} />
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Offers (flash promotions) */}
       {flash.length > 0 && (
@@ -246,6 +290,37 @@ export function MrukHome(props: {
       {spot.length > 0 && (
         <section className="wrap mv-sec">
           <Spotlight slides={spot} labels={heroLabels} kicker={slides.length ? t('spotlight') : t('inFocus')} />
+        </section>
+      )}
+
+      {/* Technology story (dark band): one hero product and its three strongest points */}
+      {tech && (
+        <section className="mv-tech">
+          <div className="wrap mv-tech-in">
+            <div className="mv-tech-copy" data-reveal>
+              <p className="mx-kicker light">{tech.catName}</p>
+              <h2 className="mx-h light">{productLabel(tech)}</h2>
+              <ul className="mv-tech-points">
+                {tech.features.slice(0, 3).map((f, k) => (
+                  <li key={f}>
+                    <span>{String(k + 1).padStart(2, '0')}</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="mx-row">
+                <Link href={`${b}/p/${tech.id}`} className="mu-btn mu-btn-sky">
+                  {t('discover')} <ArrowRightIcon size={16} className="i-arrow" />
+                </Link>
+                <span className="mv-tech-price">{fmt(tech.price)}</span>
+              </div>
+            </div>
+            <div className="mv-tech-stage" aria-hidden="true" data-reveal>
+              <span className="mv-tech-glow" />
+              <div className="mv-tech-obj">{tech.img && <SafeImg src={tech.img} alt="" />}</div>
+              <div className="mv-tech-reflect">{tech.img && <SafeImg src={tech.img} alt="" />}</div>
+            </div>
+          </div>
         </section>
       )}
 
