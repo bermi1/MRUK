@@ -199,17 +199,7 @@ export function Suppliers({
                       {x.phone}
                     </a>
                   </>
-                ) : (
-                  <span
-                    style={{
-                      fontSize: 13,
-                      color: "var(--muted2)",
-                      alignSelf: "center",
-                    }}
-                  >
-                    Phone number coming soon
-                  </span>
-                )}
+                ) : null}
               </div>
             </div>
           ))}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AddBundleButton } from '@/components/store/CartButtons';
-import { Countdown } from '@/components/store/Countdown';
+import { ProductCard } from '@/components/store/brands/ProductCard';
 import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { PImg } from '@/components/store/PImg';
 import { fmt } from '@/lib/format';
@@ -37,17 +37,14 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
           <span className="mono" style={{ fontSize: 12, letterSpacing: '.16em', opacity: 0.75 }}>
             DEALS, BUNDLES AND OFFERS
           </span>
-          <h1 style={{ margin: '10px 0 0', fontSize: 'clamp(26px, 4vw, 56px)', fontWeight: 600, letterSpacing: '-.03em', lineHeight: 1 }}>Save more when you buy together.</h1>
+          <h1 className="deals-h1">Save more when you buy together.</h1>
         </div>
-        <div className="deals-timer">
-          <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 8 }}>Flash deals end in</div>
-          <Countdown />
-        </div>
+        <p className="deals-sub">{t('flashDealsSub')}</p>
       </section>
       <h2 className="deals-h2">Bundle packages</h2>
-      <div className="grid-3" style={{ marginTop: 18 }}>
+      <div className="deals-grid" style={{ marginTop: 18, ['--n' as string]: Math.min(Math.max(bundles.length, 1), 3) }}>
         {bundles.map((b) => (
-          <article key={b.title} style={{ border: '1px solid var(--border)', borderRadius: 26, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <article key={b.title} className="deal-bundle" style={{ border: '1px solid var(--border)', borderRadius: 26, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', height: 200, gap: 2, background: 'var(--border)' }}>
               {b.items.slice(0, 3).map((t) => (
                 <Link key={t.id} href={`/${key}/p/${t.id}`} style={{ flex: 1, position: 'relative' }}>
@@ -58,7 +55,7 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
               <div className="row">
                 <span style={{ fontSize: 19, fontWeight: 600 }}>{b.title}</span>
-                <span className="badge" style={{ background: '#E6F4EE', color: 'var(--ok)' }}>
+                <span className="badge deal-save">
                   Save {b.save}%
                 </span>
               </div>
@@ -82,11 +79,14 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
       {flash.length > 0 && (
         <>
           <h2 className="deals-h2">Flash deals</h2>
-          <div className="grid-4" style={{ marginTop: 18 }}>
-            {flash.slice(0, 8).map((p) => (
+          <div className={key === 'skywood' ? 'deals-grid deals-flash' : 'grid-4'} style={{ marginTop: 18, ['--n' as string]: Math.min(Math.max(flash.length, 3), 4) }}>
+            {flash.slice(0, 8).map((p) =>
+              key === 'skywood' ? (
+                <ProductCard key={p.id} p={p} brand="skywood" price={p.dealPrice} was={p.price} badge={`−${p.off}%`} perMonth="" />
+              ) : (
               <Link key={p.id} href={`/${key}/p/${p.id}`} className="ptile shade-tb" style={{ height: 320 }}>
                 <PImg src={p.img} alt={p.name} model={p.model} size="lg" />
-                <span className="badge" style={{ position: 'absolute', left: 14, top: 14, background: '#E23B3B', color: '#fff', zIndex: 2 }}>
+                <span className="badge deal-off" style={{ position: 'absolute', left: 14, top: 14, zIndex: 2 }}>
                   −{p.off}%
                 </span>
                 <div style={{ position: 'absolute', left: 16, right: 16, bottom: 16, zIndex: 2 }}>
@@ -97,7 +97,8 @@ export default async function DealsPage({ params }: { params: Promise<{ brand: s
                   </div>
                 </div>
               </Link>
-            ))}
+              ),
+            )}
           </div>
         </>
       )}

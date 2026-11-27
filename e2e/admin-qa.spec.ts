@@ -76,7 +76,15 @@ test('password-only sign-in when STAFF_2FA_REQUIRED=false', async ({ page }) => 
 test('uploaded JPEG and PNG photos are stored and served as WebP (rotated, resized, transparency kept)', async ({ page }) => {
   await signIn(page, 'halima@skywood.co.tz');
   const c = db();
-  const product = await c.product.findFirstOrThrow({ where: { brandKey: 'skywood', hidden: false }, orderBy: { name: 'asc' } });
+  // A dedicated fixture product, so uploads never replace a real product's photos in the shared database.
+  const like = await c.product.findFirstOrThrow({ where: { brandKey: 'skywood', hidden: false }, orderBy: { name: 'asc' } });
+  const fixtureId = 'skywood-e2e-photo-fixture';
+  await c.cartItem.deleteMany({ where: { productId: fixtureId } });
+  await c.product.deleteMany({ where: { id: fixtureId } });
+  const product = await c.product.create({
+    data: { id: fixtureId, brandKey: 'skywood', categoryId: like.categoryId, sub: like.sub, model: 'E2E-PHOTO-FIXTURE', name: 'E2E photo fixture', price: 1000, stock: 1, features: ['Test fixture'], description: 'Test fixture for the photo upload check.', images: [like.images[0] ?? '/img/products/skywood/skywood-csc-12k-1.webp'] },
+  });
+  try {
   // 2400×1200 JPEG with EXIF orientation 6 (phone held upright) → upright, 1600 px on the longest side.
   const jpeg = await sharp({ create: { width: 2400, height: 1200, channels: 3, background: '#c04020' } }).jpeg({ quality: 60 }).withMetadata({ orientation: 6 }).toBuffer();
   await page.goto(`/admin/products?b=skywood&q=${encodeURIComponent(product.model)}`);
@@ -117,7 +125,11 @@ test('uploaded JPEG and PNG photos are stored and served as WebP (rotated, resiz
   await page.goto(`/admin/products?b=skywood&q=${encodeURIComponent(product.model)}`);
   await row.locator('input[type=file]').setInputFiles({ name: 'fake.png', mimeType: 'image/png', buffer: Buffer.from('definitely not a picture, just text') });
   await expect(row.getByRole('alert')).toContainText('Only JPG, PNG or WebP');
-  await c.$disconnect();
+  } finally {
+    await c.cartItem.deleteMany({ where: { productId: fixtureId } });
+    await c.product.deleteMany({ where: { id: fixtureId, orderItems: { none: {} } } });
+    await c.$disconnect();
+  }
 });
 
 test('stock: restock adds, inline edit sets, never negative, reserved units shown, audit-logged', async ({ page }) => {

@@ -7,7 +7,6 @@ import type { BundleView, FlashDeal } from '@/server/catalog';
 import { AddBundleButton } from '../../CartButtons';
 import { subscribeLabels } from '../../Footer';
 import { Subscribe } from '../../Subscribe';
-import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { ProductCard } from '../ProductCard';
@@ -294,14 +293,6 @@ export function MrukHome(props: {
             <Head
               kicker={t('mv7Deals')}
               title={t('mv7DealsTitle')}
-              action={
-                deals.length > 0 ? (
-                  <div className="mv7-timer">
-                    <span>{t('endsIn')}</span>
-                    <Countdown compact />
-                  </div>
-                ) : undefined
-              }
             />
             <ShowcaseTabs
               label={t('mv7Deals')}

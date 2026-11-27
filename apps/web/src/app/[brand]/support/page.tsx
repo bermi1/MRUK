@@ -35,7 +35,7 @@ export default async function SupportPage({ params }: { params: Promise<{ brand:
             <div style={{ fontSize: 14.5, fontWeight: 600 }}>Service centres</div>
             <div style={{ fontSize: 12.5, color: 'var(--muted2)', marginTop: 2 }}>Near you</div>
           </Link>
-          <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" style={{ borderRadius: 18, background: 'var(--wa)', color: '#fff', padding: 16 }}>
+          <a href={waLink(brand.whatsapp, `Hello ${brand.name}, I need help.`)} target="_blank" rel="noopener noreferrer" className="sup-wa" style={{ borderRadius: 18, background: 'var(--wa)', color: '#fff', padding: 16 }}>
             <div style={{ fontSize: 14.5, fontWeight: 600 }}>WhatsApp</div>
             <div style={{ fontSize: 12.5, opacity: 0.85, marginTop: 2 }}>Chat now</div>
           </a>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ProductCard } from '@/components/store/brands/ProductCard';
 import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
 import { HeaderOffset } from '@/components/store/HeaderOffset';
@@ -232,6 +233,8 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     .filter((x) => x.id !== p.id && x.cat === p.cat && kind(p) !== '' && kind(x) === kind(p) && x.img)
     .sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price))
     .slice(0, 3);
+  // Skywood: a quiet rail of other pieces in the same category (photos only, max 8).
+  const more = key === 'skywood' ? products.filter((x) => x.id !== p.id && x.cat === p.cat && x.img).slice(0, 8) : [];
 
   return (
     <div className="wrap pdp-page" style={{ paddingTop: 24 }}>
@@ -310,6 +313,21 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
       </div>
       <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis'), pick: t('pdCmpPick'), pickLabel: t('pdCmpPickLabel'), aiNote: t('pdCmpAiNote') }} />
       <ProductDetails title={t('pdDetails')} sections={sections} />
+      {more.length > 0 && (
+        <section className="pdp-more" aria-labelledby="pdp-more-h">
+          <div className="pdp-more-head">
+            <h2 id="pdp-more-h">{t('pdMoreIn', { cat: p.catName })}</h2>
+            <Link href={`/${key}/c/${p.cat}`} className="pdx-link">
+              {t('seeAll')} <ArrowRightIcon size={15} />
+            </Link>
+          </div>
+          <div className="pdp-more-track">
+            {more.map((x) => (
+              <ProductCard key={x.id} p={x} brand="skywood" perMonth="" />
+            ))}
+          </div>
+        </section>
+      )}
       {p.stock > 0 && (
       <StickyBuyBar
         brand={key}

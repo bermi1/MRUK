@@ -17,6 +17,7 @@ test('add a product: one form with features, specs, photos (reorder, main), prev
   await signIn(page, 'halima@skywood.co.tz');
   const c = db();
   // A product left by an earlier run would trip the "nothing saved yet" check below (and shows on the store).
+  await c.productEmbedding.deleteMany({ where: { product: { name: 'QA Air Fryer 5L' } } });
   await c.product.deleteMany({ where: { name: 'QA Air Fryer 5L', orderItems: { none: {} } } });
   await page.goto('/admin/products?b=skywood');
   await page.getByRole('link', { name: '+ Add product' }).click();
@@ -99,6 +100,10 @@ test('add a product: one form with features, specs, photos (reorder, main), prev
   await page.goto('/admin/products/new?b=skywood');
   const [sw, w] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
   expect(sw).toBeLessThanOrEqual(w);
+  // Test data must not stay in the live catalogue.
+  await c.productEmbedding.deleteMany({ where: { productId: p.id } });
+  await c.cartItem.deleteMany({ where: { productId: p.id } });
+  await c.product.deleteMany({ where: { id: p.id, orderItems: { none: {} } } });
   await c.$disconnect();
 });
 

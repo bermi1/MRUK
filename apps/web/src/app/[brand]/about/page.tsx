@@ -98,7 +98,7 @@ export default async function AboutPage({ params }: { params: Promise<{ brand: s
       {a.activities.length > 0 && (
         <section className="about-sec" aria-labelledby="about-activities">
           <h2 id="about-activities">{t('aboutActivities')}</h2>
-          <ul className="about-acts">
+          <ul className={`about-acts n${a.activities.length}`} style={{ ['--n' as string]: a.activities.length === 4 ? 2 : Math.min(a.activities.length, 3) }}>
             {a.activities.map((x) => (
               <li key={x.title}>
                 <h3>{x.title}</h3>

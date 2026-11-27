@@ -101,6 +101,17 @@ const loadProducts = cached(async (brand: BrandKey): Promise<ProductView[]> => {
   return ps.map(toView);
 }, 'products');
 
+/** Published products that have no photo yet (not sold online): listed as text on their category page so shoppers can enquire. */
+const loadShowroomOnly = cached(
+  async (brand: BrandKey) =>
+    (await prisma.product.findMany({ where: { brandKey: brand, hidden: false, images: { isEmpty: true } }, select: { id: true, name: true, model: true, price: true, category: { select: { slug: true } } }, orderBy: { price: 'asc' } })).map((p) => ({ id: p.id, name: p.name, model: p.model, price: p.price, cat: p.category.slug })),
+  'showroom-only',
+);
+
+export async function getShowroomOnly(brand: BrandKey, cat: string) {
+  return (await loadShowroomOnly(brand)).filter((p) => p.cat === cat);
+}
+
 /**
  * These products straight from the database (not the 60 s catalogue cache), with live deals
  * applied, plus their updatedAt. Used by the AI compare so an admin edit to features or

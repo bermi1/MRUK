@@ -54,7 +54,7 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, pay
           <span style={{ fontSize: 15, fontWeight: 600 }}>{fmt(p.price)}</span>
         </button>
         {payLater && (
-        <div role="radio" aria-checked={pay === 'salary'} tabIndex={0} onClick={() => setPay('salary')} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPay('salary')} className="payopt" style={{ display: 'block', border: pay === 'salary' ? '2px solid var(--az)' : '1px solid var(--line)', background: pay === 'salary' ? '#F3FAFE' : '#fff' }}>
+        <div role="radio" aria-checked={pay === 'salary'} tabIndex={0} onClick={() => setPay('salary')} onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setPay('salary')} className="payopt payopt-sal" style={{ display: 'block', border: pay === 'salary' ? '2px solid var(--az)' : '1px solid var(--line)', background: pay === 'salary' ? '#F3FAFE' : '#fff' }}>
           <div className="row">
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left' }}>
               <img src="/brand/azania-mark.png" alt="Azania Bank" style={{ width: 34, height: 34, objectFit: 'contain' }} />

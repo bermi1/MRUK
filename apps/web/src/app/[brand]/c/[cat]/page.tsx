@@ -9,9 +9,9 @@ import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { getT } from '@/server/locale';
 import type { BrandKey } from '@/lib/types';
 import { getCart, getCompareIds } from '@/server/cart';
-import { getBrand, getCategories, getProducts, photoFirst } from '@/server/catalog';
+import { getBrand, getCategories, getProducts, getShowroomOnly, photoFirst } from '@/server/catalog';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { fmt } from '@/lib/format';
+import { fmt, waLink } from '@/lib/format';
 import { brandTitle, breadcrumbLd, graph, itemListLd, pageMeta } from '@/server/seo';
 import { payLaterOn } from '@/server/paylater';
 
@@ -45,7 +45,10 @@ export default async function CategoryPage({ params, searchParams }: { params: P
   const sub = sp.sub && (cat?.subs.includes(sp.sub) ?? false) ? sp.sub : 'All';
   const sort = sp.sort === 'low' || sp.sort === 'high' ? sp.sort : 'popular';
   const view = sp.view === 'list' ? 'list' : 'grid';
-  let list = products.filter((p) => !cat || p.cat === cat.id).filter((p) => sub === 'All' || p.sub === sub);
+  const inCat = products.filter((p) => !cat || p.cat === cat.id);
+  // Only sub-category chips that lead somewhere.
+  const subs = (cat?.subs ?? []).filter((s) => inCat.some((p) => p.sub === s));
+  let list = inCat.filter((p) => sub === 'All' || p.sub === sub);
   list = sort === 'low' ? [...list].sort((a, b) => a.price - b.price) : sort === 'high' ? [...list].sort((a, b) => b.price - a.price) : photoFirst(list);
   const base = `/${key}/c/${catId}`;
   const q = (patch: Record<string, string>) => {
@@ -54,6 +57,9 @@ export default async function CategoryPage({ params, searchParams }: { params: P
     const s = u.toString();
     return s ? `${base}?${s}` : base;
   };
+  // Published products without a photo are not sold online: list them as text (no placeholder tiles).
+  const noPhoto = cat ? await getShowroomOnly(key, cat.id) : [];
+  const fewItems = list.length < 4;
   const heroImg = cat ? cat.img : brand.heroImg;
   // Silent looping film where we have caption-free footage: poster first (LCP), video only after mount.
   const film = cat ? categoryFilm(key, cat) : null;
@@ -67,7 +73,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
             <Link href={`/${key}`}>Home</Link> / {cat?.name ?? 'All products'}
           </nav>
           <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(26px, 3.4vw, 44px)', fontWeight: 600, letterSpacing: '-.03em' }}>{cat?.name ?? 'All products'}</h1>
-          <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{list.length} products{payLater ? ' · Pay Later on every item' : ''}</div>
+          <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{t('productsN', { n: list.length })}{payLater ? ' · Pay Later on every item' : ''}</div>
         </div>
         <div className="art">
           {film ? (
@@ -91,12 +97,13 @@ export default async function CategoryPage({ params, searchParams }: { params: P
       )}
       <div className="filters">
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['All', ...(cat?.subs ?? [])].map((s) => (
+          {(subs.length > 1 || sub !== 'All' ? ['All', ...subs] : []).map((s) => (
             <Link key={s} href={q({ sub: s })} className={`chip ${sub === s ? 'on' : ''}`} aria-current={sub === s}>
               {s}
             </Link>
           ))}
         </div>
+        {!fewItems && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 'none' }}>
           {(
             [
@@ -118,6 +125,7 @@ export default async function CategoryPage({ params, searchParams }: { params: P
             </Link>
           </div>
         </div>
+        )}
       </div>
       {list.length === 0 && <div style={{ border: '1px dashed var(--line)', borderRadius: 20, padding: 40, textAlign: 'center', color: 'var(--muted2)', marginTop: 20 }}>No products here yet.</div>}
       {view === 'grid' ? (
@@ -132,6 +140,27 @@ export default async function CategoryPage({ params, searchParams }: { params: P
             <ProductRow key={p.id} p={p} brand={key} inCompare={cmp.includes(p.id)} months={cart.months} payLater={payLater} />
           ))}
         </div>
+      )}
+      {noPhoto.length > 0 && (
+        <section className="also-avail" aria-labelledby="also-h">
+          <h2 id="also-h">{t('alsoInShowrooms')}</h2>
+          <ul>
+            {noPhoto.map((p) => (
+              <li key={p.id}>
+                <span className="also-name">
+                  {p.name}
+                  <span className="also-model">{p.model}</span>
+                </span>
+                <span className="also-price">{fmt(p.price)}</span>
+                {brand.whatsapp && (
+                  <a className="also-wa" href={waLink(brand.whatsapp, `Hello ${brand.name}, I would like to ask about the ${p.name} (${p.model}).`)} target="_blank" rel="noopener noreferrer">
+                    {t('enquireWhatsApp')}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {payLater && <PayLaterBanner brand={key} title={t('salaryAdvance')} sub={t('swAdvanceBody')} cta={t('payLaterHow')} href={`/${key}/pay-later`} />}
     </div>

@@ -13,7 +13,7 @@ import { fill, useMobileMenu, type MobileMenuProps } from './shared';
  * that is not one of the four bottom-bar destinations: categories, Pay Later, deals, compare,
  * track order, suppliers, support, WhatsApp, language.
  */
-export function MobileDrawer({ brand, brandName, cats, labels, announcement, locale, whatsapp, compareCount, payLater }: MobileMenuProps) {
+export function MobileDrawer({ brand, brandName, cats, labels, locale, whatsapp, compareCount, payLater }: MobileMenuProps) {
   const { open, setOpen, close, panel } = useMobileMenu();
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -92,13 +92,12 @@ export function MobileDrawer({ brand, brandName, cats, labels, announcement, loc
                 <img src="/brand/azania-bank-white.png" alt="" width={30} height={23} />
                 <div>
                   <b>{labels.salaryAdvance}</b>
-                  <span>{announcement || labels.salaryAdvanceSub}</span>
+                  <span>{labels.salaryAdvanceSub}</span>
                 </div>
                 <div className="dr-pl-links">
                   <Link href={`${b}/pay-later`}>
-                    {labels.payLater} <ArrowRightIcon size={15} />
+                    {labels.payLaterHow} <ArrowRightIcon size={15} />
                   </Link>
-                  <Link href={`${b}/pay-later#how`}>{labels.payLaterHow}</Link>
                 </div>
               </div>
               )}

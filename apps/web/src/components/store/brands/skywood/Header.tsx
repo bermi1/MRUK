@@ -102,12 +102,12 @@ export function SkywoodHeader({ brand, cms, cats, mega, cartCount, compareCount,
                 {disc('paylater', labels.payLaterHow)}
               </li>
             )}
-            <li onMouseEnter={m.leave}>
+            <li className="sw-cats-plain" onMouseEnter={m.leave}>
               <Link href={`${b}/shop`} className={path.startsWith(`${b}/shop`) ? 'on' : ''} data-testid="nav-all-products">
                 {labels.allProducts}
               </Link>
             </li>
-            <li onMouseEnter={m.leave}>
+            <li className="sw-cats-plain" onMouseEnter={m.leave}>
               <Link href={`${b}/deals`} className={path.startsWith(`${b}/deals`) ? 'on' : ''}>
                 {labels.deals}
               </Link>

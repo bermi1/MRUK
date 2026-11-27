@@ -1,3 +1,4 @@
+import { fillVars } from './fill';
 /** English and Kiswahili UI strings. Product data stays as entered in admin. */
 export type Locale = 'en' | 'sw';
 
@@ -75,7 +76,9 @@ const en = {
   close: 'Close',
   featured: 'Featured',
   viewAllN: 'View all {n}',
-  productsN: '{n} products',
+  productsN: '{n} {n|product|products}',
+  alsoInShowrooms: 'Also available in our showrooms',
+  enquireWhatsApp: 'Enquire on WhatsApp',
   searchShort: 'Search',
   helpAndServices: 'Help and services',
   pause: 'Pause slideshow',
@@ -114,6 +117,7 @@ const en = {
   pdVideo: 'Video',
   pdJump: 'On this page',
   pdCompare: 'Compare similar models',
+  pdMoreIn: 'More in {cat}',
   pdCompareSub: 'Find the right one',
   pdCmpPrice: 'Price',
   pdCmpRating: 'Rating',
@@ -131,11 +135,11 @@ const en = {
   pdPlay: 'Play video',
   pdRated: '{r} out of 5',
   pdReviewsN: '{n} reviews',
-  mv7Deals: "Today's deals",
+  mv7Deals: 'Current deals',
   mv7PauseVideo: 'Pause video',
   mv7KeyProd: 'Featured',
   mv7OfferT: 'Save {n}% on the {name}',
-  mv7DealsTitle: 'Limited-time prices on popular appliances.',
+  mv7DealsTitle: 'Reduced prices on popular appliances, while stock lasts.',
   mv7Visit: 'Visit one of {n} showrooms and dealers in {m} towns.',
   mxShowcase: 'Shop the range',
   mxShowcaseTitle: 'The appliances Tanzanian homes are buying.',
@@ -167,7 +171,7 @@ const en = {
   trustShowroomsSub: 'Pickup ready in 24 hours',
   shopByCategory: 'Shop by category',
   flashDeals: 'Flash deals',
-  flashDealsSub: 'Today only. Prices reset at midnight.',
+  flashDealsSub: 'Selected pieces, reduced while stock lasts.',
   endsIn: 'Ends in',
   off: '{n}% off',
   shopByNeed: 'Shop by need',
@@ -694,6 +698,8 @@ const sw: Record<MessageKey, string> = {
   featured: 'Zilizochaguliwa',
   viewAllN: 'Tazama zote {n}',
   productsN: 'Bidhaa {n}',
+  alsoInShowrooms: 'Zinapatikana pia kwenye maduka yetu',
+  enquireWhatsApp: 'Uliza kwa WhatsApp',
   searchShort: 'Tafuta',
   helpAndServices: 'Msaada na huduma',
   pause: 'Simamisha slaidi',
@@ -732,6 +738,7 @@ const sw: Record<MessageKey, string> = {
   pdVideo: 'Video',
   pdJump: 'Kwenye ukurasa huu',
   pdCompare: 'Linganisha modeli zinazofanana',
+  pdMoreIn: 'Zaidi katika {cat}',
   pdCompareSub: 'Chagua inayokufaa',
   pdCmpPrice: 'Bei',
   pdCmpRating: 'Ukadiriaji',
@@ -749,11 +756,11 @@ const sw: Record<MessageKey, string> = {
   pdPlay: 'Cheza video',
   pdRated: '{r} kati ya 5',
   pdReviewsN: 'Maoni {n}',
-  mv7Deals: 'Ofa za leo',
+  mv7Deals: 'Ofa za sasa',
   mv7PauseVideo: 'Simamisha video',
   mv7KeyProd: 'Bidhaa maalum',
   mv7OfferT: 'Okoa {n}% kwenye {name}',
-  mv7DealsTitle: 'Bei za muda mfupi kwa vifaa maarufu.',
+  mv7DealsTitle: 'Bei nafuu kwa vifaa maarufu, hadi stoku itakapoisha.',
   mv7Visit: 'Tembelea mojawapo ya maduka na mawakala {n} katika miji {m}.',
   mxShowcase: 'Nunua bidhaa zetu',
   mxShowcaseTitle: 'Vifaa ambavyo nyumba za Kitanzania zinanunua.',
@@ -785,7 +792,7 @@ const sw: Record<MessageKey, string> = {
   trustShowroomsSub: 'Tayari kuchukuliwa ndani ya saa 24',
   shopByCategory: 'Nunua kwa kundi',
   flashDeals: 'Ofa za muda mfupi',
-  flashDealsSub: 'Leo tu. Bei zinarudi saa sita usiku.',
+  flashDealsSub: 'Bidhaa teule, kwa bei nafuu hadi stoku itakapoisha.',
   endsIn: 'Inaisha baada ya',
   off: 'Punguzo {n}%',
   shopByNeed: 'Nunua kwa hitaji',
@@ -1235,10 +1242,10 @@ const sw: Record<MessageKey, string> = {
 export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, sw };
 
 export function translate(locale: Locale, key: MessageKey, vars?: Record<string, string | number>): string {
-  let s = MESSAGES[locale]?.[key] ?? en[key];
-  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
-  return s;
+  const s = MESSAGES[locale]?.[key] ?? en[key];
+  return vars ? fillVars(s, vars) : s;
 }
+
 
 /** Strings client components read through <MessagesProvider> (kept small: only these ship to the browser). */
 export const CLIENT_KEYS = ['compare', 'addCompare', 'addedCompare', 'cmpLimit', 'cmpAdded', 'cmpRemoved', 'cmpRemove', 'cmpAddAria', 'cmpClearAll', 'accErrGeneric', 'emptyCart', 'browseProducts', 'remove', 'cartDecrease', 'cartIncrease', 'cartRemoveItem', 'cartOnlyAvailable', 'onlyLeft', 'outOfStock', 'inStock', 'cmpMixed', 'cmpStartNew', 'cmpView', 'cmpTray', 'cmpNow'] as const;

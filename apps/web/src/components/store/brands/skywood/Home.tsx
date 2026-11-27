@@ -9,7 +9,6 @@ import { ArrowRightIcon, CardIcon, ChatIcon, PinIcon, ShieldIcon, Stars, TruckIc
 import { AddBundleButton, AddButton } from '../../CartButtons';
 import { subscribeLabels } from '../../Footer';
 import { Subscribe } from '../../Subscribe';
-import { Countdown } from '../../Countdown';
 import { PImg } from '../../PImg';
 import { SafeImg } from '../../SafeImg';
 import { ProductCard } from '../ProductCard';
@@ -193,10 +192,6 @@ export function SkywoodHome(props: {
               </p>
               <h2>{t('swOffersTitle')}</h2>
               <p className="sw-offers-sub">{t('flashDealsSub')}</p>
-              <div className="sw-offers-timer">
-                <span>{t('endsIn')}</span>
-                <Countdown className="sw-cd" />
-              </div>
               <More href={`${b}/deals`} light>
                 {t('seeDeals')}
               </More>
@@ -380,8 +375,8 @@ export function SkywoodHome(props: {
         <Subscribe brand="skywood" source="home" labels={subscribeLabels(t, brand.name)} className="home-sub" />
       </section>
 
-      {/* Showrooms */}
-      <section className="wrap sw-sec">
+      {/* Showrooms (joined to the subscribe band: one hairline between them, no empty gap) */}
+      <section className="wrap sw-sec sw-sec-join">
         <div className="sw-visit" data-reveal>
           <div className="sw-visit-copy">
             <p className="sw-eyebrow">

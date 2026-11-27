@@ -466,7 +466,9 @@ textarea.input { resize: vertical; }
 /* Card prices: each amount on one line; the struck list price wraps below when space is short. */
 .pt-price, .pc-price { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; row-gap: 0; }
 .pt-price > span, .pt-price > s, .pc-price, .pc-price > s { white-space: nowrap; }
-.tile-stock { display: block; color: #ffd2c4; }
+.tile-stock { display: block; color: var(--warn); }
+/* Light text only where the tile has a dark overlay behind its copy. */
+.shade-tb .tile-stock { color: #ffd2c4; }
 @media (max-width: 767px) { [data-brand] .grid-5 .ptile .tile-stock { color: var(--warn); } }
 .cart-stock { display: block; font-size: 12.5px; }
 .pdp-stock { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ok); }
@@ -510,13 +512,18 @@ textarea.input { resize: vertical; }
 .cmp-x::before { content: ''; position: absolute; inset: 9px; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center / contain no-repeat; }
 .cmp-x svg { display: none; }
 .deals-hero { border-radius: 30px; background: var(--p); color: #fff; padding: 48px 52px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center; position: relative; overflow: hidden; }
-.deals-timer { justify-self: end; text-align: right; position: relative; }
-.deals-timer > div:last-child { justify-content: flex-end; }
+.deals-h1 { margin: 10px 0 0; font-size: clamp(26px, 4vw, 56px); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
+.deals-sub { margin: 0; justify-self: end; max-width: 320px; font-size: 15px; line-height: 1.5; opacity: 0.8; position: relative; }
+.deals-grid { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1100px) { .deals-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.deal-save { background: #e6f4ee; color: var(--ok); }
+.deal-off { background: #e23b3b; color: #fff; }
 .deals-h2 { margin: 48px 0 0; font-size: clamp(19px, 2.4vw, 30px); font-weight: 600; letter-spacing: -0.02em; }
 @media (max-width: 767px) {
   .deals-hero { grid-template-columns: 1fr; padding: 22px; border-radius: 26px; gap: 14px; }
-  .deals-timer { justify-self: start; text-align: left; }
-  .deals-timer > div:last-child { justify-content: flex-start; }
+  .deals-sub { justify-self: start; }
+  .deals-grid { grid-template-columns: 1fr; }
+  .deals-grid.deals-flash { grid-template-columns: 1fr 1fr; gap: 10px; }
   .deals-h2 { margin-top: 24px; }
 }
 .sup-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 16px; margin-top: 18px; align-items: start; }
@@ -1200,6 +1207,13 @@ textarea.input { resize: vertical; }
 .about-story > div { max-width: 720px; }
 .about-story p { margin: 0 0 16px; font-size: 15.5px; line-height: 1.75; color: var(--text); }
 .about-acts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+@media (min-width: 768px) {
+  .about-acts { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+  /* Five items: three on top, two wider below (no orphan gap). */
+  .about-acts.n5 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .about-acts.n5 li { grid-column: span 2; }
+  .about-acts.n5 li:nth-child(n + 4) { grid-column: span 3; }
+}
 .about-acts li { border: 1px solid var(--border); border-radius: var(--rs); padding: 20px; background: #fff; }
 .about-acts h3 { margin: 0; font-size: 15.5px; font-weight: 500; color: var(--ink); }
 .about-acts p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--muted2); }
@@ -1445,7 +1459,7 @@ textarea.input { resize: vertical; }
 .subpop-main { display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 36px 32px 28px; }
 .subpop-logo { height: 40px; width: auto; align-self: flex-start; margin-bottom: 8px; }
 .subpop-card .sub { padding: 0 !important; box-shadow: none !important; }
-.subpop-card .sub form, .subpop-card .sub { display: flex; flex-direction: column; gap: 12px; }
+.subpop-card .sub form, .subpop-card .sub { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
 .subpop-card .sub-title { font-size: 24px !important; line-height: 1.2; letter-spacing: -0.01em; }
 .subpop-card input[type='tel'], .subpop-card input[type='email'], .subpop-card input[type='text'] { width: 100%; }
 .subpop-mruk .subpop-offer-t { font-family: var(--mu-display); }
@@ -1504,3 +1518,14 @@ textarea.input { resize: vertical; }
   [data-brand] .cathero.has-film .art::after { background: linear-gradient(0deg, var(--scrim) 0%, rgba(0, 0, 0, 0) 20%); }
   [data-brand] .cathero.has-film .cathero-copy { padding: 6px 20px 18px !important; }
 }
+
+/* Category: live products without a photo, listed as text under the grid. */
+.also-avail { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 22px; }
+.also-avail h2 { margin: 0 0 10px; font-size: 18px; font-weight: 500; letter-spacing: -0.01em; }
+.also-avail ul { list-style: none; margin: 0; padding: 0; }
+.also-avail li { display: grid; grid-template-columns: 1fr auto auto; gap: 8px 20px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; }
+.also-name { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-height: 44px; align-items: center; color: var(--text); }
+.also-model { font-size: 12.5px; color: var(--muted2); letter-spacing: 0.04em; }
+.also-price { font-weight: 600; white-space: nowrap; }
+.also-wa { display: inline-flex; align-items: center; min-height: 44px; font-size: 13.5px; font-weight: 500; color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 767px) { .also-avail li { grid-template-columns: 1fr auto; } .also-wa { grid-column: 1 / -1; min-height: 32px; } }

@@ -70,7 +70,8 @@ export function ShopControls({
     e.preventDefault();
     const u = new URLSearchParams();
     new FormData(e.currentTarget).forEach((v, k) => {
-      const val = String(v).trim();
+      // Prices are shown with thousands separators; the URL carries plain digits.
+      const val = k === "min" || k === "max" ? String(v).replace(/\D/g, "") : String(v).trim();
       if (val && !(k === "sort" && val === "popular")) u.set(k, val);
     });
     setOpen(false);
@@ -156,26 +157,26 @@ export function ShopControls({
                     <span>{labels.minPrice}</span>
                     <input
                       className="input"
-                      type="number"
+                      type="text"
                       name="min"
                       inputMode="numeric"
-                      min={0}
-                      step={1000}
-                      defaultValue={min}
-                      placeholder={String(floor)}
+                      autoComplete="off"
+                      defaultValue={min !== undefined ? groupDigits(String(min)) : undefined}
+                      onChange={(e) => (e.currentTarget.value = groupDigits(e.currentTarget.value))}
+                      placeholder={groupDigits(String(floor))}
                     />
                   </label>
                   <label>
                     <span>{labels.maxPrice}</span>
                     <input
                       className="input"
-                      type="number"
+                      type="text"
                       name="max"
                       inputMode="numeric"
-                      min={0}
-                      step={1000}
-                      defaultValue={max}
-                      placeholder={String(ceil)}
+                      autoComplete="off"
+                      defaultValue={max !== undefined ? groupDigits(String(max)) : undefined}
+                      onChange={(e) => (e.currentTarget.value = groupDigits(e.currentTarget.value))}
+                      placeholder={groupDigits(String(ceil))}
                     />
                   </label>
                 </fieldset>
@@ -206,4 +207,10 @@ export function ShopControls({
         )}
     </div>
   );
+}
+
+/** "2040000" -> "2,040,000" (display only). */
+function groupDigits(v: string): string {
+  const d = v.replace(/\D/g, "");
+  return d ? Number(d).toLocaleString("en-US") : "";
 }

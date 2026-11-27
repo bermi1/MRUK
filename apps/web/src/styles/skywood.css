@@ -272,19 +272,17 @@
 .sw-arrivals .sw-head { padding-right: 130px; }
 
 /* Product card: arch-topped gallery card */
-.pc-skywood { position: relative; display: block; height: 100%; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 2px; background: #f6f3ee; }
-/* Product floats in open space; name and price sit on a rectangular overlay; gentle zoom on hover. */
-.pc-skywood .pc-media { position: absolute; inset: 0; overflow: hidden; border-radius: 0; background: transparent; }
+/* Quiet gallery card: product on a paper frame, name and price below it (same rhythm as the category tiles). */
+.pc-skywood { position: relative; display: flex; flex-direction: column; height: 100%; background: transparent; }
+.pc-skywood .pc-media { position: relative; inset: auto; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 2px; background: #f6f3ee; }
 .pc-skywood .pimg { position: absolute; inset: 0; border-radius: 0; background: transparent; }
-.pc-skywood .pimg > img { padding: 10% 10% 30%; filter: drop-shadow(0 18px 18px rgba(28, 25, 21, 0.14)); transition: transform 0.9s var(--sw-slow); }
-.pc-skywood:hover .pimg > img, .pc-skywood:focus-within .pimg > img { transform: scale(1.07); }
+.pc-skywood .pimg > img { padding: 10%; filter: drop-shadow(0 18px 18px rgba(28, 25, 21, 0.14)); }
 .pc-skywood .pc-badge { left: 12px; translate: none; top: 12px; bottom: auto; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; padding: 5px 9px; border-radius: 0; background: var(--sw-ink); color: var(--sw-gold-hi); white-space: nowrap; }
 .pc-skywood .pc-cmp { top: 10px; bottom: auto; right: 10px; }
-.pc-skywood .pc-body { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: rgba(255, 255, 255, 0.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 0; transition: background 0.4s; }
-.pc-skywood:hover .pc-body { background: rgba(255, 255, 255, 0.95); }
+.pc-skywood .pc-body { position: static; display: flex; flex: 1; flex-direction: column; gap: 2px; padding: 14px 0 4px; background: transparent; }
 .pc-skywood .pc-model { font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sw-bronze); }
-.pc-skywood .pc-name { margin: 0; font-family: var(--sw-display); font-size: 17px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; color: var(--sw-ink); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
-.pc-skywood .pc-foot { margin-top: 6px; padding-top: 0; border-top: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.pc-skywood .pc-name { margin: 0; font-family: var(--sw-display); font-size: 17px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; color: var(--sw-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; }
+.pc-skywood .pc-foot { margin-top: auto; padding-top: 8px; border-top: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .pc-skywood .pc-price { font-size: 14.5px; font-weight: 600; color: var(--sw-ink); display: flex; gap: 8px; flex-wrap: wrap; }
 .pc-skywood .pc-price s { font-weight: 400; color: var(--muted); }
 .pc-skywood .pc-mo { font-size: 12px; color: var(--sw-bronze); }
@@ -342,7 +340,7 @@
 .sw-story-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 
 /* Curated sets */
-.sw-sets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.sw-sets { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; }
 .sw-set { display: flex; flex-direction: column; background: #f3ede3; box-shadow: inset 0 0 0 1px rgba(201, 169, 110, 0.25); }
 .sw-set-stack { position: relative; height: 260px; background: linear-gradient(180deg, #ebe2d3 0%, #f3ede3 100%); overflow: hidden; }
 .sw-set-piece { position: absolute; bottom: 22px; width: 46%; aspect-ratio: 4 / 5; border-radius: 6px; overflow: hidden; background: #fbf8f3; box-shadow: 0 18px 30px rgba(70, 50, 25, 0.16); transition: transform 0.9s var(--sw-slow); }
@@ -660,6 +658,7 @@
   .sw-cols { grid-template-columns: 1fr 1fr; gap: 10px; }
   .sw-col, .sw-col.c1, .sw-col.c2 { grid-column: span 1; height: 250px; }
   .sw-col.c0 { grid-column: span 2; height: 330px; }
+  .sw-col:not(.c0):last-child:nth-child(even) { grid-column: span 2; }
   .sw-col-top { left: 14px; right: 14px; top: 12px; font-size: 10px; }
   .sw-col:not(.c0) .sw-col-count { display: none; }
   .sw-col-cap { padding: 40px 14px 14px; gap: 4px; }
@@ -671,7 +670,7 @@
 
   .sw-arrivals .sw-head { padding-right: 0; }
   .sw-rail .rail2-track { grid-auto-columns: 64%; gap: 14px; margin: 0 -16px; padding: 0 16px 6px; scroll-padding: 0 16px; }
-  .pc-skywood .pc-body { left: 6px; right: 6px; bottom: 6px; padding: 9px 10px; }
+  .pc-skywood .pc-body { padding: 10px 0 2px; }
   .pc-skywood .pc-name { font-size: 14.5px; }
   .pc-skywood .pc-price { font-size: 13px; }
   .pc-skywood .pc-mo { font-size: 11.5px; }
@@ -721,9 +720,8 @@
   .sw-visit-t { font-size: 26px; }
   .sw-visit-cities li { font-size: 16.5px; min-height: 48px; }
 }
-/* Overlay cards: the model already shows on the overlay, so hide the placeholder caption and lift the line art. */
+/* The model already shows below the card, so hide the placeholder caption. */
 .pc-skywood .ph-model, .pc-skywood .ph .sub { display: none; }
-.pc-skywood .ph { padding-bottom: 28% !important; }
 
 /* Statement band: brand picture behind the tagline, faded so the text stays readable. */
 .sw-statement { position: relative; max-width: none; margin-top: 90px; padding: 110px 0; overflow: hidden; background: var(--sw-ink); color: #fff; text-align: center; }
@@ -815,3 +813,55 @@ body:has(.sw-hero.is-photo.theme-dark) .sw-hdr.is-over .sw-cats-sep { background
 .sw-hdr.is-compact .sw-cats { max-height: 0; border-top-color: transparent; }
 .sw-hero h1 { font-size: clamp(38px, 4vw, 64px); }
 .sw-hero-sub { font-size: 15.5px; }
+
+/* Stock note on Skywood tiles (no dark overlay behind the copy). */
+[data-brand='skywood'] .ptile .tile-stock { color: var(--warn); }
+/* Pay Later option: brand tone on Skywood (the Azania logo stays as the partner mark). */
+[data-brand='skywood'] .payopt-sal[aria-checked='true'] { border-color: var(--sw-bronze) !important; background: var(--sw-ivory) !important; }
+[data-brand='skywood'] .chip-az.on { background: var(--sw-ink); border-color: var(--sw-ink); color: #fff; }
+
+/* Hero film: soft top scrim on desktop so the header reads over bright sky. */
+@media (min-width: 768px) {
+  .sw-hero.is-photo.theme-dark .sw-photo-shade { background: linear-gradient(180deg, rgba(14, 11, 8, 0.5) 0%, rgba(14, 11, 8, 0.18) 150px, rgba(14, 11, 8, 0) 240px), linear-gradient(90deg, rgba(20, 16, 12, 0.7) 0%, rgba(20, 16, 12, 0.25) 55%, rgba(20, 16, 12, 0.05) 100%); }
+}
+/* Phones: the whole film as a 16:9 block, the copy below it on ivory (nothing cropped or covered). */
+@media (max-width: 767px) {
+  .sw-hero.is-photo, .sw-hero.is-photo.theme-dark { height: auto; min-height: 0; color: var(--sw-ink); background: var(--sw-paper); }
+  .sw-hero.is-photo .sw-hero-scene { position: relative; inset: auto; z-index: 0; aspect-ratio: 16 / 9; overflow: hidden; background: var(--sw-espresso); }
+  .sw-hero.is-photo .sw-photo-shade { display: none; }
+  .sw-hero.is-photo .sw-hero-in { height: auto; padding-top: 22px; padding-bottom: 60px; }
+  .sw-hero.is-photo .sw-hero-sub { display: block; font-size: 15px; }
+  .sw-hero.is-photo.theme-dark .sw-hero-sub, .sw-hero.is-photo.theme-dark .sw-hero-mo em { color: #4a4339; }
+  .sw-hero.is-photo.theme-dark .sw-line:last-child > span, .sw-hero.is-photo.theme-dark .sw-eyebrow, .sw-hero.is-photo.theme-dark .sw-hero-mo { color: var(--sw-bronze); }
+  .sw-hero.is-photo.theme-dark .sw-hero-idx { color: var(--sw-ink); }
+  .sw-hero.is-photo.theme-dark .sw-hero-mo { background: transparent; box-shadow: inset 0 0 0 1px rgba(122, 90, 34, 0.45); }
+  .sw-hero.is-photo.theme-dark .sw-btn:not(.sw-btn-ghost) { background: var(--sw-ink); color: #fbf8f3; }
+  .sw-hero.is-photo.theme-dark .sw-btn-ghost { color: var(--sw-ink); box-shadow: inset 0 0 0 1px rgba(28, 25, 21, 0.5); }
+  .sw-hero.is-photo .sw-pause { color: var(--sw-ink); }
+}
+/* Deals page in Skywood tones. */
+[data-brand='skywood'] .deals-h1 { font-weight: 360; letter-spacing: -0.02em; line-height: 1.04; }
+[data-brand='skywood'] .deal-save { background: var(--sw-ivory); color: var(--sw-bronze); }
+[data-brand='skywood'] .deal-off { background: var(--sw-ink); color: var(--sw-gold-hi); }
+[data-brand='skywood'] .deal-bundle { border-radius: var(--sw-r-card) !important; background: #fff; }
+[data-brand='skywood'] .deal-bundle span[style*='font-size:19px'] { font-family: var(--sw-display); font-weight: 400 !important; }
+/* Category grid: four calm columns on desktop. */
+@media (min-width: 1101px) { [data-brand='skywood'] .grid-5 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 20px; } }
+/* PDP: quiet "More in {category}" rail. */
+.pdp-more { margin-top: 72px; }
+.pdp-more-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+.pdp-more-head h2 { margin: 0; font-size: clamp(24px, 2.4vw, 34px); }
+.pdp-more-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 60px) / 4); gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; padding-bottom: 8px; }
+.pdp-more-track > * { scroll-snap-align: start; }
+@media (max-width: 767px) { .pdp-more { margin-top: 48px; } .pdp-more-track { grid-auto-columns: 62%; gap: 12px; } }
+/* Nav: 44px targets; links without a disclosure arrow get the same space either side as the others. */
+.sw-cats li > a { display: inline-flex; align-items: center; min-height: 44px; }
+.sw-cats li.sw-cats-plain > a { padding: 12px 10px; background-position: 10px calc(100% - 8px); }
+.sw-cats li.sw-cats-plain:hover > a, .sw-cats li.sw-cats-plain > a.on { background-size: calc(100% - 20px) 1px; }
+/* Hero thumbnails: labels may take two lines instead of being cut off. */
+.sw-thumb-l { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; letter-spacing: 0.08em; font-size: 10.5px; }
+.sw-sec.sw-sec-join { margin-top: 0; }
+.sw-sec-join .sw-visit { border-top: 0; }
+/* Support: WhatsApp actions in Skywood ink (the WhatsApp icon keeps its meaning). */
+[data-brand='skywood'] .btn-wa, [data-brand='skywood'] .sup-wa { background: var(--sw-ink) !important; color: #fbf8f3 !important; border-radius: var(--sw-r-btn) !important; }
+[data-brand='skywood'] .btn-wa:hover, [data-brand='skywood'] .sup-wa:hover { background: var(--sw-espresso) !important; }

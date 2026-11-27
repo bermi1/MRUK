@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import type { BrandView, CategoryView, CmsView } from '@/lib/types';
+import { fillVars } from '@/lib/fill';
 import { AuthModal, type SessionUser } from '../AuthModal';
 
 export interface MegaProduct {
@@ -59,7 +60,7 @@ export interface HeaderProps {
   labels: HeaderLabels;
 }
 
-export const fill = (s: string, vars: Record<string, string | number>) => Object.entries(vars).reduce((a, [k, v]) => a.replace(`{${k}}`, String(v)), s);
+export const fill = (s: string, vars: Record<string, string | number>) => fillVars(s, vars);
 
 /**
  * Mega-menu behaviour shared by both brands: hover intent (120 ms, README), click/Enter toggles,
