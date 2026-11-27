@@ -162,12 +162,12 @@ function SkywoodFooter({ brand, cats, t, social, payLater }: { brand: BrandView;
         <Subscribe brand="skywood" source="footer" labels={subscribeLabels(t, brand.name)} className="foot-sub" />
         <div className="sw-foot-grid">
           <div className="sw-foot-brand">
-            <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} loading="lazy" />
+            <img src="/brand/skywood.png" alt={brand.name} width={98} height={28} loading="lazy" />
             <p className="sw-foot-about">{t('swIntro')}</p>
             {payLater && (
               <div className="sw-foot-partner">
                 <span>{t('advancePartner')}</span>
-                <img src="/brand/azania-bank-white.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
+                <img src="/brand/azania-bank.png" alt="Azania Bank" width={39} height={30} loading="lazy" />
               </div>
             )}
             <Social links={social} brand={brand.name} className="sw" />

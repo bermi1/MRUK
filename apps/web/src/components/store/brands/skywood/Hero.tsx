@@ -136,7 +136,7 @@ export function SkywoodHero({ slides, labels, dealsHref }: { slides: HeroSlideVi
                 </span>
                 <span className="sw-thumb-copy" aria-hidden="true">
                   <span className="sw-thumb-n">{String(k + 1).padStart(2, '0')}</span>
-                  <span className="sw-thumb-l">{x.eyebrow || x.name}</span>
+                  <span className="sw-thumb-l">{(x.title || x.eyebrow || x.name).replace(/\.\s*$/, '')}</span>
                 </span>
                 <span className="sw-thumb-bar">{k === i && <span className="sw-thumb-fill" key={`f${i}`} onAnimationEnd={() => go(i + 1)} />}</span>
               </button>
