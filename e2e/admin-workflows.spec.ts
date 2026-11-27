@@ -126,6 +126,8 @@ test('storekeeper: cleared-to-dispatch queue, one-click steps with SMS, picking 
     [/^Mark delivered/, 'delivered'],
   ] as const) {
     await detail.getByRole('button', { name: label, exact: typeof label === 'string' }).click();
+    // "Mark delivered" asks for an inline confirmation first.
+    if (status === 'delivered') await detail.getByRole('button', { name: 'Yes, delivered' }).click();
     await expect.poll(async () => (await c.order.findUniqueOrThrow({ where: { id: o.id } })).status).toBe(status);
   }
   expect(await steps()).toBe(before + 3);
@@ -138,6 +140,31 @@ test('storekeeper: cleared-to-dispatch queue, one-click steps with SMS, picking 
   const sk = await c.order.findFirstOrThrow({ where: { brandKey: 'skywood' } });
   const r = await page.goto(`/admin/orders/${sk.number}/note`);
   expect(r?.status()).toBe(404);
+  await c.$disconnect();
+});
+
+test('finance: payment received form records amount, method and reference', async ({ page }) => {
+  const c = db();
+  const o = await c.order.findFirst({ where: { brandKey: 'mruk', status: 'confirmed', paymentMethod: { not: 'pay_on_delivery' } }, orderBy: { createdAt: 'desc' } });
+  test.skip(!o, 'No confirmed (not pay-on-delivery) order in the seed');
+  await signIn(page, 'finance@mruk.co.tz');
+  await page.goto(`/admin/orders?q=${o!.number}&o=${o!.number}`);
+  const form = page.getByRole('complementary', { name: `Order ${o!.number}` }).getByRole('form', { name: 'Payment received' });
+  await expect(form.locator('input[name=amount]')).toHaveValue(String(o!.total));
+  // Full total only; bank transfer needs a reference.
+  await form.locator('input[name=amount]').fill(String(o!.total - 1));
+  await form.getByRole('button', { name: 'Payment received' }).click();
+  await expect(form.getByRole('alert')).toContainText('full order total');
+  await form.locator('input[name=amount]').fill(String(o!.total));
+  await form.getByRole('button', { name: 'Payment received' }).click();
+  await expect(form.getByRole('alert')).toContainText('reference');
+  await form.locator('input[name=reference]').fill('CRDB-778812');
+  await form.getByRole('button', { name: 'Payment received' }).click();
+  await expect.poll(async () => (await c.order.findUniqueOrThrow({ where: { id: o!.id } })).status).toBe('approved');
+  const pays = await c.payment.findMany({ where: { orderId: o!.id, status: 'captured' } });
+  expect(pays).toEqual([expect.objectContaining({ amount: o!.total, receivedVia: 'bank_transfer', reference: 'CRDB-778812' })]);
+  const log = await c.auditLog.findFirstOrThrow({ where: { entityId: o!.number, action: 'order.status' }, orderBy: { at: 'desc' } });
+  expect(log.diff).toMatchObject({ to: 'approved', payment: { amount: o!.total, via: 'bank_transfer', reference: 'CRDB-778812' } });
   await c.$disconnect();
 });
 

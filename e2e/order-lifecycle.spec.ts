@@ -120,7 +120,9 @@ async function newStore(browser: Browser, baseURL: string): Promise<{ ctx: Brows
 }
 
 async function trackStatus(page: Page, brand: Brand, number: string) {
-  await page.goto(`/${brand}/track?o=${number}`);
+  // Tracking needs the order number and the last 4 digits of the order's phone.
+  const { contactPhone } = await c.order.findUniqueOrThrow({ where: { number }, select: { contactPhone: true } });
+  await page.goto(`/${brand}/track?o=${number}&p=${contactPhone.slice(-4)}`);
   return page.getByTestId('track-status');
 }
 
@@ -255,6 +257,7 @@ for (const b of BRANDS) {
         ['Mark delivered', 'delivered', 'Delivered'],
       ] as const) {
         await detail.getByRole('button', { name: label, exact: true }).click();
+        if (status === 'delivered') await detail.getByRole('button', { name: 'Yes, delivered' }).click();
         await expect.poll(async () => (await orderOf(number)).status).toBe(status);
         await expect(await trackStatus(page, b.key, number)).toHaveText(customerSees);
         await ap.goto(`/admin/orders?q=${number}`);
@@ -303,6 +306,7 @@ for (const b of BRANDS) {
       await expect(page.getByTestId('account-order').filter({ hasText: number })).toHaveCount(0);
       await page.goto(`/${sister}/track?o=${number}`);
       await expect(page).toHaveURL(new RegExp(`/${b.key}/track\\?o=${number}`));
+      await expect(page.getByTestId('track-result')).toBeVisible();
     });
 
     test(`pay on delivery: Dar es Salaam only (server-checked), Azania methods refused, confirmed at once, cash recorded on delivery`, async ({ page, browser, baseURL }) => {
@@ -375,6 +379,7 @@ for (const b of BRANDS) {
       detail = await openOrder(ap, number);
       await detail.getByRole('button', { name: 'Send invoice by WhatsApp' }).click();
       await expect(detail.getByText('Invoice link sent by WhatsApp')).toBeVisible();
+      await expect.poll(async () => (await orderOf(number)).events.at(-1)?.note).toMatch(/^Invoice INV-\S+ sent by WhatsApp/);
       // The customer's confirmation link opens the invoice.
       expect((await get(page, `/api/orders/${number}/invoice?t=${token}`)).headers()['content-type']).toBe('application/pdf');
       await expect(await trackStatus(page, b.key, number)).toHaveText('Confirmed, awaiting payment');
@@ -404,13 +409,14 @@ for (const b of BRANDS) {
       await expect.poll(async () => (await orderOf(number)).status).toBe('out_for_delivery');
       detail = await openOrder(ap, number);
       await detail.getByRole('button', { name: /Mark delivered · cash/ }).click();
+      await detail.getByRole('button', { name: 'Yes, delivered' }).click();
       await expect.poll(async () => (await orderOf(number)).status).toBe('delivered');
       await admin.ctx.close();
       o = await orderOf(number);
       expect(o.payments).toEqual([expect.objectContaining({ status: 'captured', reference: 'POD-CASH', amount: o.total })]);
       expect(o.invoices).toEqual([expect.objectContaining({ status: 'paid' })]);
       expect(await audits(number)).toBe(6);
-      expect(o.events.map((e) => e.status)).toEqual(['placed', 'placed', 'confirmed', 'placed', 'confirmed', 'approved', 'out_for_delivery', 'delivered']);
+      expect(o.events.map((e) => e.status)).toEqual(['placed', 'placed', 'confirmed', 'confirmed', 'placed', 'confirmed', 'approved', 'out_for_delivery', 'delivered']);
       await expect(await trackStatus(page, b.key, number)).toHaveText('Delivered');
     });
 

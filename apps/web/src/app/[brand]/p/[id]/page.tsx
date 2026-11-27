@@ -240,7 +240,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         <Link href={`/${key}`}>{t('home')}</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
       </nav>
       <div className="pdp">
-        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge={stockText} labels={galleryLabels} video={media.video} />
+        <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge="" labels={galleryLabels} video={media.video} />
         <div className="pdp-info">
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}

@@ -284,6 +284,9 @@ export async function invoicePdf(v: InvoicePdfInput): Promise<Uint8Array> {
     w.right(val, 545, { size: b ? 11 : 9.5, font: b ? w.bold : w.font });
   }
   w.y -= 40;
+  // TODO(client): add the brand's bank transfer details (bank, account name, account number, branch / SWIFT)
+  // here once the client provides them. Never use placeholder account numbers. Until then the team shares
+  // payment details by phone / WhatsApp (as the track page says).
   w.para('Thank you for shopping with us. Products carry a 2-year manufacturer warranty. EFD receipt is issued separately by the fiscal device.', 50, 495, 8.5, w.font, MUTED);
   return doc.save();
 }

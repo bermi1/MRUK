@@ -71,17 +71,40 @@ export interface TrackingStep {
   state: 'done' | 'current' | 'pending';
 }
 
-export function trackingSteps(status: OrderStatus, method: PaymentMethod): TrackingStep[] {
-  // Pay on delivery is confirmed without a payment: the customer pays when the order arrives.
-  const second = method === 'salary_advance' ? 'Azania Bank approval' : method === 'pay_on_delivery' ? 'Order confirmed' : 'Payment confirmed';
+/**
+ * Customer-facing step names, shared by tracking, the account stepper and the confirmation page
+ * (the web app translates each key; TRACK_STEP_TITLE is the English source).
+ */
+export type TrackStepKey = 'received' | 'confirmedByPhone' | 'paymentConfirmed' | 'bankApproval' | 'readyForDispatch' | 'packed' | 'outForDelivery' | 'delivered';
+
+export const TRACK_STEP_TITLE: Record<TrackStepKey, string> = {
+  received: 'Order received',
+  confirmedByPhone: 'Confirmed by phone',
+  paymentConfirmed: 'Payment confirmed',
+  bankApproval: 'Azania Bank approval',
+  readyForDispatch: 'Ready for dispatch',
+  packed: 'Packed',
+  outForDelivery: 'Out for delivery',
+  delivered: 'Delivered',
+};
+
+const byPhone = (method: PaymentMethod) => method === 'pay_on_delivery' || method === 'pay_before_delivery';
+
+/** The five step names for an order paid this way (same order as trackingSteps / orderStepper). */
+export function trackingStepKeys(method: PaymentMethod): TrackStepKey[] {
   // Orders confirmed by phone: received → confirmed (invoice) → cleared → out for delivery → delivered.
-  if (method === 'pay_on_delivery' || method === 'pay_before_delivery') {
-    const titles2 = ['Order received', 'Confirmed by phone', method === 'pay_on_delivery' ? 'Ready for dispatch' : 'Payment confirmed', 'Out for delivery', 'Delivered'];
+  if (byPhone(method)) return ['received', 'confirmedByPhone', method === 'pay_on_delivery' ? 'readyForDispatch' : 'paymentConfirmed', 'outForDelivery', 'delivered'];
+  return ['received', method === 'salary_advance' ? 'bankApproval' : 'paymentConfirmed', 'packed', 'outForDelivery', 'delivered'];
+}
+
+export function trackingSteps(status: OrderStatus, method: PaymentMethod): TrackingStep[] {
+  const titles = trackingStepKeys(method).map((k) => TRACK_STEP_TITLE[k]);
+  // Pay on delivery is confirmed without a payment: the customer pays when the order arrives.
+  if (byPhone(method)) {
     const p2: Record<OrderStatus, [number, number]> = { placed: [1, 1], confirmed: [2, 2], bank_review: [1, 1], approved: [3, -1], packed: [3, -1], out_for_delivery: [3, 3], delivered: [5, -1], cancelled: [1, -1], rejected: [1, -1] };
     const [d2, c2] = p2[status];
-    return titles2.map((title, i) => ({ title, state: i < d2 ? 'done' : i === c2 ? 'current' : 'pending' }));
+    return titles.map((title, i) => ({ title, state: i < d2 ? 'done' : i === c2 ? 'current' : 'pending' }));
   }
-  const titles = ['Order placed', second, 'Packed at warehouse', 'Out for delivery', 'Delivered'];
   // How many steps are complete, and which step is in progress (-1 = none).
   const progress: Record<OrderStatus, [done: number, current: number]> = {
     placed: [1, 1],
@@ -116,6 +139,8 @@ export type StepperKey = (typeof STEPPER_KEYS)[number];
 
 export interface StepperStep {
   key: StepperKey;
+  /** Customer-facing step name (same as tracking). */
+  label: TrackStepKey;
   state: 'done' | 'current' | 'pending';
   /** When the order reached this step (first matching OrderEvent), or null when not recorded. */
   at: Date | null;
@@ -131,12 +156,13 @@ const STEP_OF_STATUS: Partial<Record<OrderStatus, number>> = { placed: 0, confir
 export function orderStepper(status: OrderStatus, method: PaymentMethod, events: { status: string; at: Date }[]): StepperStep[] | null {
   if (status === 'cancelled' || status === 'rejected') return null;
   const states = trackingSteps(status, method).map((s) => s.state);
+  const labels = trackingStepKeys(method);
   const at: (Date | null)[] = STEPPER_KEYS.map(() => null);
   for (const e of [...events].sort((a, b) => a.at.getTime() - b.at.getTime())) {
     const i = isOrderStatus(e.status) ? STEP_OF_STATUS[e.status] : undefined;
     if (i !== undefined && !at[i]) at[i] = e.at;
   }
-  return STEPPER_KEYS.map((key, i) => ({ key, state: states[i]!, at: states[i] === 'pending' ? null : (at[i] ?? null) }));
+  return STEPPER_KEYS.map((key, i) => ({ key, label: labels[i]!, state: states[i]!, at: states[i] === 'pending' ? null : (at[i] ?? null) }));
 }
 
 /** Orders still moving (the dashboard's "Active" filter). */

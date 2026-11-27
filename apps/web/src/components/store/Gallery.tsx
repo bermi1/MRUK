@@ -83,7 +83,7 @@ export function Gallery({ images, name, model, sub, badge, labels, video, lifest
             <PImg src={cur.src} alt={alt(i, cur)} model={model} sub={sub} size="xl" cover={cur.kind === 'life'} style={{ position: 'absolute', inset: 0, borderRadius: 0 }} />
           </button>
         )}
-        <span className="pdp-badge">{badge}</span>
+        {badge && <span className="pdp-badge">{badge}</span>}
         {n > 1 && (
           <>
             <button type="button" className="pdp-arrow pdp-arrow-l" onClick={() => go(-1)} aria-label={labels.prev}>

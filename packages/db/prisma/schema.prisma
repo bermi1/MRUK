@@ -236,6 +236,8 @@ model Payment {
   amount    Int
   status    String // pending | captured | failed | refunded
   reference String   @default("")
+  /// How Finance received a manually recorded payment: cash | bank_transfer | other. Null for online/automatic payments.
+  receivedVia String?
   createdAt DateTime @default(now())
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

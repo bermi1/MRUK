@@ -130,7 +130,8 @@ const contactZ = z.object({
   name: z.string().trim().min(2, 'Enter your full name').max(120),
   phone: z.string().trim().min(9, 'Enter your phone number').max(20),
   email: z.union([z.literal(''), z.string().email('Enter a valid email')]).optional(),
-  address: z.string().max(240).optional(),
+  // Every checkout method delivers (no showroom pickup option), so a delivery address is required.
+  address: z.string().trim().min(5, 'Enter your delivery address or a nearby landmark').max(240),
 });
 
 export async function placeOrderAction(brand: string, input: unknown): Promise<ActionResult<{ redirect: string }>> {

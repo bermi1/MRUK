@@ -18,6 +18,7 @@ async function checkoutWithCard(page: Page, phone: string) {
   await page.goto('/skywood/checkout');
   await page.locator('input[name=name]').fill('Stock Tester');
   await page.locator('input[name=phone]').fill(phone);
+  await page.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await page.getByTestId('pay-card').click();
   await page.getByTestId('consent').check();
   await page.getByTestId('place-order').click();

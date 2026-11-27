@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma, type Prisma } from '@bt/db';
 import { fmtDateTime, fmtTZS, formatTzPhone, nextOrderStatuses, ORDER_STATUS_LABEL, paymentLabel, staffConfirmed, transitionPermission, type OrderStatus, type PaymentMethod } from '@bt/core';
-import { editOrderItemsAction, sendInvoiceAction, transitionOrderAction } from '@/app/actions/admin';
+import { editOrderItemsAction, receivePaymentAction, sendInvoiceAction, transitionOrderAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
 import { LISTABLE } from '@/server/listable';
 import { ActBtn } from '@/components/admin/ActBtn';
@@ -98,13 +98,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         .filter((s) => !(o.status === 'placed' && byPhone && s === 'approved') && !(o.status === 'placed' && !byPhone && s === 'confirmed'))
         // Only the buttons of the steps this person's roles may take.
         .filter((s) => ctx.can(transitionPermission(o.status as OrderStatus, s)))
+        // DEFAULT rule (server enforces it too): a paid order is cancelled only by Finance or management.
+        .filter((s) => !(s === 'cancelled' && o.payments.some((p) => p.status === 'captured') && !ctx.can('payments.approve')))
     : [];
+  const address = o?.addressLine.trim() ?? '';
   const editable = !!o && o.status === 'placed' && byPhone && ctx.can('orders.confirm');
   const addable = editable ? await prisma.product.findMany({ where: { brandKey: o!.brandKey, ...LISTABLE, price: { gt: 0 }, stock: { gt: 0 } }, orderBy: { name: 'asc' }, select: { id: true, model: true, name: true, price: true, stock: true } }) : [];
 
   const queue = (s: string) => counts.find((c) => c.status === s)?._count._all ?? 0;
-  const forward = o ? (nexts.includes('out_for_delivery') ? 'out_for_delivery' : nexts.find((s) => s !== 'cancelled' && s !== 'rejected' && s !== 'bank_review' && s !== 'placed')) : undefined;
-  const others = nexts.filter((s) => s !== forward);
+  // Storekeeper order: Pack → Dispatch → Delivered (Dispatch stays available to skip packing).
+  const forward = o ? (nexts.includes('packed') ? 'packed' : nexts.includes('out_for_delivery') ? 'out_for_delivery' : nexts.find((s) => s !== 'cancelled' && s !== 'rejected' && s !== 'bank_review' && s !== 'placed')) : undefined;
+  const others = nexts.filter((s) => s !== forward).sort((a, b) => Number(a === 'cancelled' || a === 'rejected') - Number(b === 'cancelled' || b === 'rejected'));
+  const financePaid = !!o && forward === 'approved' && o.status === 'confirmed' && o.paymentMethod !== 'pay_on_delivery';
   const stepAt = o ? STEPS.findIndex((s) => s.status === (o.status === 'packed' ? 'approved' : o.status)) : -1;
 
   return (
@@ -229,9 +234,15 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <div className="ad-muted2" style={{ fontSize: 12.5, marginTop: 2 }}>
               {formatTzPhone(o.contactPhone)} · {o.region}
             </div>
-            <div className="ad-muted2" style={{ fontSize: 12.5 }}>
-              {o.addressLine}
-            </div>
+            {address ? (
+              <div style={{ fontSize: 12.5, marginTop: 4 }} data-testid="order-address">
+                <span className="ad-muted2">Deliver to:</span> {address}, {o.region}
+              </div>
+            ) : (
+              <div className="ad-err" role="note" style={{ marginTop: 4 }} data-testid="order-address-missing">
+                No delivery address. Call the customer before dispatch.
+              </div>
+            )}
             <div className="ad-muted2" style={{ fontSize: 12.5 }}>
               Ordered via {CHANNEL[o.channel] ?? o.channel} · {fmtDateTime(o.createdAt)}
             </div>
@@ -307,7 +318,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               <div className="ad-kv">
                 <span>Reference</span>
                 <span className="mono" style={{ fontSize: 12 }}>
-                  {o.payments[0].reference || '—'} · {o.payments[0].status}
+                  {o.payments[0].reference || '—'} · {o.payments[0].receivedVia ? `${{ cash: 'cash', bank_transfer: 'bank transfer', other: 'other' }[o.payments[0].receivedVia] ?? o.payments[0].receivedVia} · ` : ''}{o.payments[0].status}
                 </span>
               </div>
             )}
@@ -371,14 +382,46 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </li>
             ))}
           </ol>
-          {forward && (
+          {forward && financePaid && (
             <div className="ad-stack s8">
-              <ActBtn action={transitionOrderAction.bind(null, o.number, forward)} className="ad-btn block ok" showOk>
+              <AForm action={receivePaymentAction.bind(null, o.number)} submit="Payment received" submitClass="ad-btn block ok" className="ad-stack s8" label="Payment received">
+                <div className="ad-pay">
+                  <label className="ad-field">
+                    Amount received (TZS)
+                    <input name="amount" type="number" inputMode="numeric" min={1} step={1} required defaultValue={o.total} />
+                  </label>
+                  <label className="ad-field">
+                    Method
+                    <select name="via" defaultValue="bank_transfer" required>
+                      <option value="bank_transfer">Bank transfer</option>
+                      <option value="cash">Cash</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </label>
+                </div>
+                <label className="ad-field">
+                  Reference (required for bank transfer)
+                  <input name="reference" maxLength={60} autoComplete="off" placeholder="Bank or receipt reference" />
+                </label>
+              </AForm>
+              <small className="ad-muted2" style={{ fontSize: 12 }}>
+                The amount must be the full order total, {fmtTZS(o.total)} (part payments are not recorded). Marks the invoice paid and sends the order to the Storekeeper.
+              </small>
+            </div>
+          )}
+          {forward && !financePaid && (
+            <div className="ad-stack s8">
+              <ActBtn
+                action={transitionOrderAction.bind(null, o.number, forward)}
+                className="ad-btn block ok"
+                showOk
+                ask={forward === 'delivered' ? { text: `Has the customer received order ${o.number}?${o.paymentMethod === 'pay_on_delivery' ? ` Confirm the ${fmtTZS(o.total)} cash is collected.` : ''}`, yes: 'Yes, delivered' } : undefined}
+              >
                 {forward === 'delivered' && o.paymentMethod === 'pay_on_delivery' ? `Mark delivered · cash ${fmtTZS(o.total)} collected` : actionLabel(o.status, forward, o.paymentMethod)}
               </ActBtn>
               <small className="ad-muted2" style={{ fontSize: 12 }}>
                 {forward === 'confirmed'
-                  ? 'Press after the call. Creates the invoice, texts the customer and sends the order to Finance.'
+                  ? 'Press after the call. Creates the invoice, texts the customer that the order is confirmed and sends it to Finance. Send the invoice itself with the WhatsApp or SMS button.'
                   : forward === 'approved' && o.status === 'confirmed' && o.paymentMethod === 'pay_on_delivery'
                     ? 'Cash is collected at the door: sends the order to the Storekeeper to dispatch.'
                   : forward === 'approved'
@@ -392,7 +435,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           {others.length > 0 && (
             <div className="ad-btns">
               {others.map((s) => (
-                <ActBtn key={s} action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn line'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : s === 'placed' ? `Send ${o.number} back to the Order desk as not paid?` : s === 'rejected' ? `Reject order ${o.number}? Stock is returned and payments refunded.` : undefined}>
+                <ActBtn key={s} showOk action={transitionOrderAction.bind(null, o.number, s)} className={s === 'cancelled' || s === 'rejected' ? 'ad-btn danger' : 'ad-btn line'} confirm={s === 'cancelled' ? `Cancel order ${o.number}? Stock is returned and payments refunded.` : s === 'placed' ? `Send ${o.number} back to the Order desk as not paid?` : s === 'rejected' ? `Reject order ${o.number}? Stock is returned and payments refunded.` : undefined}>
                   {actionLabel(o.status, s, o.paymentMethod)}
                 </ActBtn>
               ))}

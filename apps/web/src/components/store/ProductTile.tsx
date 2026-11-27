@@ -21,12 +21,13 @@ export function ProductTile({ p, brand, inCompare, months = 12, payLater }: { p:
           {p.model}
         </div>
         <div style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.2, marginTop: 3 }}>{p.name}</div>
-        {p.stock > 0 && <StockNote stock={p.stock} className="tile-stock" />}
+        {/* Stock note ("Only N left" / "Out of stock") on its own line so it never collides with the prices. */}
+        <StockNote stock={p.stock} className="tile-stock" />
         <div className="row" style={{ alignItems: 'flex-end', marginTop: 8 }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>
-              {fmt(p.price)}
-              {p.off > 0 && <s style={{ fontSize: 12, fontWeight: 500, opacity: 0.75, marginLeft: 6 }}>{fmt(p.listPrice)}</s>}
+          <div style={{ minWidth: 0 }}>
+            <div className="pt-price" style={{ fontSize: 15, fontWeight: 600 }}>
+              <span>{fmt(p.price)}</span>
+              {p.off > 0 && <s style={{ fontSize: 12, fontWeight: 500, opacity: 0.75 }}>{fmt(p.listPrice)}</s>}
             </div>
             {payLater && (
               <div className="monthly-light" style={{ fontSize: 11.5 }}>
@@ -34,7 +35,7 @@ export function ProductTile({ p, brand, inCompare, months = 12, payLater }: { p:
               </div>
             )}
           </div>
-          {p.stock > 0 ? <AddButton brand={brand} id={p.id} name={p.name} /> : <StockNote stock={0} className="tile-stock" />}
+          {p.stock > 0 && <AddButton brand={brand} id={p.id} name={p.name} />}
         </div>
       </div>
     </div>

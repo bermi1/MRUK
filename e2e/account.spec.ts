@@ -106,7 +106,7 @@ test('customer dashboard: order stepper, Pay Later, addresses, marketing prefere
     await expect(orders).toContainText(number);
     const stepper = orders.getByTestId('order-stepper');
     await expect(stepper.locator('.is-done')).toHaveCount(3);
-    await expect(stepper.locator('.is-done').nth(1)).toContainText('Approved');
+    await expect(stepper.locator('.is-done').nth(1)).toContainText('Azania Bank approval');
     await expect(stepper.locator('.is-pending').first()).toContainText('Out for delivery');
     const pl = page.getByTestId('overview-paylater');
     await expect(pl).toContainText('Repaying');

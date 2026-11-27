@@ -50,13 +50,13 @@ export function CartItems({ cart, brand, payLater }: { cart: Cart; brand: string
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: 999 }}>
-                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} disabled={l.qty <= 1} aria-label={t('cartDecrease', { name: l.name })}>
+                <button type="button" style={{ width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, Math.max(1, l.qty - 1))} disabled={l.qty <= 1} aria-label={t('cartDecrease', { name: l.name })}>
                   <MinusIcon size={16} />
                 </button>
                 <span style={{ width: 22, textAlign: 'center', fontWeight: 600, fontSize: 14 }} aria-live="polite">
                   {l.qty}
                 </span>
-                <button type="button" style={{ width: 44, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={t('cartIncrease', { name: l.name })}>
+                <button type="button" style={{ width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => qty(l.productId, l.qty + 1)} disabled={l.qty >= l.stock} aria-label={t('cartIncrease', { name: l.name })}>
                   <PlusIcon size={16} />
                 </button>
               </div>

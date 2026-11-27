@@ -107,6 +107,7 @@ async function capturePlaceOrder(page: Page, p: string): Promise<Captured> {
   await page.goto('/skywood/checkout');
   await page.locator('input[name=name]').fill('Security Tester');
   await page.locator('input[name=phone]').fill(p);
+  await page.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await page.getByTestId('pay-card').click();
   await page.getByTestId('consent').check();
   return capture(page, (b) => b.includes('"consent":true'), () => page.getByTestId('place-order').click());
@@ -303,14 +304,24 @@ test('tracking: masked phone only, no name or address; other brand orders open i
   const number = await placedCardOrder(page);
   const o = await db.order.findUniqueOrThrow({ where: { number } });
   await context.clearCookies();
+  // Sequential order numbers: the number alone (or with wrong phone digits) shows nothing.
+  const last4 = o.contactPhone.slice(-4);
+  const wrong = last4 === '0000' ? '1111' : '0000';
   await page.goto(`/skywood/track?o=${number}`);
+  await expect(page.getByTestId('track-result')).toHaveCount(0);
+  await page.goto(`/skywood/track?o=${number}&p=${wrong}`);
+  await expect(page.getByTestId('track-result')).toHaveCount(0);
+  await expect(page.getByText('We could not find that order')).toBeVisible();
+  expect(await page.content()).not.toContain(o.contactName);
+  await page.goto(`/skywood/track?o=${number}&p=${last4}`);
   await expect(page.getByTestId('track-result')).toBeVisible();
   const html = await page.content();
   expect(html).not.toContain(o.contactPhone);
   expect(html).not.toContain(o.contactName);
   // On the sister store it is never shown under the wrong brand: it opens in its own store instead.
-  await page.goto(`/mruk/track?o=${number}`);
+  await page.goto(`/mruk/track?o=${number}&p=${last4}`);
   await expect(page).toHaveURL(new RegExp(`/skywood/track\\?o=${number}`));
+  await expect(page.getByTestId('track-result')).toBeVisible();
   // Order page and invoice need the signed token or the owner's session.
   expect((await page.goto(`/skywood/order/${number}`))!.status()).toBe(404);
   expect((await page.goto(`/skywood/order/${number}?t=${'A'.repeat(32)}`))!.status()).toBe(404);

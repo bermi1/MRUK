@@ -3,21 +3,29 @@ import Link from 'next/link';
 import { ADVANCE_STATUS_LABEL, ORDER_STATUS_LABEL, paymentLabel, type AdvanceStatus, type OrderStatus, type PaymentMethod } from '@bt/core';
 import { CheckIcon } from '@/components/icons';
 import { fmt, fmtDate, formatTzPhone } from '@/lib/format';
+import { getT } from '@/server/locale';
 import { confirmationToken } from '@/server/orders';
 import { advanceSummary, orderForOwner } from '@/server/orderview';
+import { verifySigned } from '@/server/session';
 
-export const metadata: Metadata = { title: 'Order confirmed', robots: { index: false } };
+export const metadata: Metadata = { title: 'Your order', robots: { index: false } };
 
 export default async function OrderPage({ params, searchParams }: { params: Promise<{ brand: string; number: string }>; searchParams: Promise<{ t?: string }> }) {
   const { brand, number } = await params;
-  const o = await orderForOwner(brand, number, (await searchParams).t);
+  const linkToken = (await searchParams).t;
+  const o = await orderForOwner(brand, number, linkToken);
+  const tr = await getT();
   const t = confirmationToken(o.number);
+  const status = o.status as OrderStatus;
+  // Fresh from checkout (signed link): "received" until staff confirm. Opened later from the account: neutral heading.
+  const fromCheckout = verifySigned(`order:${o.number}`, linkToken);
+  const heading = !fromCheckout || status === 'cancelled' || status === 'rejected' ? tr('ordDetails') : status === 'placed' || status === 'bank_review' ? tr('ordReceived') : tr('ordConfirmed');
   const adv = advanceSummary(o);
   const method = o.paymentMethod as PaymentMethod;
   const byPhone = method === 'pay_on_delivery' || method === 'pay_before_delivery';
   const steps = byPhone
-    ? ['Our team calls you to confirm the order', method === 'pay_on_delivery' ? 'We send your invoice; pay cash when it arrives' : 'We send your invoice; pay by cash or bank transfer', 'Delivery team calls before arrival', 'Register your warranty after delivery']
-    : [method === 'salary_advance' ? 'Azania Bank reviews your Pay Later application' : 'Payment confirmed', 'We pack your order at the warehouse', 'Delivery team calls before arrival', 'Register your warranty after delivery'];
+    ? ['Our team calls you to confirm the order', method === 'pay_on_delivery' ? 'We send your invoice; pay cash when it arrives' : 'We send your invoice; pay by cash or bank transfer', 'Delivery team calls before arrival']
+    : [method === 'salary_advance' ? 'Azania Bank reviews your Pay Later application' : 'Payment confirmed', 'We pack your order at the warehouse', 'Delivery team calls before arrival'];
   const advStatus = adv ? ADVANCE_STATUS_LABEL[adv.status as AdvanceStatus] : '';
   return (
     <div className="wrap confirm" style={{ maxWidth: 1100, paddingTop: 48 }}>
@@ -25,13 +33,15 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
         <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#E6F4EE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <CheckIcon />
         </div>
-        <h1 style={{ margin: '6px 0 0', fontSize: 'clamp(28px, 3.4vw, 42px)', fontWeight: 600, letterSpacing: '-.03em', lineHeight: 1.05 }}>Order confirmed. Asante!</h1>
+        <h1 style={{ margin: '6px 0 0', fontSize: 'clamp(28px, 3.4vw, 42px)', fontWeight: 600, letterSpacing: '-.03em', lineHeight: 1.05 }} data-testid="order-heading">
+          {heading}
+        </h1>
         <div style={{ fontSize: 15.5, color: 'var(--muted2)', lineHeight: 1.6 }}>
           Order{' '}
           <span className="mono" style={{ color: 'var(--text)', fontWeight: 600 }} data-testid="order-number">
             {o.number}
           </span>{' '}
-          is with our team ({ORDER_STATUS_LABEL[o.status as OrderStatus].toLowerCase()}). We&apos;ve sent an SMS to {formatTzPhone(o.contactPhone)}.
+          is with our team ({ORDER_STATUS_LABEL[status].toLowerCase()}). We&apos;ve sent an SMS to {formatTzPhone(o.contactPhone)}.
         </div>
         <ol className="card" style={{ listStyle: 'none', margin: 0, padding: 18, display: 'flex', flexDirection: 'column', gap: 10, borderRadius: 20 }}>
           {steps.map((s, i) => (
@@ -42,7 +52,7 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
           ))}
         </ol>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link href={`/${brand}/track?o=${o.number}`} className="btn btn-primary">
+          <Link href={`/${brand}/track?o=${o.number}&t=${t}`} className="btn btn-primary">
             Track order
           </Link>
           <Link href={`/${brand}`} className="btn btn-outline">
@@ -117,25 +127,25 @@ export default async function OrderPage({ params, searchParams }: { params: Prom
         <div className="card-soft" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 18, borderRadius: 22 }}>
           {o.items.map((i) => (
             <div key={i.id} className="row" style={{ fontSize: 14 }}>
-              <span>
+              <span className="amt-label">
                 {i.name} × {i.qty}
               </span>
-              <span>{fmt(i.price * i.qty)}</span>
+              <span className="amt">{fmt(i.price * i.qty)}</span>
             </div>
           ))}
           {o.discount > 0 && (
             <div className="row" style={{ fontSize: 14, color: 'var(--ok)' }}>
-              <span>Savings</span>
-              <span>−{fmt(o.discount)}</span>
+              <span className="amt-label">Savings</span>
+              <span className="amt">−{fmt(o.discount)}</span>
             </div>
           )}
           <div className="row" style={{ fontSize: 14, color: 'var(--muted2)' }}>
-            <span>Delivery · {o.region}</span>
-            <span>{o.deliveryFee ? fmt(o.deliveryFee) : 'Free'}</span>
+            <span className="amt-label">Delivery · {o.region}</span>
+            <span className="amt">{o.deliveryFee ? fmt(o.deliveryFee) : 'Free'}</span>
           </div>
-          <div className="sumtotal" style={{ fontSize: 17, paddingTop: 10 }}>
-            <span>Total · {paymentLabel(method)}</span>
-            <span>{fmt(o.total)}</span>
+          <div className="sumtotal" style={{ fontSize: 17, paddingTop: 10, gap: 12 }}>
+            <span className="amt-label">Total · {paymentLabel(method)}</span>
+            <span className="amt">{fmt(o.total)}</span>
           </div>
         </div>
       </div>

@@ -13,6 +13,7 @@ async function toApplication(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL(/\/mruk\/checkout/);
   await page.locator('input[name=name]').fill('Neema Mushi');
   await page.locator('input[name=phone]').fill('+255 754 000 214');
+  await page.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await page.getByTestId('consent').check();
   await page.getByTestId('place-order').click();
   await page.locator('input[name=nida]').fill('19900101-12345-00001-23');

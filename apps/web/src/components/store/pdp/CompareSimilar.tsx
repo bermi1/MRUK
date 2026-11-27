@@ -87,6 +87,49 @@ export function CompareSimilar({ brand, current, others, t }: { brand: string; c
           </tbody>
         </table>
       </div>
+      {/* Phones (≤767px): one stacked card per model instead of the wide table. */}
+      <ul className="pcmp-cards" role="list">
+        {cols.map((p) => (
+          <li key={p.id} className={`pcmp-card ${p.id === current.id ? 'is-this' : ''}`}>
+            <span className="pcmp-img">
+              <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="sm" />
+            </span>
+            <div className="pcmp-cbody">
+              {p.id === current.id && <span className="pcmp-tag">{t.thisOne}</span>}
+              <span className="pcmp-name">{p.name}</span>
+              <span className="pcmp-cmodel">{p.model}</span>
+              <div className="pcmp-cprice">
+                <b>{fmt(p.price)}</b>
+                {p.off > 0 && <s>{fmt(p.listPrice)}</s>}
+              </div>
+              {p.reviews > 0 && (
+                <div className="pcmp-crate">
+                  <Stars value={p.rating} size={12} className="pst-stars" /> {p.rating.toFixed(1)} ({p.reviews})
+                </div>
+              )}
+              {p.features.length > 0 && (
+                <ul className="pcmp-cfeat" aria-label={t.key}>
+                  {p.features.slice(0, rows).map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              )}
+              {p.id !== current.id && (
+                <div className="pcmp-cact">
+                  <form action={compareTwoAction.bind(null, brand, current.id, p.id)}>
+                    <button type="submit" className="btn btn-outline pcmp-pick" aria-label={t.pickLabel.replace('{name}', p.name)} data-testid="pcmp-pick-card">
+                      {t.pick}
+                    </button>
+                  </form>
+                  <Link href={`/${brand}/p/${p.id}`} className="pdx-link">
+                    {t.view}
+                  </Link>
+                </div>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

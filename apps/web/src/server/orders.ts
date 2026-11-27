@@ -465,11 +465,22 @@ export async function releaseExpiredReservations() {
   return expired.length;
 }
 
+/** What Finance records when it marks a confirmed order paid (cash, bank transfer, other). */
+export type ReceivedPayment = { amount: number; via: 'cash' | 'bank_transfer' | 'other'; reference: string };
+export const RECEIVED_VIA_LABEL: Record<ReceivedPayment['via'], string> = { cash: 'Cash', bank_transfer: 'Bank transfer', other: 'Other' };
+
 /** Staff-driven order status change, with stock release and customer SMS. */
-export async function transitionOrder(number: string, to: OrderStatus, actor: string, note = '') {
+export async function transitionOrder(number: string, to: OrderStatus, actor: string, note = '', received?: ReceivedPayment) {
   const o = await prisma.order.findUnique({ where: { number }, include: { advance: true } });
   if (!o) throw new Error('Order not found');
   assertOrderTransition(o.status as OrderStatus, to);
+  const financePaid = to === 'approved' && o.status === 'confirmed' && o.paymentMethod !== 'pay_on_delivery';
+  if (financePaid) {
+    // No partial-payment model: the amount received must be the full order total.
+    if (!received) throw new Error('Enter the amount, method and reference of the payment');
+    if (received.amount !== o.total) throw new Error(`The amount must be the full order total, ${fmtTZS(o.total)}`);
+    if (received.via === 'bank_transfer' && !received.reference) throw new Error('Enter the bank transfer reference');
+  }
   if (o.paymentMethod === 'salary_advance' && o.status === 'bank_review' && (to === 'approved' || to === 'rejected')) {
     throw new Error('Approve or reject Salary Advance orders from the Salary Advance page');
   }
@@ -489,9 +500,10 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
       // Order desk confirmed by phone: the invoice the customer receives.
       await issueInvoice(tx, o.id, o.total, 'issued');
     }
-    if (to === 'approved' && o.status === 'confirmed' && o.paymentMethod !== 'pay_on_delivery') {
-      // Finance saw the money (cash, bank transfer): record it and mark the invoice paid.
-      await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', reference: 'FINANCE-APPROVED' } });
+    if (financePaid && received) {
+      // Finance saw the money (cash, bank transfer): record amount, method and reference; mark the invoice paid.
+      const r = await tx.payment.updateMany({ where: { orderId: o.id, status: 'pending' }, data: { status: 'captured', amount: received.amount, receivedVia: received.via, reference: received.reference } });
+      if (r.count === 0) await tx.payment.create({ data: { orderId: o.id, method: o.paymentMethod, amount: received.amount, status: 'captured', receivedVia: received.via, reference: received.reference } });
       await issueInvoice(tx, o.id, o.total, 'paid');
     }
     if (to === 'approved' && o.status === 'placed') {
@@ -521,7 +533,7 @@ export async function transitionOrder(number: string, to: OrderStatus, actor: st
     ...(o.status === 'confirmed'
       ? { approved: o.paymentMethod === 'pay_on_delivery' ? `is ready for dispatch. Please have ${fmtTZS(o.total)} ready on delivery` : `payment of ${fmtTZS(o.total)} received. We are preparing it` }
       : {}),
-    confirmed: `is confirmed. Your invoice of ${fmtTZS(o.total)} has been sent`,
+    confirmed: `is confirmed. Invoice total: ${fmtTZS(o.total)}`,
     packed: 'is packed at our warehouse',
     out_for_delivery: 'is out for delivery. Our team will call before arrival',
     delivered: 'has been delivered. Thank you for shopping with us',

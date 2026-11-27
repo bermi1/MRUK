@@ -143,21 +143,62 @@ export async function newOrdersAction(): Promise<ActionResult<{ count: number; l
 
 const orderNoZ = z.string().regex(/^[A-Z]{2}-\d{3,8}$/, 'Invalid order number');
 
+const STATUS_DONE: Partial<Record<OrderStatus, string>> = {
+  confirmed: 'confirmed, invoice created',
+  approved: 'cleared for dispatch',
+  packed: 'marked packed',
+  out_for_delivery: 'dispatched',
+  delivered: 'marked delivered',
+  cancelled: 'cancelled',
+  placed: 'sent back to the Order desk',
+};
+
+/** Finance "Payment received" form: full order total (no partial payments), method, reference. */
+const receivedZ = z
+  .object({
+    amount: intZ(1, 1_000_000_000),
+    via: z.enum(['cash', 'bank_transfer', 'other'], { errorMap: () => ({ message: 'Choose how the payment was received' }) }),
+    reference: z.string().trim().max(60, 'Keep the reference under 60 characters').regex(/^[A-Za-z0-9 ./:#_-]*$/, 'Use letters, numbers and - / . : # only'),
+  })
+  .refine((v) => v.via !== 'bank_transfer' || v.reference.length > 0, { path: ['reference'], message: 'Enter the bank transfer reference' });
+
+async function doTransition(ctx: StaffContext, number: string, to: string, received?: z.infer<typeof receivedZ>): Promise<Msg> {
+  const n = orderNoZ.parse(number);
+  const st = z.enum(ORDER_STATUSES).parse(to) as OrderStatus;
+  const o = await prisma.order.findUnique({ where: { number: n }, select: { brandKey: true, status: true, paymentMethod: true, payments: { where: { status: 'captured' }, select: { id: true } } } });
+  if (!o) throw new Error('Order not found');
+  assertBrand(ctx, o.brandKey);
+  // Each step belongs to one team: Order desk confirms, Finance approves payment, Storekeeper dispatches.
+  const need = transitionPermission(o.status as OrderStatus, st);
+  if (!ctx.can(need)) throw new AuthError(`Your role (${ctx.roleName}) cannot do this step`);
+  // DEFAULT rule: a paid order (money captured) is cancelled and refunded only by Finance or management, not the Storekeeper.
+  if (st === 'cancelled' && o.payments.length && !ctx.can('payments.approve')) throw new AuthError('A paid order can only be cancelled by Finance or management');
+  const financePaid = st === 'approved' && o.status === 'confirmed' && o.paymentMethod !== 'pay_on_delivery';
+  if (financePaid && !received) throw new Error('Use the Payment received form');
+  const via = received ? { cash: 'cash', bank_transfer: 'bank transfer', other: 'other' }[received.via] : '';
+  const note =
+    st === 'placed'
+      ? `Not paid: sent back to the Order desk by ${ctx.name}`
+      : financePaid && received
+        ? `Payment received: ${received.amount.toLocaleString('en-US')} TZS by ${via}${received.reference ? ` (ref ${received.reference})` : ''} · ${ctx.name}`
+        : `Updated by ${ctx.name}`;
+  await transitionOrder(n, st, ctx.name, note.slice(0, 300), financePaid ? received : undefined);
+  await audit(ctx.email, 'order.status', 'Order', n, { from: o.status, to: st, ...(financePaid && received ? { payment: { amount: received.amount, via: received.via, reference: received.reference } } : {}) });
+  revalidateAdmin();
+  revalidateStore();
+  return { message: `Order ${n} ${STATUS_DONE[st] ?? 'updated'}` };
+}
+
 export async function transitionOrderAction(number: string, to: string): Promise<ActionResult<Msg>> {
-  return run('orders', async (ctx) => {
-    const n = orderNoZ.parse(number);
-    const st = z.enum(ORDER_STATUSES).parse(to) as OrderStatus;
-    const o = await prisma.order.findUnique({ where: { number: n }, select: { brandKey: true, status: true } });
-    if (!o) throw new Error('Order not found');
-    assertBrand(ctx, o.brandKey);
-    // Each step belongs to one team: Order desk confirms, Finance approves payment, Storekeeper dispatches.
-    const need = transitionPermission(o.status as OrderStatus, st);
-    if (!ctx.can(need)) throw new AuthError(`Your role (${ctx.roleName}) cannot do this step`);
-    await transitionOrder(n, st, ctx.name, st === 'placed' ? `Not paid: sent back to the Order desk by ${ctx.name}` : `Updated by ${ctx.name}`);
-    await audit(ctx.email, 'order.status', 'Order', n, { from: o.status, to: st });
-    revalidateAdmin();
-    revalidateStore();
-    return { message: `Order ${n} updated` };
+  return run('orders', (ctx) => doTransition(ctx, number, to));
+}
+
+/** Finance: record a payment seen (cash, bank transfer) and clear a confirmed order for dispatch. */
+export async function receivePaymentAction(number: string, fd: FormData): Promise<ActionResult<Msg>> {
+  return run('payments.approve', async (ctx) => {
+    const f = fields(fd);
+    const received = receivedZ.parse({ amount: (f.amount ?? '').replace(/[,\s]/g, ''), via: f.via, reference: f.reference ?? '' });
+    return doTransition(ctx, number, 'approved', received);
   });
 }
 
@@ -313,6 +354,10 @@ export async function sendInvoiceAction(number: string, channel: string): Promis
       await integrations.email.send(inv.order.contactEmail, `${brand} tax invoice ${inv.number}`, `Hello ${inv.order.contactName},\n\n${text}\n`);
     }
     await audit(ctx.email, 'invoice.send', 'Invoice', no, { channel: ch });
+    // Timeline entry at the order's current status (no PII: invoice number and channel only).
+    const ord = await prisma.order.findUnique({ where: { number: inv.order.number }, select: { id: true, status: true } });
+    if (ord) await prisma.orderEvent.create({ data: { orderId: ord.id, status: ord.status, note: `Invoice ${inv.number} sent by ${ch === 'sms' ? 'SMS' : ch === 'whatsapp' ? 'WhatsApp' : 'email'} · ${ctx.name}`, actor: ctx.name } });
+    revalidateAdmin();
     return { message: `Invoice link sent by ${ch === 'sms' ? 'SMS' : ch === 'whatsapp' ? 'WhatsApp' : 'email'}` };
   });
 }

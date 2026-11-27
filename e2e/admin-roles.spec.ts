@@ -92,6 +92,7 @@ test('a store order is routed to the warehouse, notified, and closed when done',
   await page.getByTestId('go-checkout').click();
   await page.locator('input[name=name]').fill('Roles Test');
   await page.locator('input[name=phone]').fill('0754333444');
+  await page.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await page.getByTestId('pay-card').click();
   await page.getByTestId('consent').check();
   await page.getByTestId('place-order').click();

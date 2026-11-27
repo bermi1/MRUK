@@ -27,6 +27,9 @@ describe('orderStepper', () => {
     ])!;
     expect(s.map((x) => x.state)).toEqual(['done', 'current', 'pending', 'pending', 'pending']);
     expect(s[1]!.at).toBeNull();
+    // Same step names as tracking.
+    expect(s.map((x) => x.label)).toEqual(['received', 'bankApproval', 'packed', 'outForDelivery', 'delivered']);
+    expect(orderStepper('placed', 'pay_before_delivery', [])!.map((x) => x.label)).toEqual(['received', 'confirmedByPhone', 'paymentConfirmed', 'outForDelivery', 'delivered']);
   });
 
   it('never invents a date for a step that has no event', () => {

@@ -14,13 +14,25 @@ test('ticket creation', async ({ page }) => {
 
 test('order tracking', async ({ page }) => {
   await page.goto('/mruk/track');
+  // The order number alone shows nothing: it also needs the last 4 digits of the order's phone.
+  await page.goto('/mruk/track?o=MU-10482');
+  await expect(page.getByTestId('track-result')).toHaveCount(0);
   await page.getByTestId('track-input').fill('mu-10482');
+  await page.getByTestId('track-phone').fill('0554');
   await page.getByRole('button', { name: 'Track' }).click();
   await expect(page.getByTestId('track-status')).toHaveText('Out for delivery');
   await expect(page.getByTestId('track-result')).toContainText('+255 777 ••• 554');
-  await page.getByTestId('track-input').fill('MU-1');
+  await expect(page.getByTestId('track-result')).toContainText('Estimated delivery');
+  // Wrong digits and unknown numbers get the same neutral message.
+  await page.getByTestId('track-input').fill('MU-10482');
+  await page.getByTestId('track-phone').fill('1234');
   await page.getByRole('button', { name: 'Track' }).click();
-  await expect(page.getByText("We couldn't find that order number")).toBeVisible();
+  await expect(page.getByTestId('track-result')).toHaveCount(0);
+  await expect(page.getByText('We could not find that order')).toBeVisible();
+  await page.getByTestId('track-input').fill('MU-1');
+  await page.getByTestId('track-phone').fill('0554');
+  await page.getByRole('button', { name: 'Track' }).click();
+  await expect(page.getByText('We could not find that order')).toBeVisible();
 });
 
 test('AI compare answers only from catalogue data', async ({ page }) => {

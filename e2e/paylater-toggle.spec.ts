@@ -32,6 +32,7 @@ async function toContract(store: Page) {
   await expect(store).toHaveURL(/\/skywood\/checkout/);
   await store.locator('input[name=name]').fill('Neema Mushi');
   await store.locator('input[name=phone]').fill('+255 754 000 214');
+  await store.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await store.getByTestId('consent').check();
   await store.getByTestId('place-order').click();
   await store.locator('input[name=nida]').fill('19900101-12345-00001-23');

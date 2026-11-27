@@ -207,6 +207,7 @@ test('promo codes: validation, edit, pause; uses count only when an order is pla
   await page.getByTestId('go-checkout').click();
   await page.locator('input[name=name]').fill('Promo Test');
   await page.locator('input[name=phone]').fill('0754222333');
+  await page.locator('input[name=address]').fill('Plot 12, Mikocheni B, near the market');
   await page.getByTestId('pay-card').click();
   await page.getByTestId('consent').check();
   await page.getByTestId('place-order').click();

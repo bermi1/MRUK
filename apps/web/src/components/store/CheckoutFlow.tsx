@@ -89,6 +89,8 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel, pay
     const e: Record<string, string> = {};
     if (co.name.trim().length < 2) e.name = 'Enter your full name';
     if (!isTzPhone(co.phone)) e.phone = 'Enter a valid Tanzanian number, e.g. +255 754 000 214';
+    // Every payment method delivers (no showroom pickup at checkout), so the address is required.
+    if (co.address.trim().length < 5) e.address = 'Enter your delivery address or a nearby landmark';
     if (co.email && !/^\S+@\S+\.\S+$/.test(co.email)) e.email = 'Enter a valid email';
     if (!co.consent) e.consent = 'Please accept the privacy notice to continue';
     setErrors(e);
@@ -259,8 +261,8 @@ export function CheckoutFlow({ brand, cart, prefill, initialMethod, channel, pay
               <Field label="Phone" error={errors.phone}>
                 <input className="input" value={co.phone} onChange={(e) => setCo({ ...co, phone: e.target.value })} inputMode="tel" autoComplete="tel" placeholder="+255 7XX XXX XXX" aria-invalid={!!errors.phone} name="phone" />
               </Field>
-              <Field label="Delivery address or landmark" wide>
-                <input className="input" value={co.address} onChange={(e) => setCo({ ...co, address: e.target.value })} autoComplete="street-address" placeholder="e.g. Mikocheni B, near the market" name="address" />
+              <Field label="Delivery address or landmark" error={errors.address} wide>
+                <input className="input" value={co.address} onChange={(e) => setCo({ ...co, address: e.target.value })} autoComplete="street-address" placeholder="e.g. Mikocheni B, near the market" aria-invalid={!!errors.address} aria-required="true" name="address" />
               </Field>
               <Field label="Email (optional)" error={errors.email} wide>
                 <input className="input" type="email" value={co.email} onChange={(e) => setCo({ ...co, email: e.target.value })} autoComplete="email" name="email" />

@@ -18,10 +18,11 @@ const href = (brand: string, tab: string, extra = '') => `/${brand}/account?tab=
 
 // Building blocks ------------------------------------------------------------------------------
 
-export function Stepper({ steps, salaryAdvance, payOnDelivery = false, ctx }: { steps: StepperStep[]; salaryAdvance: boolean; payOnDelivery?: boolean; ctx: Ctx }) {
+export function Stepper({ steps, ctx }: { steps: StepperStep[]; salaryAdvance?: boolean; payOnDelivery?: boolean; ctx: Ctx }) {
   const { t, locale } = ctx;
-  // Pay on delivery is confirmed before anything is paid: never show it as "Paid".
-  const label = (s: StepperStep) => (s.key === 'confirmed' && salaryAdvance ? t('accStep_confirmedSa') : s.key === 'confirmed' && payOnDelivery ? t('accStep_confirmedPod') : t(k(`accStep_${s.key}`)));
+  // Pay on delivery is confirmed before anything is paid: its step reads "Confirmed by phone", never "Paid".
+  // Same step names as the track page (packages/core TRACK_STEP_TITLE).
+  const label = (s: StepperStep) => t(k(`step_${s.label}`));
   return (
     <ol className="acc-steps" data-testid="order-stepper">
       {steps.map((s) => (
