@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { z } from 'zod';
-import { SafeImg } from '@/components/store/SafeImg';
+import { HeaderOffset } from '@/components/store/HeaderOffset';
 import { ProductCard } from '@/components/store/brands/ProductCard';
 import { ShopControls } from '@/components/store/ShopControls';
 import { PayLaterBanner } from '@/components/store/PayLaterBanner';
@@ -65,11 +65,13 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
   const sort: Sort = q.sort ?? 'popular';
   const lo = q.min !== undefined && q.max !== undefined ? Math.min(q.min, q.max) : q.min;
   const hi = q.min !== undefined && q.max !== undefined ? Math.max(q.min, q.max) : q.max;
-  const filtered = products
-    .filter((p) => !cat || p.cat === cat.id)
+  // Price and stock filters first, so each category chip can show how many items it holds under them.
+  const inRange = products
     .filter((p) => lo === undefined || p.price >= lo)
     .filter((p) => hi === undefined || p.price <= hi)
     .filter((p) => !q.stock || p.stock > 0);
+  const filtered = inRange.filter((p) => !cat || p.cat === cat.id);
+  const countIn = (id: string) => inRange.filter((p) => p.cat === id).length;
   const list = sortList(filtered, sort);
   const pages = q.n ?? 1;
   const shown = list.slice(0, pages * PAGE);
@@ -96,26 +98,16 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
         <p className="shop-sub">{t(payLater ? 'shopSub' : 'shopSubNoPl', { n: filtered.length })}</p>
       </header>
 
-      {/* "Shop by category": one compact row of category shortcuts. */}
-      <nav className="shop-cats nsb" aria-label={t('shopByCategory')}>
-        {cats.map((c) => (
-          <Link key={c.id} href={`${b}/c/${c.id}`} className="shop-cat">
-            <span className="shop-cat-art" aria-hidden="true">
-              {c.img && <SafeImg src={c.img} alt="" />}
-            </span>
-            <span className="shop-cat-name">{c.short}</span>
-          </Link>
-        ))}
-      </nav>
-
+      <HeaderOffset />
+      {/* One toolbar, sticky right under the site header: category filter chips (with counts), sort and filters. */}
       <div className="shop-bar">
         <nav className="shop-chips nsb" aria-label={t('categories')}>
           <Link href={href({ cat: undefined, n: undefined })} scroll={false} className={`shop-chip ${!cat ? 'on' : ''}`} aria-current={!cat ? 'page' : undefined}>
-            {t('allFilter')}
+            {t('allFilter')} <span className="shop-chip-n">{inRange.length}</span>
           </Link>
           {cats.map((c) => (
             <Link key={c.id} href={href({ cat: c.id, n: undefined })} scroll={false} className={`shop-chip ${cat?.id === c.id ? 'on' : ''}`} aria-current={cat?.id === c.id ? 'page' : undefined}>
-              {c.short}
+              {c.short} <span className="shop-chip-n">{countIn(c.id)}</span>
             </Link>
           ))}
         </nav>
@@ -129,7 +121,7 @@ export default async function ShopPage({ params, searchParams }: { params: Promi
           floor={floor}
           ceil={ceil}
           clearHref={href({ min: undefined, max: undefined, stock: undefined, n: undefined })}
-          labels={{ sortBy: t('sortBy'), filters: t('filters'), priceRange: t('priceRange'), minPrice: t('minPrice'), maxPrice: t('maxPrice'), inStockOnly: t('inStockOnly'), apply: t('applyFilters'), clear: t('clearFilters'), close: t('close') }}
+          labels={{ sortBy: t('sortBy'), sortFilter: t('sortFilter'), filters: t('filters'), priceRange: t('priceRange'), minPrice: t('minPrice'), maxPrice: t('maxPrice'), inStockOnly: t('inStockOnly'), apply: t('applyFilters'), clear: t('clearFilters'), close: t('close') }}
         />
       </div>
 

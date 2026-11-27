@@ -62,7 +62,7 @@ export const getCategories = cache(
     const imgs = c.products.map((p) => p.images[0] ?? '').filter(Boolean);
     return imgs.find((i) => i.startsWith('/img/')) ?? imgs[0] ?? '';
   };
-  return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img || photo(c), subs: c.subs, count: c._count.products }));
+  return cats.filter((c) => c._count.products > 0).map((c) => ({ id: c.slug, name: c.name, short: c.short, img: c.img || photo(c), video: c.video, videoPoster: c.videoPoster, subs: c.subs, count: c._count.products }));
   }, 'categories'),
 );
 

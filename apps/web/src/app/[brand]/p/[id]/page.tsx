@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BuyBox } from '@/components/store/BuyBox';
 import { Gallery } from '@/components/store/Gallery';
-import { ArrowRightIcon, ChatIcon, PinIcon, Stars } from '@/components/icons';
+import { HeaderOffset } from '@/components/store/HeaderOffset';
+import { ArrowRightIcon, ChatIcon, ChevronLeftIcon, PinIcon, Stars } from '@/components/icons';
 import { Highlights } from '@/components/store/pdp/Highlights';
 import { ProductDetails, type DetailSection } from '@/components/store/pdp/ProductDetails';
 import { StickyBuyBar } from '@/components/store/pdp/StickyBuyBar';
@@ -236,8 +237,23 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
     <div className="wrap pdp-page" style={{ paddingTop: 24 }}>
       <JsonLd data={jsonLd} />
       <OgProduct price={p.price} availability={p.stock > 0 ? 'in stock' : 'out of stock'} brand={brand.name} />
-      <nav aria-label="Breadcrumb" style={{ fontSize: 13, color: 'var(--muted)' }}>
-        <Link href={`/${key}`}>{t('home')}</Link> / <Link href={`/${key}/c/${p.cat}`}>{p.catName}</Link> / <span style={{ color: 'var(--text)' }}>{p.model}</span>
+      <HeaderOffset />
+      {/* Desktop: full trail. Phones: one 44px "back to category" link (a long trail wraps and adds nothing). */}
+      <nav aria-label="Breadcrumb" className="pdp-crumbs">
+        <ol>
+          <li className="pdp-crumb-home">
+            <Link href={`/${key}`}>{t('home')}</Link>
+          </li>
+          <li>
+            <Link href={`/${key}/c/${p.cat}`}>
+              <ChevronLeftIcon size={16} className="pdp-crumb-back" />
+              {p.catName}
+            </Link>
+          </li>
+          <li className="pdp-crumb-here" aria-current="page">
+            {p.model}
+          </li>
+        </ol>
       </nav>
       <div className="pdp">
         <Gallery images={p.images} name={p.name} model={p.model} sub={p.sub} badge="" labels={galleryLabels} video={media.video} />
@@ -245,12 +261,11 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           <div className="eyebrow-muted" style={{ fontSize: 12 }}>
             {p.model}
           </div>
-          <h1 style={{ margin: '10px 0 0', fontSize: 'clamp(26px, 3vw, 40px)', lineHeight: 1.06, fontWeight: 600, letterSpacing: '-.025em' }}>{p.name}</h1>
+          <h1 style={{ margin: '8px 0 0', fontSize: 'clamp(26px, 2.8vw, 38px)', lineHeight: 1.1, fontWeight: 500, letterSpacing: '-.02em' }}>{p.name}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#B7791F', fontWeight: 600, marginTop: 10 }}>
             <Stars value={p.rating} size={15} /> <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{p.rating.toFixed(1)} · {p.reviews} reviews</span>
           </div>
-          <Highlights items={highlights(features, 4)} label={t('pdHighlights')} />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 22, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
             <span data-testid="pdp-price" style={{ fontSize: 'clamp(26px, 3vw, 34px)', fontWeight: 600, letterSpacing: '-.02em' }}>{fmt(p.price)}</span>
             {p.off > 0 && (
               <>
@@ -266,6 +281,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             <i aria-hidden="true" />
             {stockText}
           </div>
+          <Highlights items={highlights(features, 4)} label={t('pdHighlights')} />
           <BuyBox
             brand={key}
             product={{ id: p.id, name: p.name, model: p.model, price: p.price, stock: p.stock, img: p.img, features: p.features }}
@@ -273,7 +289,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
             inCompare={cmp.includes(p.id)}
             initialMonths={cart.months}
             payLater={payLater}
-            labels={{ payInFull: t('payInFull'), payInFullSub: payLater ? t('payInFullSub') : t('payInFullSubCard'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share') }}
+            labels={{ payInFull: t('payInFull'), payInFullSub: payLater ? t('payInFullSub') : t('payInFullSubCard'), salaryAdvance: payLater ? t('salaryAdvance') : '', salaryAdvanceSub: payLater ? t('salaryAdvanceSub') : '', addToCart: t('addToCart'), buyNow: t('buyNow'), buyWithAdvance: payLater ? t('buyWithAdvance') : '', share: t('share'), outOfStock: t('outOfStock') }}
           />
           <div id="pdp-buy-sentinel" aria-hidden="true" />
           <div className="perks">
@@ -294,6 +310,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
       </div>
       <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis'), pick: t('pdCmpPick'), pickLabel: t('pdCmpPickLabel'), aiNote: t('pdCmpAiNote') }} />
       <ProductDetails title={t('pdDetails')} sections={sections} />
+      {p.stock > 0 && (
       <StickyBuyBar
         brand={key}
         id={p.id}
@@ -305,6 +322,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
         stock={p.stock}
         labels={{ addToCart: t('addToCart'), outOfStock: t('outOfStock') }}
       />
+      )}
     </div>
   );
 }

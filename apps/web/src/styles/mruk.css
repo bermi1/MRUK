@@ -348,7 +348,7 @@
 [data-brand='mruk'] .cathero h1 { font-weight: 800 !important; letter-spacing: -0.04em !important; }
 [data-brand='mruk'] .cathero .art::after { background: linear-gradient(90deg, var(--mu-navy) 0%, rgba(29, 35, 102, 0) 45%); }
 [data-brand='mruk'] .cathero .art img { object-fit: contain; padding: 18px; }
-[data-brand='mruk'] .pdp h1 { font-weight: 780 !important; letter-spacing: -0.04em !important; }
+[data-brand='mruk'] .pdp h1 { font-weight: 500 !important; letter-spacing: -0.02em !important; }
 [data-brand='mruk'] .thumbs button { background: var(--mu-cloud); }
 [data-brand='mruk'] .pdp-badge { background: var(--mu-navy); color: #fff; backdrop-filter: none; }
 
@@ -612,8 +612,8 @@
 [data-brand='mruk'] .thumbs button.on { border-color: var(--mu-sky); }
 [data-brand='mruk'] .pdp-hl li { background: var(--mu-cloud); border-radius: 18px; }
 [data-brand='mruk'] .pdp-hl-i { background: var(--mu-navy); color: #fff; border-radius: 12px; }
-[data-brand='mruk'] .pdp-hl-t { font-weight: 700; color: var(--mu-ink); }
-[data-brand='mruk'] .pdx-title { font-weight: 780; letter-spacing: -0.04em; color: var(--mu-ink); }
+[data-brand='mruk'] .pdp-hl-t { font-weight: 500; color: var(--mu-ink); }
+[data-brand='mruk'] .pdx-title { font-weight: 400; letter-spacing: -0.025em; color: var(--mu-ink); }
 [data-brand='mruk'] .pdx-title::after { content: ''; display: block; width: 44px; height: 4px; margin-top: 16px; border-radius: 4px; background: var(--mu-sky); }
 [data-brand='mruk'] .pdx-list { border-top: 0; display: flex; flex-direction: column; gap: 10px; }
 [data-brand='mruk'] .pdx-item { border: 1.5px solid var(--mu-line); border-radius: 22px; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }

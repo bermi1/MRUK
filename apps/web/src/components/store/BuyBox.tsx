@@ -16,7 +16,7 @@ interface Props {
   initialMonths: number;
   /** Admin switch: false shows Pay in full only (no Salary Advance option, no monthly prices). */
   payLater: boolean;
-  labels: Record<'payInFull' | 'payInFullSub' | 'salaryAdvance' | 'salaryAdvanceSub' | 'addToCart' | 'buyNow' | 'buyWithAdvance' | 'share', string>;
+  labels: Record<'payInFull' | 'payInFullSub' | 'salaryAdvance' | 'salaryAdvanceSub' | 'addToCart' | 'buyNow' | 'buyWithAdvance' | 'share' | 'outOfStock', string>;
 }
 
 /** Two purchase paths (README): Pay in full, or Azania Salary Advance with 3/6/12 months. */
@@ -43,6 +43,8 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, pay
   const text = `${p.name} (${p.model}) — ${fmt(p.price)}${payLater ? ` or ${fmt(p.price / months)}/mo` : ''}. ${share.url}`;
   return (
     <div style={{ position: 'relative' }}>
+      {/* Out of stock: no payment chooser (nothing to pay for yet), just the disabled button below. */}
+      {!out && (
       <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }} role="radiogroup" aria-label="Payment option">
         <button type="button" role="radio" aria-checked={pay === 'full'} onClick={() => setPay('full')} className="payopt" style={{ border: pay === 'full' ? '2px solid var(--p)' : '1px solid var(--line)' }}>
           <div style={{ textAlign: 'left' }}>
@@ -86,14 +88,23 @@ export function BuyBox({ brand, product: p, share, inCompare, initialMonths, pay
         </div>
         )}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
-        <button type="button" className="btn btn-outline-p" disabled={pending || out} onClick={() => go(false)}>
-          {labels.addToCart}
-        </button>
-        <button type="button" className="btn btn-primary" disabled={pending || out} onClick={() => go(true)} data-testid="buy-now">
-          {out ? 'Out of stock' : pending ? '…' : pay === 'salary' ? labels.buyWithAdvance : labels.buyNow}
-        </button>
-      </div>
+      )}
+      {out ? (
+        <div style={{ marginTop: 18 }}>
+          <button type="button" className="btn btn-primary pdp-buy-out" disabled data-testid="buy-now">
+            {labels.outOfStock}
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
+          <button type="button" className="btn btn-outline-p" disabled={pending} onClick={() => go(false)}>
+            {labels.addToCart}
+          </button>
+          <button type="button" className="btn btn-primary" disabled={pending} onClick={() => go(true)} data-testid="buy-now">
+            {pending ? '…' : pay === 'salary' ? labels.buyWithAdvance : labels.buyNow}
+          </button>
+        </div>
+      )}
       <div className="pdp-actions">
         <CompareToggle brand={brand} id={p.id} name={p.name} on={inCompare} long className="cmp-link pdp-act" />
         <button type="button" className="pdp-act" onClick={() => setShareOpen((x) => !x)} aria-expanded={shareOpen}>

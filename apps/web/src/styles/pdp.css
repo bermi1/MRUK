@@ -21,7 +21,7 @@
 .pdp-hl { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 .pdp-hl li { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 16px; background: var(--surface); min-width: 0; }
 .pdp-hl-i { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: #fff; color: var(--p); }
-.pdp-hl-t { font-size: 13.5px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.pdp-hl-t { font-size: 13.5px; font-weight: 500; line-height: 1.3; overflow-wrap: anywhere; }
 
 /* Perks become links into the detail sections ------------------------------------- */
 .perks a { display: block; color: inherit; min-height: 44px; border-radius: 10px; }
@@ -134,3 +134,23 @@ html[data-pdp-sticky] .toast { bottom: 100px; }
 @media (prefers-reduced-motion: reduce) {
   .pdx-panel, .pdx-chev, .pdp-sticky, .pdp-arrow { transition: none !important; }
 }
+
+/* Breadcrumbs: full trail on desktop; on phones a single 44px "back to category" link. */
+.pdp-crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); }
+.pdp-crumbs li { display: inline-flex; align-items: center; }
+.pdp-crumbs li + li::before { content: '/'; margin: 0 8px; color: var(--line); }
+.pdp-crumbs a { display: inline-flex; align-items: center; min-height: 32px; color: var(--muted2); }
+.pdp-crumbs a:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.pdp-crumb-here { color: var(--text); }
+.pdp-crumb-back { display: none; }
+@media (max-width: 767px) {
+  .pdp-crumb-home, .pdp-crumb-here { display: none !important; }
+  .pdp-crumbs li + li::before { content: none; }
+  .pdp-crumbs a { min-height: 44px; gap: 4px; font-size: 14px; color: var(--text); }
+  .pdp-crumb-back { display: block; margin-left: -4px; }
+  /* Sticky bar on phones: thumbnail, price and the button; the name is already on the page. */
+  .pdp-sticky-t { display: none; }
+  .pdp-sticky-p { flex: 1; align-items: flex-start; }
+}
+/* Out of stock: one disabled button instead of two. */
+.pdp-buy-out { display: block; width: 100%; }

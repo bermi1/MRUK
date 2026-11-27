@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { ProductRow, ProductTile } from '@/components/store/ProductTile';
 import { SafeImg } from '@/components/store/SafeImg';
+import { HeroVideo } from '@/components/store/brands/HeroMedia';
+import { categoryFilm } from '@/lib/category-media';
 import { PayLaterBanner } from '@/components/store/PayLaterBanner';
 import { getT } from '@/server/locale';
 import type { BrandKey } from '@/lib/types';
@@ -53,12 +55,14 @@ export default async function CategoryPage({ params, searchParams }: { params: P
     return s ? `${base}?${s}` : base;
   };
   const heroImg = cat ? cat.img : brand.heroImg;
+  // Silent looping film where we have caption-free footage: poster first (LCP), video only after mount.
+  const film = cat ? categoryFilm(key, cat) : null;
 
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
       {cat && <JsonLd data={graph(breadcrumbLd(brand, [{ name: cat.name, path: `/c/${cat.id}` }]), itemListLd(brand, cat.name, list))} />}
-      <div className="cathero">
-        <div style={{ padding: '30px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      <div className={film ? 'cathero has-film' : 'cathero'}>
+        <div className="cathero-copy" style={{ padding: '30px 40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
           <nav aria-label="Breadcrumb" style={{ fontSize: 13, opacity: 0.7 }}>
             <Link href={`/${key}`}>Home</Link> / {cat?.name ?? 'All products'}
           </nav>
@@ -66,7 +70,14 @@ export default async function CategoryPage({ params, searchParams }: { params: P
           <div style={{ fontSize: 14, opacity: 0.8, marginTop: 4 }}>{list.length} products{payLater ? ' · Pay Later on every item' : ''}</div>
         </div>
         <div className="art">
-          {heroImg && <SafeImg src={heroImg} alt="" />}
+          {film ? (
+            <>
+              <SafeImg src={film.poster || heroImg} alt="" loading="eager" fetchPriority="high" />
+              <HeroVideo src={film.src} poster={film.poster || heroImg} className="cathero-video" />
+            </>
+          ) : (
+            heroImg && <SafeImg src={heroImg} alt="" />
+          )}
         </div>
       </div>
       {!cat && (

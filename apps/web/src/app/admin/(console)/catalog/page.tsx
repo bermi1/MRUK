@@ -1,6 +1,7 @@
 import { prisma } from '@bt/db';
 import { updateCategoryAction } from '@/app/actions/admin';
 import { AForm } from '@/components/admin/AForm';
+import { categoryFilm } from '@/lib/category-media';
 import { BrandMark, Forbidden, Pill } from '@/components/admin/ui';
 import { adminFilters } from '@/server/admin/context';
 import { requireStaff } from '@/server/auth';
@@ -65,6 +66,9 @@ export default async function CatalogPage() {
                       <div className="ad-muted" style={{ fontSize: 11.5, fontWeight: 400 }}>
                         Short: {c.short}
                       </div>
+                      <div className="ad-muted" style={{ fontSize: 11.5, fontWeight: 400 }}>
+                        Hero: {c.video ? 'own video' : categoryFilm(b.key, { id: c.slug, img: '' }) ? 'default video' : 'photo'}
+                      </div>
                     </td>
                     <td className="ad-muted2" style={{ fontSize: 12 }}>
                       {c.subs.join(', ')}
@@ -83,6 +87,14 @@ export default async function CatalogPage() {
                             <label className="ad-field full">
                               Sub-categories (comma separated)
                               <input name="subs" defaultValue={c.subs.join(', ')} required maxLength={600} />
+                            </label>
+                            <label className="ad-field full">
+                              Hero video (silent loop; a /video/… file or an https .mp4/.webm link; empty to clear)
+                              <input name="video" type="text" inputMode="url" defaultValue={c.video} maxLength={300} placeholder={categoryFilm(b.key, { id: c.slug, img: '' })?.src ?? 'No default film: the photo hero is shown'} />
+                            </label>
+                            <label className="ad-field full">
+                              Video poster (first frame shown while it loads; optional)
+                              <input name="videoPoster" type="text" inputMode="url" defaultValue={c.videoPoster} maxLength={300} placeholder="/video/….webp or https link (empty = default)" />
                             </label>
                           </AForm>
                         </details>

@@ -42,6 +42,11 @@ model Category {
   name     String
   short    String
   img      String   @default("")
+  /// Optional looping hero film for the category page (/video/... file or https .mp4/.webm). Empty = the code default
+  /// in apps/web/src/lib/category-media.ts, or the image hero when there is none.
+  video       String @default("")
+  /// Poster still for the film (first paint / LCP). Empty = the default poster or the category image.
+  videoPoster String @default("")
   subs     String[]
   sort     Int      @default(0)
 

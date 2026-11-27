@@ -27,6 +27,9 @@ export interface CategoryView {
   name: string;
   short: string;
   img: string;
+  /** Staff-set hero film and poster ('' = code default / image hero). */
+  video: string;
+  videoPoster: string;
   subs: string[];
   count: number;
 }

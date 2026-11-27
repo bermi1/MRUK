@@ -448,13 +448,32 @@ export async function updateCategoryAction(id: string, fd: FormData): Promise<Ac
     const c = await prisma.category.findUnique({ where: { id: idZ.parse(id) } });
     if (!c) throw new Error('Category not found');
     assertBrand(ctx, c.brandKey);
-    const f = z.object({ name: textZ(60, 2), short: textZ(30, 2), subs: textZ(600, 2) }).parse(fields(fd));
+    const f = z
+      .object({
+        name: textZ(60, 2),
+        short: textZ(30, 2),
+        subs: textZ(600, 2),
+        // Hero film: same rule as the product video (Admin › Products). Empty = default film or the image hero.
+        video: z
+          .string()
+          .trim()
+          .max(300)
+          .refine((v) => v === '' || /^(\/video\/[\w.-]+|https:\/\/[^\s"'<>]+)\.(mp4|webm)(\?[^\s"'<>]*)?$/i.test(v), 'Video: an .mp4 or .webm link (https://…) or a /video/… file')
+          .default(''),
+        videoPoster: z
+          .string()
+          .trim()
+          .max(300)
+          .refine((v) => v === '' || /^(\/(video|img)\/[\w./-]+|https:\/\/[^\s"'<>]+)\.(webp|jpe?g|png|avif)(\?[^\s"'<>]*)?$/i.test(v), 'Poster: a .webp/.jpg/.png link (https://…) or a /video/… or /img/… file')
+          .default(''),
+      })
+      .parse(fields(fd));
     const subs = [...new Set(f.subs.split(',').map((s) => s.trim()).filter(Boolean))].slice(0, 20).map((s) => s.slice(0, 60));
     if (!subs.length) throw new Error('Add at least one sub-category');
     const used = await prisma.product.findMany({ where: { categoryId: c.id, sub: { notIn: subs } }, select: { sub: true }, distinct: ['sub'] });
     if (used.length) throw new Error(`Sub-category in use by products: ${used.map((u) => u.sub).join(', ')}`);
-    await prisma.category.update({ where: { id: c.id }, data: { name: f.name, short: f.short, subs } });
-    await audit(ctx.email, 'category.update', 'Category', c.id, { name: f.name, short: f.short, subs });
+    await prisma.category.update({ where: { id: c.id }, data: { name: f.name, short: f.short, subs, video: f.video, videoPoster: f.videoPoster } });
+    await audit(ctx.email, 'category.update', 'Category', c.id, { name: f.name, short: f.short, subs, video: f.video, videoPoster: f.videoPoster });
     revalidateStore();
     return { message: 'Category saved' };
   });

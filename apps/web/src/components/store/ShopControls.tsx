@@ -18,6 +18,7 @@ export interface ShopControlsProps {
   clearHref: string;
   labels: {
     sortBy: string;
+    sortFilter: string;
     filters: string;
     priceRange: string;
     minPrice: string;
@@ -29,7 +30,11 @@ export interface ShopControlsProps {
   };
 }
 
-/** Sort select and the filter panel (bottom sheet on phones, popover on desktop). Plain GET form, so it works without JS too. */
+/**
+ * Desktop: sort select + "Filters" button (dialog). Phones: one "Sort & filter" icon button; the bottom
+ * sheet holds sort, price and stock, so the sticky toolbar stays a single row. Plain GET form (works
+ * without JS); with JS the URL is built clean (no empty or default values).
+ */
 export function ShopControls({
   sort,
   sorts,
@@ -61,6 +66,18 @@ export function ShopControls({
     router.push(q ? `${path}?${q}` : path, { scroll: false });
   };
 
+  const submit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const u = new URLSearchParams();
+    new FormData(e.currentTarget).forEach((v, k) => {
+      const val = String(v).trim();
+      if (val && !(k === "sort" && val === "popular")) u.set(k, val);
+    });
+    setOpen(false);
+    const q = u.toString();
+    router.push(q ? `${path}?${q}` : path, { scroll: false });
+  };
+
   return (
     <div className="shop-ctl">
       <label className="shop-sort">
@@ -83,9 +100,11 @@ export function ShopControls({
         onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="shop-sheet"
+        aria-label={labels.sortFilter}
+        data-testid="shop-filter-btn"
       >
         <SlidersIcon size={18} />
-        <span>{labels.filters}</span>
+        <span className="shop-fbtn-l">{labels.filters}</span>
         {active > 0 && <span className="shop-fcount">{active}</span>}
       </button>
       {open &&
@@ -97,11 +116,14 @@ export function ShopControls({
               id="shop-sheet"
               role="dialog"
               aria-modal="true"
-              aria-label={labels.filters}
+              aria-labelledby="shop-sheet-title"
               ref={panel}
             >
               <div className="shop-sheet-head">
-                <b>{labels.filters}</b>
+                <b id="shop-sheet-title">
+                  <span className="shop-t-d">{labels.filters}</span>
+                  <span className="shop-t-m">{labels.sortFilter}</span>
+                </b>
                 <button
                   type="button"
                   onClick={close}
@@ -116,12 +138,18 @@ export function ShopControls({
                 method="get"
                 action={path}
                 className="shop-form"
-                onSubmit={() => setOpen(false)}
+                onSubmit={submit}
               >
                 {cat && <input type="hidden" name="cat" value={cat} />}
-                {sort !== "popular" && (
-                  <input type="hidden" name="sort" value={sort} />
-                )}
+                {/* Phones choose the order here; on desktop this set is hidden (the select sorts) and just carries the current value. */}
+                <fieldset className="shop-sortset">
+                  <legend>{labels.sortBy}</legend>
+                  {sorts.map(([v, l]) => (
+                    <label key={v} className="shop-check">
+                      <input type="radio" name="sort" value={v} defaultChecked={v === sort} /> {l}
+                    </label>
+                  ))}
+                </fieldset>
                 <fieldset>
                   <legend>{labels.priceRange}</legend>
                   <label>
