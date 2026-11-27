@@ -110,6 +110,28 @@ test.describe('AI compare', () => {
     await expect(page.getByTestId('verdict')).toContainText('Chaguo letu');
   });
 
+  test('product page compares the same kind only, and "Compare with this one" opens the AI verdict for the pair', async ({ page }) => {
+    // A live Mr UK product with at least one other live product of the same category and sub-type.
+    const live = await db.product.findMany({ where: { brandKey: 'mruk', hidden: false, images: { isEmpty: false }, OR: [{ description: { not: '' } }, { features: { isEmpty: false } }] }, select: { id: true, categoryId: true, sub: true, model: true } });
+    const key = (x: { categoryId: string; sub: string }) => `${x.categoryId}|${x.sub.trim().toLowerCase()}`;
+    const p = live.find((x) => x.sub.trim() && live.some((y) => y.id !== x.id && key(y) === key(x)))!;
+    await page.goto(`/mruk/p/${p.id}`);
+    const picks = page.getByTestId('pcmp-pick');
+    await expect(picks.first()).toBeVisible();
+    expect(await picks.count()).toBeLessThanOrEqual(3);
+    // Every column in the table is the same kind of item.
+    const sameKind = new Set(live.filter((y) => key(y) === key(p)).map((y) => y.model));
+    for (const m of await page.locator('.pcmp-model').allInnerTexts()) expect(sameKind.has(m.trim())).toBe(true);
+    await picks.first().click();
+    await expect(page).toHaveURL(/\/mruk\/compare\?ai=1/);
+    await expect(page.getByTestId('compare-count')).toContainText('2 of 3');
+    await expect(page.getByTestId('compare-col')).toHaveCount(2);
+    await expect(page.getByTestId('compare-col').first()).toContainText(p.model);
+    // The verdict runs on its own for exactly these two.
+    await expect(page.getByTestId('verdict-pick')).toBeVisible();
+    await expect(page.getByTestId('verdict-product')).toHaveCount(2);
+  });
+
   test.describe('phone', () => {
     test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     test('compare from the category grid, tray, table and verdict without page scroll', async ({ page }) => {

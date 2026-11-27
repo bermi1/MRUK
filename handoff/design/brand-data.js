@@ -382,11 +382,10 @@
         eyebrow: 'A home. More distinctly yours.',
         headline: 'Beyond limits. Modern living, redefined.',
         intro: 'Skywood brings together Italian product design, advanced technology and a lasting commitment to performance, for people who never settle for less.',
-        story: 'Some things simply belong in your home. They feel right in the space, work beautifully in your daily rituals, and make ordinary moments a little more rewarding.\n\nSkywood was created for those who expect that feeling from the things they choose. Founded to serve the high-end market and people who never settle for less, the brand brings together Italian product design, advanced technology, and a lasting commitment to performance.\n\nThe result is an experience shaped around more than an appliance: the pleasure of a beautifully considered kitchen, the welcome comfort of a cool room, the ease of a well-run home, and the warmth of music shared with people you love.\n\nIn 2023, Skywood officially entered the Tanzanian market, with MR UK Corporation as its sole distributor in the African market: an invitation to discover a new expression of modern living, refined in design, thoughtful in function, and made for people with a clear sense of what they want from home.',
+        story: 'Some things simply belong in your home. They feel right in the space, work beautifully in your daily rituals, and make ordinary moments a little more rewarding.\n\nSkywood was created for those who expect that feeling from the things they choose. Founded to serve the high-end market and people who never settle for less, the brand brings together Italian product design, advanced technology, and a lasting commitment to performance.\n\nThe result is an experience shaped around more than an appliance: the pleasure of a beautifully considered kitchen, the welcome comfort of a cool room, the ease of a well-run home, and the warmth of music shared with people you love.\n\nIn 2023, Skywood officially entered the Tanzanian market, through its exclusive distributor for the African market: an invitation to discover a new expression of modern living, refined in design, thoughtful in function, and made for people with a clear sense of what they want from home.',
         facts: [
           { label: 'Design', value: 'Italian product design' },
           { label: 'In Tanzania since', value: '2023' },
-          { label: 'Sole distributor in Africa', value: 'MR UK Corporation' },
           { label: 'Showrooms', value: 'Dar es Salaam, Arusha, Kahama, Dodoma' }
         ],
         mission: 'To elevate everyday living through thoughtfully designed appliances that unite advanced technology, enduring performance, and a more beautiful experience of home.',
@@ -408,9 +407,9 @@
         closing: 'Skywood. Beyond limits. A home that feels more distinctly yours.',
         // The client confirmed the group's awards are shown on both brands.
         awards: [
-          { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: 'MR UK Corporation', img: '/img/awards/africa-company-of-the-year-2026.webp' },
-          { title: 'Outstanding Home Appliance Brand of the Year', org: 'East Africa Building and Construction (EABC) Awards', year: '2025', recipient: 'Mr UK Tanzania Limited', img: '/img/awards/eabc-awards-2025.webp' },
-          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: 'Profile Beda Masawe, MR UK Corporation', img: '/img/awards/top-100-awards-2025.webp' },
+          { title: 'Home Appliance Supplier of the Year', org: 'Africa Company of the Year Awards', year: '2026', recipient: '', img: '/img/awards/africa-company-of-the-year-2026.webp' },
+          { title: 'Outstanding Home Appliance Brand of the Year', org: 'East Africa Building and Construction (EABC) Awards', year: '2025', recipient: '', img: '/img/awards/eabc-awards-2025.webp' },
+          { title: 'CEO/MD of the Year', org: 'The Top 100 Awards', year: '2025', recipient: '', img: '/img/awards/top-100-awards-2025.webp' },
         ],
         leaders: [],
       },

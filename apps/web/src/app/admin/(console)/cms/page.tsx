@@ -459,7 +459,7 @@ export default async function CmsPage({ searchParams }: { searchParams: Promise<
                 </label>
                 <label className="ad-field">
                   Photo (optional, JPG/PNG/WebP)
-                  <input name="img" type="file" accept="image/jpeg,image/png,image/webp" />
+                  <input name="offer_img" type="file" accept="image/jpeg,image/png,image/webp" />
                 </label>
                 {cms.offer.img && (
                   <label className="ad-check">

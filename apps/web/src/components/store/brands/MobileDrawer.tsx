@@ -11,7 +11,7 @@ import { fill, useMobileMenu, type MobileMenuProps } from './shared';
 /**
  * Phone side drawer (both brands, styled per brand: .dr-mruk / .dr-skywood). Holds everything
  * that is not one of the four bottom-bar destinations: categories, Pay Later, deals, compare,
- * track order, suppliers, support, WhatsApp, language and the sister-site link.
+ * track order, suppliers, support, WhatsApp, language.
  */
 export function MobileDrawer({ brand, brandName, cats, labels, announcement, locale, whatsapp, compareCount, payLater }: MobileMenuProps) {
   const { open, setOpen, close, panel } = useMobileMenu();
@@ -138,9 +138,6 @@ export function MobileDrawer({ brand, brandName, cats, labels, announcement, loc
                     </button>
                   ))}
                 </div>
-                <Link href={labels.allBrandsHref} className="dr-sister">
-                  {labels.allBrands}
-                </Link>
               </div>
             </div>
           </div>,

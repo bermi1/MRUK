@@ -192,6 +192,19 @@ export async function restartCompare(brand: BrandKey, id: string): Promise<strin
   return [p.id];
 }
 
+/**
+ * Replace the compare list with exactly these two products (product page "Compare with this one").
+ * Both must be different, live products of this brand from the same category.
+ */
+export async function compareTwo(brand: BrandKey, a: string, b: string): Promise<string[]> {
+  if (a === b) throw new Error('Choose two different products');
+  const live = await prisma.product.findMany({ where: { id: { in: [a, b] }, brandKey: brand, ...LISTABLE }, select: { id: true, categoryId: true } });
+  if (live.length !== 2) throw new Error('Product not found');
+  if (live[0]!.categoryId !== live[1]!.categoryId) throw new Error('Compare products from one category only.');
+  await saveCompare(brand, [a, b]);
+  return [a, b];
+}
+
 export async function clearCompare(brand: BrandKey) {
   await saveCompare(brand, []);
 }

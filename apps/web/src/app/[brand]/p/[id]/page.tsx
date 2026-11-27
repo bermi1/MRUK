@@ -48,7 +48,6 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
   const deal = flash.find((f) => f.id === p.id);
   const st = stockState(p.stock);
   const stockText = st === 'out' ? t('outOfStock') : st === 'low' ? t('onlyLeft', { n: p.stock }) : t('inStock', { n: p.stock });
-  const related = products.filter((x) => x.id !== p.id && x.cat === p.cat).slice(0, 8);
   const jsonLd = graph(
     productLd(brand, p, deal ? { price: deal.dealPrice, endsAt: deal.dealEndsAt } : null),
     breadcrumbLd(brand, [
@@ -225,8 +224,13 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
   };
   // Only this product's own media: its photos and, when staff added one, its video (no generic category films).
   const media = { video: p.video ? { src: p.video, poster: p.images[0] ?? '' } : null, lifestyle: [] as string[] };
-  // Similar models to compare: same category, closest in price.
-  const similar = related.filter((x) => x.img).sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price)).slice(0, 2);
+  // Models to compare: the same kind of item only (same category and sub-type, e.g. inverter AC vs inverter AC),
+  // live with a photo (getProducts already drops hidden ones), up to 3, closest in price. None: no section.
+  const kind = (x: { sub: string }) => x.sub.trim().toLowerCase();
+  const similar = products
+    .filter((x) => x.id !== p.id && x.cat === p.cat && kind(p) !== '' && kind(x) === kind(p) && x.img)
+    .sort((a, b) => Math.abs(a.price - p.price) - Math.abs(b.price - p.price))
+    .slice(0, 3);
 
   return (
     <div className="wrap pdp-page" style={{ paddingTop: 24 }}>
@@ -288,7 +292,7 @@ export default async function ProductPage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       </div>
-      <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis') }} />
+      <CompareSimilar brand={key} current={p} others={similar} t={{ title: t('pdCompare'), sub: t('pdCompareSub'), price: t('pdCmpPrice'), rating: t('pdCmpRating'), key: t('pdCmpKey'), view: t('viewProduct'), thisOne: t('pdCmpThis'), pick: t('pdCmpPick'), pickLabel: t('pdCmpPickLabel'), aiNote: t('pdCmpAiNote') }} />
       <ProductDetails title={t('pdDetails')} sections={sections} />
       <StickyBuyBar
         brand={key}

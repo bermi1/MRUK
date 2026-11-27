@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { getLocale } from '@/server/locale';
 import { env } from '@/server/env';
-import { noIndexSite } from '@/lib/site';
+import { noIndexSite, siteName, storeBrand } from '@/lib/site';
 import { getPayLaterStates } from '@/server/paylater';
 import '@/styles/globals.css';
 import { SwRegister } from '@/components/SwRegister';
@@ -17,20 +17,26 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   // Pay Later copy only while the admin switch is on for at least one brand.
   const pl = await getPayLaterStates();
-  const on = pl.mruk.enabled || pl.skywood.enabled;
+  const single = storeBrand();
+  const on = single ? pl[single].enabled : pl.mruk.enabled || pl.skywood.enabled;
+  // Single-brand site: only that brand's name (also on 404s and other pages outside /[brand]).
+  const name = siteName();
   return {
     ...metadata,
-    title: { default: on ? 'Mr UK and Skywood — Shop online, pay monthly' : 'Mr UK and Skywood — Shop online', template: '%s' },
+    title: { default: on ? `${name} — Shop online, pay monthly` : `${name} — Shop online`, template: '%s' },
+    applicationName: name,
+    appleWebApp: { capable: true, title: name, statusBarStyle: 'default' },
+    ...(single === 'skywood'
+      ? { manifest: '/icons/skywood.webmanifest', icons: { icon: [{ url: '/icons/skywood-32.png', sizes: '32x32' }, { url: '/icons/skywood-192.png', sizes: '192x192' }], apple: '/icons/skywood-apple.png' } }
+      : {}),
     description: `Refrigerators, TVs, kitchen, generators, sound and cooling, delivered across Tanzania.${on ? ' Pay in full or monthly with Pay Later by Azania Bank.' : ''}`,
-    openGraph: { type: 'website', siteName: 'Mr UK and Skywood', title: on ? 'Mr UK and Skywood — Shop online, pay monthly' : 'Mr UK and Skywood — Shop online', description: on ? 'Appliances and electronics with Pay Later by Azania Bank.' : 'Appliances and electronics, delivered across Tanzania.' },
+    openGraph: { type: 'website', siteName: name, title: on ? `${name} — Shop online, pay monthly` : `${name} — Shop online`, description: on ? 'Appliances and electronics with Pay Later by Azania Bank.' : 'Appliances and electronics, delivered across Tanzania.' },
   };
 }
 
 const metadata: Metadata = {
   metadataBase: new URL(env.APP_URL),
   manifest: '/manifest.webmanifest',
-  applicationName: 'Mr UK and Skywood',
-  appleWebApp: { capable: true, title: 'Mr UK and Skywood', statusBarStyle: 'default' },
   icons: { icon: [{ url: '/icons/mruk-32.png', sizes: '32x32' }, { url: '/icons/icon-192.png', sizes: '192x192' }], apple: '/icons/mruk-apple.png' },
   twitter: { card: 'summary_large_image' },
   // Vercel previews / SEO_NOINDEX sites stay out of search results (lib/site.ts).

@@ -73,9 +73,6 @@ export default async function BrandLayout({ children, params }: { children: Reac
   const megaPromo = payLater ? cms.megaPromo : { ...cms.megaPromo, eyebrow: stripPayLater(cms.megaPromo.eyebrow), title: stripPayLater(cms.megaPromo.title) || cms.megaPromo.title };
   // Pay Later labels are not even sent to the browser while it is off.
   const pl = (s: string) => (payLater ? s : '');
-  // Separate Mr UK / Skywood deployments (STORE_BRAND): "all brands" links to the sister site instead of the shared landing page.
-  const otherKey = key === 'mruk' ? 'skywood' : 'mruk';
-  const sister = process.env.STORE_BRAND && process.env.OTHER_STORE_URL ? { href: `${process.env.OTHER_STORE_URL.replace(/\/$/, '')}/`, label: otherKey === 'mruk' ? 'Mr UK' : 'Skywood' } : null;
   const mega: Record<string, MegaProduct[]> = Object.fromEntries(
     cats.map((c) => [c.id, photoFirst(products.filter((p) => p.cat === c.id)).slice(0, 4).map((p) => ({ id: p.id, model: p.model, name: p.name, sub: p.sub, price: p.price, img: p.img }))]),
   );
@@ -101,8 +98,6 @@ export default async function BrandLayout({ children, params }: { children: Reac
       allProducts: t('allProducts'),
       search: t('searchHint', { brand: brand.name }),
       searchShort: t('searchShort'),
-      allBrands: sister ? sister.label : t('allBrands'),
-      allBrandsHref: sister ? sister.href : '/',
       allCategories: t('allCategories'),
       menu: t('menu'),
       close: t('close'),
@@ -146,8 +141,6 @@ export default async function BrandLayout({ children, params }: { children: Reac
       track: t('trackOrder'),
       suppliers: t('suppliersNearYou'),
       support: t('support'),
-      allBrands: sister ? sister.label : t('allBrands'),
-      allBrandsHref: sister ? sister.href : '/',
       compare: t('compare'),
       salaryAdvance: pl(t('salaryAdvance')),
       salaryAdvanceSub: pl(t('salaryAdvanceSub')),

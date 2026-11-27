@@ -196,7 +196,7 @@ export function answerFromCatalogue(question: string, items: ProductFacts[], mon
 /** Prompt for an LLM adapter. The model sees only retrieved facts and must refuse otherwise. */
 export function groundedPrompt(task: string, facts: { products?: ProductFacts[]; policies?: PolicyFact[] }): string {
   return [
-    'You are a product advisor for Mr UK and Skywood in Tanzania.',
+    'You are a product advisor for an appliance store in Tanzania. Do not name any other store or brand.',
     'Use ONLY the catalogue and policy data below. Never invent specifications, prices or policies.',
     `If the data does not answer the question, reply exactly: "${SUPPORT_FALLBACK}"`,
     'Prices are in Tanzanian shillings (TZS), no decimals. priceTZS is what the customer pays today; when listPriceTZS is present the product is on a flash deal. Plain text, no markdown, at most 110 words.',

@@ -16,8 +16,10 @@ export const metadata: Metadata = { title: 'Compare products', robots: { index: 
 
 type Cell = { t: React.ReactNode; c?: string; w?: number };
 
-export default async function ComparePage({ params }: { params: Promise<{ brand: string }> }) {
+export default async function ComparePage({ params, searchParams }: { params: Promise<{ brand: string }>; searchParams: Promise<{ ai?: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
+  // ?ai=1: opened from a product page's "Compare with this one", so the verdict runs straight away.
+  const autoAi = (await searchParams).ai === '1';
   const [products, ids, cart, t, payLater, locale] = await Promise.all([getProducts(key), getCompareIds(key), getCart(key), getT(), payLaterOn(key), getLocale()]);
   const verdictLabels = (l: Locale): VerdictLabels => ({
     title: translate(l, 'cmpVerdictTitle'),
@@ -163,7 +165,7 @@ export default async function ComparePage({ params }: { params: Promise<{ brand:
           </div>
         </div>
       )}
-      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} locale={locale} labels={{ en: verdictLabels('en'), sw: verdictLabels('sw') }} />}
+      {items.length > 0 && <CompareAi brand={key} ids={items.map((p) => p.id)} names={items.map((p) => p.model).join(', ')} months={months} locale={locale} labels={{ en: verdictLabels('en'), sw: verdictLabels('sw') }} auto={autoAi && chosen.length >= 2} />}
     </div>
   );
 }

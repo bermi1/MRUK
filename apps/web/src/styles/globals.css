@@ -423,7 +423,7 @@ textarea.input { resize: vertical; }
 .track-body { padding: 22px 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
 @media (max-width: 767px) { .track-body { grid-template-columns: 1fr; padding: 18px; } }
 .cmp-ai { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 18px; }
-.cmp-verdict { border-radius: 24px; background: var(--p); color: #fff; padding: 26px; }
+.cmp-verdict { border-radius: 24px; background: var(--p); color: #fff; padding: 26px; scroll-margin-top: calc(var(--stick, 0px) + 88px); }
 .cmp-v-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .cmp-v-head h2 { margin: 0; font-size: 18px; font-weight: 650; }
 .cmp-v-head p { margin: 2px 0 0; font-size: 13px; opacity: 0.75; }
@@ -1373,6 +1373,13 @@ textarea.input { resize: vertical; }
 [data-brand='mruk'] .pcmp-tag { background: var(--mu-navy); }
 [data-brand='skywood'] .pcmp-h { font-family: var(--sw-display); }
 [data-brand='skywood'] .pcmp-tag { background: var(--sw-ink); }
+.pcmp-h { margin-bottom: 8px; }
+.pcmp-note { margin: 0 0 24px; max-width: 60ch; font-size: 15px; line-height: 1.55; color: var(--muted); }
+.pcmp-act form { margin: 0 0 4px; }
+.pcmp-pick { min-height: 44px; padding: 10px 18px; font-size: 14px; font-weight: 500; }
+.pcmp-pick:focus-visible { outline: 2px solid var(--p); outline-offset: 2px; }
+[data-brand='mruk'] .pcmp-pick { border-color: var(--mu-navy); color: var(--mu-navy); }
+[data-brand='skywood'] .pcmp-pick { border-radius: 2px; border-color: var(--sw-ink); color: var(--sw-ink); }
 /* Product page: the section bar and sticky gallery sit just below the sticky header (same offsets as the shop bar). */
 .pdp-page { --stick: 136px; }
 [data-brand='skywood'] .pdp-page { --stick: 125px; }

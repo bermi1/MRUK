@@ -521,7 +521,7 @@ export async function saveOfferAction(brand: string, fd: FormData): Promise<Acti
     const href = v.href.startsWith(`/${b}`) ? v.href : `/${b}${v.href === '/' ? '' : v.href}`;
     const current = await getCmsJson<{ img?: string }>(b, 'offer', {});
     let img = checkbox(f.clear_img) ? '' : (current?.img ?? '');
-    const file = fd.get('img');
+    const file = fd.get('offer_img');
     if (file instanceof File && file.size > 0) img = await storePublicImage(file, `cms/${b}-offer`);
     await setCms(ctx, b, 'offer', { on: checkbox(f.on), ...v, href, img });
     return { message: checkbox(f.on) ? 'Seasonal offer published' : 'Seasonal offer switched off' };

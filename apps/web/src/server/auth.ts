@@ -5,6 +5,7 @@ import { authenticator } from 'otplib';
 import { decrypt, encrypt, hashPassword, prisma, sha256, verifyPassword } from '@bt/db';
 import { normalizeTzPhone } from '@bt/core';
 import { checkStaffPassword } from '@/lib/password';
+import { siteName } from '@/lib/site';
 import { audit } from './audit';
 import { env } from './env';
 import { integrations } from './integrations';
@@ -28,7 +29,8 @@ export async function requestOtp(phoneInput: string): Promise<{ phone: string; d
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
   await prisma.otpCode.updateMany({ where: { phone, usedAt: null }, data: { usedAt: new Date() } });
   await prisma.otpCode.create({ data: { phone, codeHash: sha256(`${phone}:${code}`), expiresAt: new Date(Date.now() + OTP_TTL_MIN * 60_000) } });
-  await integrations.sms.send(phone, `Your Mr UK and Skywood code is ${code}. It expires in ${OTP_TTL_MIN} minutes. Never share it.`);
+  // Single-brand site: the SMS names only that brand (lib/site.ts siteName).
+  await integrations.sms.send(phone, `Your ${siteName()} code is ${code}. It expires in ${OTP_TTL_MIN} minutes. Never share it.`);
   return { phone, devCode: env.showOtp ? code : undefined };
 }
 

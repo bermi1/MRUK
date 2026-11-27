@@ -24,6 +24,18 @@ export function storeBrand(): BrandKey | undefined {
   return v === 'mruk' || v === 'skywood' ? v : undefined;
 }
 
+/** Customer-facing names. A single-brand site never names the other brand (client rule). */
+export const BRAND_LABEL: Record<BrandKey, { name: string; legal: string }> = {
+  mruk: { name: 'Mr UK', legal: 'MR UK Corporation Ltd' },
+  skywood: { name: 'Skywood', legal: 'Skywood Tanzania' },
+};
+
+/** This deployment's display name: the one brand on a single-brand site, both on the combined (development) site. */
+export function siteName(): string {
+  const single = storeBrand();
+  return single ? BRAND_LABEL[single].name : 'Mr UK and Skywood';
+}
+
 function appUrl(): string {
   return trim(process.env.APP_URL || 'http://localhost:3000');
 }

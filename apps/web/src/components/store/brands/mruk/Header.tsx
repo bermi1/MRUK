@@ -58,9 +58,6 @@ export function MrukHeader({ brand, cms, cats, mega, cartCount, compareCount, us
             <Link href={`${b}/track`}>{labels.track}</Link>
             <Link href={`${b}/suppliers`}>{labels.suppliers}</Link>
             <Link href={`${b}/support`}>{labels.support}</Link>
-            <Link href={labels.allBrandsHref} className="mu-util-brands">
-              {labels.allBrands}
-            </Link>
             <LangSwitch locale={locale} label={labels.language} />
           </nav>
         </div>

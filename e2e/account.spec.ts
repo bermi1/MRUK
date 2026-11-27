@@ -155,9 +155,10 @@ test('customer dashboard: order stepper, Pay Later, addresses, marketing prefere
     expect(sub.customerId).toBe(me.id);
     expect(await db.subscriber.count({ where: { brandKey: 'skywood', phone: me.phone } })).toBe(0);
 
-    // Sister brand: no Skywood orders listed, but a note links back to the Mr UK account.
+    // Other brand: the Mr UK order is not listed on Skywood, and Skywood never names Mr UK (client rule).
     await page.goto('/skywood/account');
-    await expect(page.getByTestId('sister-note')).toContainText('1 Mr UK orders');
+    await expect(page.getByTestId('overview-orders')).toBeVisible();
+    await expect(page.locator('main')).not.toContainText(/mr ?uk/i);
     await expect(page.getByTestId('overview-orders')).not.toContainText(number);
   } finally {
     await db.$disconnect();

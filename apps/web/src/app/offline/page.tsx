@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
+import { siteName, storeBrand } from '@/lib/site';
 import { RetryButton } from './RetryButton';
 
-export const metadata: Metadata = { title: "You're offline · Mr UK and Skywood", robots: { index: false } };
+export const metadata: Metadata = { title: `You're offline · ${siteName()}`, robots: { index: false } };
 
 /** Offline shell served by the service worker when there is no connection. No data access. */
 export default function OfflinePage() {
+  // A single-brand site shows only its own logo (never the other brand's).
+  const single = storeBrand();
   return (
     <main style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: '#EEF0F8' }}>
       <div style={{ maxWidth: 380, width: '100%', background: '#fff', borderRadius: 22, padding: '36px 28px', textAlign: 'center', boxShadow: '0 10px 30px rgba(18,22,74,.10)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'center' }}>
-          <img src="/brand/mruk.png" alt="Mr UK" style={{ height: 30, width: 'auto' }} />
-          <img src="/brand/skywood.png" alt="Skywood" style={{ height: 30, width: 'auto' }} />
+          {single !== 'skywood' && <img src="/brand/mruk.png" alt="Mr UK" style={{ height: 30, width: 'auto' }} />}
+          {single !== 'mruk' && <img src="/brand/skywood.png" alt="Skywood" style={{ height: 30, width: 'auto' }} />}
         </div>
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1D2366" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
           <path d="M2 8.8a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16.1a5 5 0 0 1 7 0" />

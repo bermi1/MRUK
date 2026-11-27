@@ -26,9 +26,6 @@ export interface HeaderLabels {
   allProducts: string;
   search: string;
   searchShort: string;
-  allBrands: string;
-  /** Where "all brands" goes: the landing page, or the sister site when the brands are deployed separately. */
-  allBrandsHref: string;
   allCategories: string;
   language: string;
   menu: string;
@@ -296,8 +293,6 @@ export interface MobileMenuProps {
     track: string;
     suppliers: string;
     support: string;
-    allBrands: string;
-    allBrandsHref: string;
     compare: string;
     salaryAdvance: string;
     salaryAdvanceSub: string;

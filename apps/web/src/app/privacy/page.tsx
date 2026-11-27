@@ -1,21 +1,27 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { payLaterOn } from '@/server/paylater';
+import { BRAND_LABEL, siteName, storeBrand } from '@/lib/site';
+
+// A single-brand site names only its own company (client rule); the combined development site names both.
+const single = storeBrand();
+const controller = single ? BRAND_LABEL[single].legal : `${BRAND_LABEL.mruk.legal} and ${BRAND_LABEL.skywood.legal}`;
+const controllerVerb = single ? 'processes' : 'process';
 
 export const metadata: Metadata = {
-  title: 'Privacy notice · Mr UK and Skywood',
-  description: 'How MR UK Corporation Ltd and Skywood Tanzania collect, use and keep personal data under the Tanzania Personal Data Protection Act, 2022.',
+  title: `Privacy notice · ${siteName()}`,
+  description: `How ${controller} ${single ? 'collects, uses and keeps' : 'collect, use and keep'} personal data under the Tanzania Personal Data Protection Act, 2022.`,
   alternates: { canonical: '/privacy' },
 };
 
 export default async function Privacy() {
   // Pay Later (Azania Bank) wording only while either store has it switched on.
-  const payLater = (await payLaterOn('mruk')) || (await payLaterOn('skywood'));
+  const payLater = single ? await payLaterOn(single) : (await payLaterOn('mruk')) || (await payLaterOn('skywood'));
   return (
     <main className="wrap-narrow" style={{ padding: '48px 24px', lineHeight: 1.7, maxWidth: 760 }}>
-      <Link href="/" className="link-u">← Mr UK and Skywood</Link>
+      <Link href="/" className="link-u">← {siteName()}</Link>
       <h1 className="h1">Privacy notice</h1>
-      <p>MR UK Corporation Ltd and Skywood Tanzania process personal data under the Tanzania Personal Data Protection Act, 2022.</p>
+      <p>{controller} {controllerVerb} personal data under the Tanzania Personal Data Protection Act, 2022.</p>
       <h2>What we collect</h2>
       <p>Your name, phone number, email (optional), delivery region and address, and your orders.{payLater && ' For Pay Later by Azania Bank we also collect your NIDA number, employer, check number, job title, net salary and Azania Bank account number. These bank fields are encrypted at rest and shared only with Azania Bank to assess your application.'}</p>
       <h2>Why</h2>

@@ -229,9 +229,6 @@ function SkywoodIndex({
           {labels.close} <CloseIcon size={20} strokeWidth={1.4} />
         </button>
         <img src="/brand/skywood-white.png" alt={brand.name} width={98} height={28} />
-        <Link href={labels.allBrandsHref} className="sw-index-brands">
-          {labels.allBrands}
-        </Link>
       </div>
       <div className="sw-index-body wrap">
         <ol className="sw-index-list">

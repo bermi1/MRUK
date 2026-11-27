@@ -14,7 +14,6 @@ import { accountData } from '@/server/account';
 import { getBrand } from '@/server/catalog';
 import { getLocale } from '@/server/locale';
 import { payLaterOn } from '@/server/paylater';
-import { BRAND_NAMES } from '@/server/marketing';
 import { currentCustomer } from '@/server/session';
 import '@/styles/account.css';
 
@@ -124,15 +123,6 @@ async function Dashboard({ c, brandKey: key, brandName, locale, sp }: { c: Custo
             </Link>
           ))}
         </nav>
-
-        {d.sisterOrders > 0 && (tab === 'overview' || tab === 'orders') && (
-          <p className="acc-sister" data-testid="sister-note">
-            {t('accSisterNote', { n: d.sisterOrders, brand: BRAND_NAMES[d.other] })}{' '}
-            <Link href={`/${d.other}/account?tab=orders`} className="link-u">
-              {t('accSisterLink', { brand: BRAND_NAMES[d.other] })}
-            </Link>
-          </p>
-        )}
 
         <div className="acc-body" id="account-panel">
           {tab === 'overview' && <OverviewPanel d={d} ctx={ctx} />}

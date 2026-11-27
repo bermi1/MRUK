@@ -1,5 +1,5 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import type { VerdictView } from '@bt/core';
 import { aiAskAction, aiVerdictAction } from '@/app/actions/store';
 import { SparkleIcon } from '../icons';
@@ -14,7 +14,7 @@ export type VerdictLabels = Record<'title' | 'hint' | 'generate' | 'regenerate' 
  * AI verdict (English or Kiswahili, following the site language with a toggle on the panel)
  * and Q&A. Everything comes only from the catalogue data of the compared products.
  */
-export function CompareAi({ brand, ids, names, months, locale, labels }: { brand: string; ids: string[]; names: string; months: number; locale: Lang; labels: Record<Lang, VerdictLabels> }) {
+export function CompareAi({ brand, ids, names, months, locale, labels, auto = false }: { brand: string; ids: string[]; names: string; months: number; locale: Lang; labels: Record<Lang, VerdictLabels>; auto?: boolean }) {
   const [lang, setLang] = useState<Lang>(locale);
   const [verdict, setVerdict] = useState<VerdictView | null>(null);
   const [err, setErr] = useState('');
@@ -44,9 +44,20 @@ export function CompareAi({ brand, ids, names, months, locale, labels }: { brand
     });
   };
   const nameOf = (model: string) => verdict?.products.find((p) => p.model === model)?.name ?? model;
+  // Opened from a product page's "Compare with this one": bring the verdict into view and run it once.
+  const box = useRef<HTMLElement>(null);
+  const started = useRef(false);
+  useEffect(() => {
+    if (!auto || started.current) return;
+    started.current = true;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    box.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto]);
   return (
     <div className="cmp-ai">
-      <section className="cmp-verdict" aria-labelledby="cmp-v-title" lang={lang}>
+      <section ref={box} id="verdict" className="cmp-verdict" aria-labelledby="cmp-v-title" lang={lang}>
         <div className="cmp-v-head">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="cmp-v-icon">

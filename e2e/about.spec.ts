@@ -29,6 +29,10 @@ test('Skywood has an About page and shows the group awards', async ({ page }) =>
   await page.goto('/skywood/about');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByTestId('award')).toHaveCount(3);
+  // Client rule: the Skywood site never names Mr UK (story, facts, award recipients, structured data).
+  await expect(page.locator('main, .about').first()).not.toContainText(/mr ?uk/i);
+  const ld = (await page.locator('script[type="application/ld+json"]').allTextContents()).join(' ');
+  expect(ld).not.toMatch(/mr ?uk/i);
   await page.goto('/skywood');
   await expect(page.getByTestId('awards-strip')).toBeVisible();
 });

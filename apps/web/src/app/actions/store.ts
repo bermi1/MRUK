@@ -8,7 +8,7 @@ import { prisma } from '@bt/db';
 import { isPaymentMethod, normalizeTzPhone, sameCategory, type VerdictView } from '@bt/core';
 import type { ActionResult } from '@/lib/types';
 import { AuthError, requestOtp, verifyOtp } from '@/server/auth';
-import { COMPARE_MAX, addToCart, clearCompare, getCart, restartCompare, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
+import { COMPARE_MAX, addToCart, clearCompare, compareTwo, getCart, restartCompare, setQty, toggleCompare, updateCartSettings } from '@/server/cart';
 import { getProducts, getProductsLive, isBrandKey } from '@/server/catalog';
 import { payLaterOn } from '@/server/paylater';
 import { LOCALE_COOKIE } from '@/server/locale';
@@ -99,6 +99,18 @@ export async function restartCompareAction(brand: string, productId: string): Pr
   } catch (e) {
     return fail(e);
   }
+}
+
+/**
+ * Product page "Compare with this one": the compare list becomes exactly [current, chosen], then the
+ * compare page opens with the AI verdict running. Used as a form action (works without JavaScript).
+ */
+export async function compareTwoAction(brand: string, idA: string, idB: string): Promise<void> {
+  const b = brandZ.parse(brand) as 'mruk' | 'skywood';
+  const [a, c] = z.tuple([idZ, idZ]).parse([idA, idB]);
+  await compareTwo(b, a, c);
+  revalidatePath(`/${b}`, 'layout');
+  redirect(`/${b}/compare?ai=1#verdict`);
 }
 
 export async function clearCompareAction(brand: string): Promise<ActionResult> {

@@ -187,7 +187,8 @@ export function verdictPrompt(items: CompareFacts[], reference: VerdictView, opt
     features: p.features,
   }));
   return [
-    'You are a product advisor for Mr UK and Skywood, appliance stores in Tanzania.',
+    // Brand-neutral: each store is a separate site and must never name the other brand.
+    'You are a product advisor for an appliance store in Tanzania. Do not name any brand other than the products\' own.',
     'Compare the products below using ONLY this catalogue data, which staff entered in our admin. Never invent specifications, capacities, energy ratings, dimensions, prices or warranty terms.',
     opts.lang === 'sw'
       ? 'Write in natural, everyday Kiswahili (Tanzania). Where information is missing, say "haijaelezwa".'

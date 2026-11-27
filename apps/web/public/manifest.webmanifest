@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Mr UK and Skywood",
-  "short_name": "MrUK Skywood",
-  "description": "Appliances and electronics from Mr UK and Skywood, delivered across Tanzania. Pay in full or monthly with Azania Bank Salary Advance.",
+  "name": "Mr UK",
+  "short_name": "Mr UK",
+  "description": "Mr UK appliances and electronics, delivered across Tanzania. Pay in full or monthly with Azania Bank Salary Advance.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/mruk?source=pwa",
@@ -48,18 +48,6 @@
       "icons": [
         {
           "src": "/icons/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Skywood store",
-      "short_name": "Skywood",
-      "url": "/skywood?source=pwa-shortcut",
-      "icons": [
-        {
-          "src": "/icons/skywood-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
