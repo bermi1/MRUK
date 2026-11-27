@@ -74,13 +74,22 @@ export function SkywoodHome(props: {
   const reviews = reviewsFor('skywood', payLater);
   // A set is shown only when it has two or more pieces and every piece has its own photo (no empty boxes).
   const sets = bundles.filter((d) => d.items.length > 1 && d.items.every((p) => p.img)).slice(0, 3);
-  // Category films (real Skywood footage, silent and caption-free) for the "In motion" strip.
-  const films = cats.flatMap((c) => {
-    const f = categoryFilm('skywood', c);
-    return f ? [{ c, f }] : [];
-  }).slice(0, 3);
+  // Category films used as extra hero slides (music, washing); the rest go to the "In motion" strip, so no clip repeats.
+  const HERO_FILM_CATS = ['music', 'washing'] as const;
+  const heroFilms = HERO_FILM_CATS.flatMap((id) => {
+    const c = cats.find((x) => x.id === id);
+    const f = c ? categoryFilm('skywood', c) : null;
+    return c && f ? [{ c, f }] : [];
+  });
+  const films = cats
+    .filter((c) => !heroFilms.some((h) => h.c.id === c.id))
+    .flatMap((c) => {
+      const f = categoryFilm('skywood', c);
+      return f ? [{ c, f }] : [];
+    })
+    .slice(0, 3);
   // Opening film (real Skywood lifestyle footage, no captions or graphics) comes first unless the CMS already set a video slide.
-  const heroSlides: HeroSlideView[] = slides.some((x) => x.video)
+  const baseSlides: HeroSlideView[] = slides.some((x) => x.video)
     ? slides
     : [
         {
@@ -94,6 +103,23 @@ export function SkywoodHome(props: {
         },
         ...slides,
       ];
+  // Category films join the hero right after the lead slide (skipped if the CMS already uses that clip).
+  const filmSlides: HeroSlideView[] = heroFilms
+    .filter(({ f }) => !baseSlides.some((x) => x.video === f.src))
+    .map(({ c, f }) => ({
+          ...SKYWOOD_FILM_SLIDE,
+          eyebrow: c.name,
+          title: t(c.id === 'music' ? 'swHeroMusicT' : 'swHeroWashT'),
+          sub: t(c.id === 'music' ? 'swHeroMusicS' : 'swHeroWashS'),
+          href: `${b}/c/${c.id}`,
+          name: c.name,
+          kind: c.name,
+          cta: t('explore'),
+          img: f.poster,
+          video: f.src,
+          videoPoster: f.poster,
+        }));
+  const heroSlides: HeroSlideView[] = [...baseSlides.slice(0, 1), ...filmSlides, ...baseSlides.slice(1)];
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
