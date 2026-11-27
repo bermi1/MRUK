@@ -1019,3 +1019,15 @@ body:has(.brand-root[data-brand='skywood']) { background: #efe8dc; }
 [data-brand='skywood'] .cmp-v-prod .con { color: #a3361f; }
 [data-brand='skywood'] .pdx-link, [data-brand='skywood'] .pdp-act.pdp-act { white-space: nowrap; }
 @media (max-width: 760px) { [data-brand='skywood'] .pdp-act.pdp-act { letter-spacing: 0.08em; font-size: 11.5px; } }
+
+/* Tagline band under the hero: a slim one-line statement, tight spacing (client request). */
+.sw-statement { padding: 34px 0 30px; }
+.sw-statement .sw-statement-t { font-size: clamp(22px, 2.1vw, 30px); line-height: 1.2; }
+.sw-statement-in::before, .sw-statement-in::after { display: none; }
+.sw-statement-s { display: none; }
+.sw-statement + .sw-sec-tight { margin-top: 8px; }
+@media (max-width: 760px) {
+  .sw-statement { padding: 24px 0 20px; }
+  .sw-statement .sw-statement-t { font-size: 20px; }
+  .sw-statement + .sw-sec-tight { margin-top: 4px; }
+}

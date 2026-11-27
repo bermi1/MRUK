@@ -81,13 +81,17 @@ export function SkywoodHome(props: {
     const f = c ? categoryFilm('skywood', c) : null;
     return c && f ? [{ c, f }] : [];
   });
-  const films = cats
-    .filter((c) => !heroFilms.some((h) => h.c.id === c.id))
-    .flatMap((c) => {
-      const f = categoryFilm('skywood', c);
-      return f ? [{ c, f }] : [];
-    })
-    .slice(0, 3);
+  // "In motion": the party clip (real Skywood footage, links to Music) plus the category films not used in the hero.
+  const musicCat = cats.find((x) => x.id === 'music');
+  const films = [
+    ...(musicCat ? [{ key: 'party', name: t('swMotionParty'), href: `${b}/c/music`, f: SKYWOOD_PARTY_FILM }] : []),
+    ...cats
+      .filter((c) => !heroFilms.some((h) => h.c.id === c.id))
+      .flatMap((c) => {
+        const f = categoryFilm('skywood', c);
+        return f ? [{ key: c.id, name: c.name, href: `${b}/c/${c.id}`, f }] : [];
+      }),
+  ].slice(0, 3);
   // Opening film (real Skywood lifestyle footage, no captions or graphics) comes first unless the CMS already set a video slide.
   const baseSlides: HeroSlideView[] = slides.some((x) => x.video)
     ? slides
@@ -119,7 +123,8 @@ export function SkywoodHome(props: {
           video: f.src,
           videoPoster: f.poster,
         }));
-  const heroSlides: HeroSlideView[] = [...baseSlides.slice(0, 1), ...filmSlides, ...baseSlides.slice(1)];
+  // Hero is video only: the lead film, then the category films. Photo slides are left out on purpose (client request).
+  const heroSlides: HeroSlideView[] = [...baseSlides.filter((x) => x.video).slice(0, 1), ...filmSlides];
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
@@ -217,12 +222,12 @@ export function SkywoodHome(props: {
         <section className="wrap sw-sec sw-motion">
           <Head eyebrow={t('swMotion')} title={t('swMotionTitle')} />
           <div className="sw-motion-grid">
-            {films.map(({ c, f }, i) => (
-              <Link key={c.id} href={`${b}/c/${c.id}`} className="sw-motion-item" data-reveal style={{ ['--i' as string]: i }}>
+            {films.map(({ key, name, href, f }, i) => (
+              <Link key={key} href={href} className="sw-motion-item" data-reveal style={{ ['--i' as string]: i }}>
                 <FilmTile src={f.src} poster={f.poster} className="sw-motion-film" />
                 <span className="sw-motion-cap">
                   <span className="sw-motion-n">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="sw-motion-name">{c.name}</span>
+                  <span className="sw-motion-name">{name}</span>
                   <span className="sw-motion-go">
                     {t('explore')} <ArrowRightIcon size={14} strokeWidth={1.5} />
                   </span>
@@ -457,6 +462,7 @@ export function SkywoodHome(props: {
   );
 }
 
+const SKYWOOD_PARTY_FILM = { src: '/video/skywood-party.mp4', poster: '/video/skywood-party.webp' };
 const SKYWOOD_FILM_SLIDE: HeroSlideView = {
   eyebrow: '',
   title: '',
