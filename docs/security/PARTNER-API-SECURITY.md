@@ -174,10 +174,10 @@ one transaction:
    `capturePayment` in `server/orders.ts`) and the hold has not expired. Expired → 409 `order_expired`; the
    partner must reverse the debit.
 7. `amount === order.amountDue` exactly and `currency === "TZS"`. Mismatch → 422, no partial payments.
-8. `partnerTxnRef` unique per partner (DB unique index on `(partnerId, partnerTxnRef)` in `Payment`); a reuse
+8. `partnerTransactionRef` unique per partner (DB unique index on `(partnerId, partnerTransactionRef)` in `Payment`); a reuse
    with a different order → 409 and alert.
 9. Conditional update `updateMany({ where: { id, status: 'placed' } })` (existing pattern) so only one capture
-   wins under concurrency; create `Payment(status=captured, method=partner:<id>, reference=partnerTxnRef)`,
+   wins under concurrency; create `Payment(status=captured, method=partner:<id>, reference=partnerTransactionRef)`,
    mark invoice paid, append `OrderEvent`, store the signature header and body hash for non-repudiation.
 - Refund confirmations follow the same checks against a Hub-issued refund (amount ≤ refundable remainder,
   refund id belongs to the partner, state `refund_pending`). The Hub never initiates money movement.
@@ -185,11 +185,11 @@ one transaction:
 
 ### C8. Idempotency store
 - `Idempotency-Key` (UUID v4, ≤ 64 chars) **required on every POST**; missing → 400.
-- Table `PartnerIdempotency(partnerId, key, method, path, requestHash, status, responseCode, responseBody,
+- Table `IdempotencyRecord(partnerId, key, method, path, requestHash, status, responseCode, responseBody,
   createdAt)` with unique `(partnerId, key)`. Insert-first (lock) before doing work; same key + same request
   hash → replay stored response; same key + different hash → 422 `idempotency_mismatch`; in-flight → 409.
 - Retain 24 h (configurable), then purge. Stored bodies contain no more PII than the original response.
-- Business uniqueness backs it up: one order per quote, one capture per order, unique `partnerTxnRef`.
+- Business uniqueness backs it up: one order per quote, one capture per order, unique `partnerTransactionRef`.
 
 ### C9. Rate limits, scraping and hold caps
 - Reuse the Postgres fixed-window limiter (`server/ratelimit.ts` `hit()`), keyed by **partner id + route
@@ -245,7 +245,7 @@ reports or webhook payloads. Seed two partners and both merchants.
 
 ### C14. Monitoring, alerting and incident response
 Alert rules (to on-call + Security): signature failures > 5/min per partner; replayed timestamps; amount
-mismatch or `partnerTxnRef` reuse (any occurrence); 404 spikes on order ids (IDOR probing); token failures and
+mismatch or `partnerTransactionRef` reuse (any occurrence); 404 spikes on order ids (IDOR probing); token failures and
 lockouts; hold-cap hits; webhook SSRF rejections; captures without settlement after T+N; access from new
 source IPs outside the partner allowlist; any staff manual payment on a partner order.
 
@@ -336,7 +336,7 @@ notify the others promptly (proposed default: within 24 h of discovery) so contr
   rotation expiry, both secrets during overlap.
 - Replay: timestamp −301 s and +61 s rejected; same body + same key replays stored response only.
 - Amount tampering: amount ±1, decimal, string, negative, currency `USD`/`tzs`, payment on expired or
-  cancelled order, second capture, `partnerTxnRef` reuse.
+  cancelled order, second capture, `partnerTransactionRef` reuse.
 - Mass assignment: extra fields (`status`, `total`, `brandKey`, `partnerId`) rejected.
 - Idempotency: concurrent identical POSTs create one order; same key different body → 422.
 - Rate limits and hold caps: exceed per-route limit → 429; exceed open-order and per-product caps.
