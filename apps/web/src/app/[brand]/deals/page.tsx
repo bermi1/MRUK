@@ -28,7 +28,9 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
 
 export default async function DealsPage({ params }: { params: Promise<{ brand: string }> }) {
   const { brand: key } = (await params) as { brand: BrandKey };
-  const [bundles, flash, t, payLater] = await Promise.all([getBundles(key), getFlashDeals(key), getT(), payLaterOn(key)]);
+  const [allBundles, flash, t, payLater] = await Promise.all([getBundles(key), getFlashDeals(key), getT(), payLaterOn(key)]);
+  // Skywood shows only complete sets whose every piece has a photo (no empty boxes).
+  const bundles = key === 'skywood' ? allBundles.filter((d) => d.items.length > 1 && d.items.every((p) => p.img)) : allBundles;
   return (
     <div className="wrap" style={{ paddingTop: 20 }}>
       <section className="deals-hero">

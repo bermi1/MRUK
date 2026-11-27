@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { img } from '@/lib/img';
 import type { BrandView, CategoryView, ProductView } from '@/lib/types';
 import type { MessageKey } from '@/lib/i18n';
 import { reviewsFor } from '@/lib/content';
@@ -16,6 +15,8 @@ import { Rail } from '../Rail';
 import type { HeroLabels, HeroSlideView } from '../shared';
 import { SkywoodHero } from './Hero';
 import { productLabel } from '@/lib/site';
+import { categoryFilm } from '@/lib/category-media';
+import { FilmTile } from '../mruk/FilmTile';
 
 type T = (k: MessageKey, v?: Record<string, string | number>) => string;
 
@@ -45,9 +46,9 @@ function More({ href, children, light }: { href: string; children: React.ReactNo
 }
 
 /**
- * Skywood home: an editorial gallery rhythm (wide/narrow alternation, arches, hairlines, ink and
- * plaster bands, slow reveals) that carries the same commerce depth as Mr UK: hero with live
- * price and Pay Later, service promise, collections, new arrivals, private offers, curated sets,
+ * Skywood home: an editorial gallery rhythm (wide/narrow alternation, arches, hairlines, light
+ * ivory and plaster bands, slow reveals) that carries the same commerce depth as Mr UK: hero with live
+ * price and Pay Later, service promise, collections, new arrivals, films, private offers, curated sets,
  * Pay Later steps, reviews, subscribe and showrooms.
  */
 export function SkywoodHome(props: {
@@ -71,6 +72,13 @@ export function SkywoodHome(props: {
   const perMonth = payLater ? t('perMonthShort') : '';
   const newest = [...products].filter((p) => p.img).sort((x, y) => y.createdAt.localeCompare(x.createdAt) || Number(!!y.img) - Number(!!x.img)).slice(0, 10);
   const reviews = reviewsFor('skywood', payLater);
+  // A set is shown only when it has two or more pieces and every piece has its own photo (no empty boxes).
+  const sets = bundles.filter((d) => d.items.length > 1 && d.items.every((p) => p.img)).slice(0, 3);
+  // Category films (real Skywood footage, silent and caption-free) for the "In motion" strip.
+  const films = cats.flatMap((c) => {
+    const f = categoryFilm('skywood', c);
+    return f ? [{ c, f }] : [];
+  }).slice(0, 3);
   // Opening film (real Skywood lifestyle footage, no captions or graphics) comes first unless the CMS already set a video slide.
   const heroSlides: HeroSlideView[] = slides.some((x) => x.video)
     ? slides
@@ -86,8 +94,6 @@ export function SkywoodHome(props: {
         },
         ...slides,
       ];
-  // Background for the tagline band: an uploaded/local picture first (always loads), else the bundled cooker photo.
-  const statementImg = [brand.heroImg, ...slides.map((x) => x.img)].find((u) => u?.startsWith('/')) ?? '/img/products/skywood-sk6031ges-cooker.webp';
   const [tag1, ...tagRest] = brand.tagline.split(/(?<=\.)\s+/);
   const avg = products.length ? products.reduce((a, p) => a + p.rating, 0) / products.length : 0;
   const reviewCount = products.reduce((a, p) => a + p.reviews, 0);
@@ -126,12 +132,11 @@ export function SkywoodHome(props: {
 
       {/* Statement */}
       <section className="sw-statement" data-reveal>
-        <img className="sw-statement-bg" src={img(statementImg, 1200)} alt="" loading="lazy" decoding="async" />
         <div className="wrap sw-statement-in">
-        <p className="sw-statement-t">
-          {tag1} {tagRest.length > 0 && <em>{tagRest.join(' ')}</em>}
-        </p>
-        <p className="sw-statement-s">{t('swIntro')}</p>
+          <p className="sw-statement-t">
+            {tag1} {tagRest.length > 0 && <em>{tagRest.join(' ')}</em>}
+          </p>
+          <p className="sw-statement-s">{t('swIntro')}</p>
         </div>
       </section>
 
@@ -180,6 +185,27 @@ export function SkywoodHome(props: {
           </Rail>
         </div>
       </section>
+
+      {/* In motion: three category films, each plays only while on screen (poster first, none with reduced motion or Save-Data) */}
+      {films.length > 1 && (
+        <section className="wrap sw-sec sw-motion">
+          <Head eyebrow={t('swMotion')} title={t('swMotionTitle')} />
+          <div className="sw-motion-grid">
+            {films.map(({ c, f }, i) => (
+              <Link key={c.id} href={`${b}/c/${c.id}`} className="sw-motion-item" data-reveal style={{ ['--i' as string]: i }}>
+                <FilmTile src={f.src} poster={f.poster} className="sw-motion-film" />
+                <span className="sw-motion-cap">
+                  <span className="sw-motion-n">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="sw-motion-name">{c.name}</span>
+                  <span className="sw-motion-go">
+                    {t('explore')} <ArrowRightIcon size={14} strokeWidth={1.5} />
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Private offers (flash promotions) */}
       {flash.length > 0 && (
@@ -262,25 +288,30 @@ export function SkywoodHome(props: {
       )}
 
       {/* Curated sets */}
-      {bundles.length > 0 && (
+      {sets.length > 0 && (
         <section className="wrap sw-sec">
           <Head eyebrow={t('dealsAndBundles')} title={t('curatedSets')} sub={t('bundlesSub')} action={<More href={`${b}/deals`}>{t('seeAll')}</More>} />
           <div className="sw-sets">
-            {bundles.slice(0, 3).map((d, i) => (
+            {sets.map((d, i) => (
               <article key={d.title} className="sw-set" data-reveal style={{ ['--i' as string]: i }}>
                 <div className={`sw-set-stack n${Math.min(d.items.length, 3)}`}>
-                  {d.items.slice(0, 3).map((p, k) => (
-                    <span key={p.id} className="sw-set-piece" style={{ ['--k' as string]: k }}>
-                      <PImg src={p.img} alt={productLabel(p)} model={p.model} sub={p.sub} size="sm" />
-                    </span>
+                  {d.items.slice(0, 3).map((p) => (
+                    <Link key={p.id} href={`${b}/p/${p.id}`} className="sw-set-piece" aria-label={productLabel(p)}>
+                      <PImg src={p.img} alt="" model={p.model} sub={p.sub} size="md" />
+                    </Link>
                   ))}
-                  <span className="sw-set-save">{t('saveN', { n: d.save })}</span>
                 </div>
                 <div className="sw-set-copy">
-                  <h3>{d.title}</h3>
+                  <div className="sw-set-title">
+                    <h3>{d.title}</h3>
+                    <span className="sw-set-save">{t('saveN', { n: d.save })}</span>
+                  </div>
                   <ul>
                     {d.items.map((p) => (
-                      <li key={p.id}>{p.name}</li>
+                      <li key={p.id}>
+                        <span>{p.name}</span>
+                        <span>{fmt(p.price)}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

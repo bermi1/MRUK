@@ -6,7 +6,7 @@ import { primeAutoplay, videoAllowed } from '../HeroMedia';
  * Silent product film that plays only while at least half of it is on screen and pauses when it leaves,
  * so it never spends data off-screen. Poster only with reduced motion, Save-Data or 2G.
  */
-export function FilmTile({ src, poster }: { src: string; poster: string }) {
+export function FilmTile({ src, poster, className = 'mv7-film-media' }: { src: string; poster: string; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
   const [ok, setOk] = useState(false);
@@ -32,7 +32,7 @@ export function FilmTile({ src, poster }: { src: string; poster: string }) {
   }, [ok]);
 
   return (
-    <div ref={box} className="mv7-film-media" aria-hidden="true">
+    <div ref={box} className={className} aria-hidden="true">
       <img src={poster} alt="" loading="lazy" decoding="async" width={960} height={540} />
       {ok && near && <video ref={vid} src={src} poster={poster} muted loop playsInline preload="metadata" tabIndex={-1} onCanPlay={(e) => e.currentTarget.getBoundingClientRect().top < window.innerHeight && primeAutoplay(e.currentTarget)} />}
     </div>
